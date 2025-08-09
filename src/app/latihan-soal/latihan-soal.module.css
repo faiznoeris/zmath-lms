@@ -1,0 +1,252 @@
+/* Main Content Styles */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.instructionContainer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.instruction {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background-color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease;
+}
+
+.instruction:hover {
+  transform: translateY(-5px);
+}
+
+.instruction p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  line-height: 1.4;
+}
+
+.actionButton {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 3rem;
+  padding: 0.8rem 2rem;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.actionButton:hover {
+  background-color: var(--primary-hover);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2.5rem;
+  background-color: var(--white);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  text-align: left;
+}
+
+.table th {
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-weight: 500;
+}
+
+.table tr:nth-child(even) {
+  background-color: var(--primary-light);
+}
+
+/* Preview Styles */
+.previewContainer {
+  background-color: var(--white);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.previewHeading {
+  margin-bottom: 1.5rem;
+}
+
+.previewHeading h2 {
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.previewHeading p {
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.question {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--background-light);
+  border-radius: 0.5rem;
+}
+
+.question h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.question p {
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+.options {
+  margin-top: 1rem;
+}
+
+.option {
+  display: block;
+  margin-bottom: 0.8rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.option:hover {
+  background-color: var(--primary-light);
+}
+
+.option input {
+  margin-right: 0.5rem;
+}
+
+.controls {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.secondaryButton {
+  padding: 0.8rem 1.5rem;
+  background-color: var(--white);
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 2rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.secondaryButton:hover {
+  background-color: var(--primary-light);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .instructionContainer {
+    gap: 1rem;
+  }
+  
+  .instruction {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .instruction p {
+    font-size: 0.8rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .previewContainer {
+    padding: 1.5rem;
+  }
+  
+  .question {
+    padding: 1rem;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .instructionContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .instruction {
+    width: 200px;
+    height: 100px;
+    border-radius: 1rem;
+  }
+  
+  .table {
+    font-size: 0.8125rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .actionButton,
+  .secondaryButton {
+    width: 100%;
+    max-width: 250px;
+  }
+}

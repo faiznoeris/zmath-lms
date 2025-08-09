@@ -123,3 +123,127 @@
   margin-bottom: 1.5rem;
   color: var(--text-dark);
 }
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .pageTitle {
+    font-size: 2.5rem;
+  }
+  
+  .pageSubtitle {
+    font-size: 1.125rem;
+  }
+  
+  .instructionGrid {
+    gap: 1.25rem;
+  }
+  
+  .instructionItem {
+    padding: 1.25rem;
+  }
+  
+  .welcomeSection {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageHeader {
+    padding: 3rem 0 2rem;
+  }
+  
+  .pageTitle {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  .pageSubtitle {
+    font-size: 1rem;
+  }
+  
+  .instructionGrid {
+    gap: 1rem;
+  }
+  
+  .instructionItem {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .instructionIcon {
+    align-self: center;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .instructionTitle {
+    font-size: 1rem;
+  }
+  
+  .instructionDescription {
+    font-size: 0.9rem;
+  }
+  
+  .welcomeSection {
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  
+  .welcomeText {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 250px;
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+  
+  .pageTitle {
+    font-size: 1.75rem;
+  }
+  
+  .pageSubtitle {
+    font-size: 0.9rem;
+  }
+  
+  .instructionItem {
+    padding: 0.875rem;
+  }
+  
+  .instructionIcon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  
+  .instructionTitle {
+    font-size: 0.9rem;
+  }
+  
+  .instructionDescription {
+    font-size: 0.8rem;
+  }
+  
+  .welcomeSection {
+    padding: 1rem;
+  }
+  
+  .welcomeText {
+    font-size: 0.9rem;
+  }
+  
+  .btn {
+    max-width: 200px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}

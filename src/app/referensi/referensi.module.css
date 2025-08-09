@@ -113,13 +113,37 @@
 }
 
 /* Responsive Design */
+@media (max-width: 968px) {
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+  
+  .referencesGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.75rem;
+  }
+  
+  .bookInfo {
+    padding: 1.25rem;
+  }
+  
+  .bookTitle {
+    font-size: 1.15rem;
+  }
+  
+  .bookDescription {
+    font-size: 0.9rem;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
-    padding: 0 0.5rem;
+    padding: 0 0.75rem;
   }
   
   .sectionTitle {
     font-size: 1.5rem;
+    line-height: 1.3;
   }
   
   .sectionHeader::before {
@@ -131,26 +155,55 @@
     gap: 1.5rem;
   }
   
+  .bookCard {
+    margin-bottom: 0.5rem;
+  }
+  
+  .bookCover {
+    height: 220px;
+  }
+  
   .bookInfo {
     padding: 1rem;
   }
   
   .bookTitle {
     font-size: 1.1rem;
+    line-height: 1.3;
+  }
+  
+  .bookAuthor {
+    font-size: 0.85rem;
   }
   
   .bookDescription {
     font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .viewButton {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .container {
     margin: 1rem auto;
+    padding: 0 0.5rem;
   }
   
   .sectionHeader {
     margin-bottom: 1.5rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.3rem;
+  }
+  
+  .sectionHeader::before {
+    font-size: 1.3rem;
+    margin-right: 0.75rem;
   }
   
   .referencesGrid {
@@ -158,12 +211,37 @@
     gap: 1rem;
   }
   
+  .bookCard {
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  
   .bookCover {
     height: 250px;
+  }
+  
+  .bookInfo {
+    padding: 0.875rem;
+  }
+  
+  .bookTitle {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  
+  .bookAuthor {
+    font-size: 0.8rem;
+  }
+  
+  .bookDescription {
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
   
   .viewButton {
     width: 100%;
     text-align: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
   }
 }

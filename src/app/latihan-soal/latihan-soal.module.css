@@ -178,9 +178,45 @@
 }
 
 /* Responsive Design */
+@media (max-width: 968px) {
+  .header h1 {
+    font-size: 2.25rem;
+  }
+  
+  .instructionContainer {
+    gap: 1.25rem;
+  }
+  
+  .instruction {
+    width: 130px;
+    height: 130px;
+  }
+  
+  .instruction p {
+    font-size: 0.85rem;
+  }
+  
+  .table {
+    font-size: 0.9rem;
+  }
+  
+  .previewContainer {
+    padding: 1.75rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+  
+  .header {
+    margin-bottom: 2rem;
+  }
+  
   .instructionContainer {
     gap: 1rem;
+    margin-bottom: 2.5rem;
   }
   
   .instruction {
@@ -194,45 +230,114 @@
   
   .header h1 {
     font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  .actionButton {
+    padding: 0.75rem 1.75rem;
+    font-size: 0.9rem;
   }
   
   .table {
     font-size: 0.875rem;
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+  }
+  
+  .table thead,
+  .table tbody,
+  .table tr {
+    display: table;
+    width: 100%;
   }
   
   .table th,
   .table td {
     padding: 0.75rem 0.5rem;
+    white-space: normal;
   }
   
   .previewContainer {
     padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .previewHeading h2 {
+    font-size: 1.25rem;
+  }
+  
+  .previewHeading p {
+    font-size: 0.9rem;
   }
   
   .question {
-    padding: 1rem;
+    padding: 1.25rem;
+  }
+  
+  .question h3 {
+    font-size: 1rem;
+  }
+  
+  .question p {
+    font-size: 0.9rem;
+  }
+  
+  .option {
+    padding: 0.4rem;
+    font-size: 0.9rem;
   }
   
   .controls {
     flex-direction: column;
     align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .secondaryButton {
+    width: 100%;
+    max-width: 200px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 480px) {
   .container {
     padding: 0 0.5rem;
+    margin: 1.5rem auto;
+  }
+  
+  .header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .header h1 {
+    font-size: 1.75rem;
   }
   
   .instructionContainer {
     flex-direction: column;
     align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
   }
   
   .instruction {
     width: 200px;
     height: 100px;
     border-radius: 1rem;
+  }
+  
+  .instruction p {
+    font-size: 0.8rem;
+  }
+  
+  .actionButton {
+    width: 100%;
+    max-width: 250px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
   }
   
   .table {
@@ -242,11 +347,46 @@
   .table th,
   .table td {
     padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
   }
   
-  .actionButton,
+  .previewContainer {
+    padding: 1rem;
+  }
+  
+  .previewHeading h2 {
+    font-size: 1.1rem;
+  }
+  
+  .previewHeading p {
+    font-size: 0.8rem;
+  }
+  
+  .question {
+    padding: 1rem;
+  }
+  
+  .question h3 {
+    font-size: 0.9rem;
+  }
+  
+  .question p {
+    font-size: 0.8rem;
+  }
+  
+  .option {
+    padding: 0.35rem;
+    font-size: 0.8rem;
+  }
+  
+  .option input {
+    margin-right: 0.4rem;
+  }
+  
   .secondaryButton {
     width: 100%;
     max-width: 250px;
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
   }
 }

@@ -34,3 +34,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Project Structure
+
+- `src/models/`: Data models and interfaces
+- `src/controllers/`: Request handlers
+- `src/services/`: Business logic
+- `src/routes/`: API route definitions
+- `src/utils/`: Helpers and utilities
+- `src/middlewares/`: Express/Next middlewares
+- `src/types/`: Shared types
+- `src/config/`: Configuration files
+- `database/schema.sql`: Supabase SQL schema
+
+See `database/schema.sql` for the database structure.

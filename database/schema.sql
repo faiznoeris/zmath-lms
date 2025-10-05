@@ -1,0 +1,1 @@
+-- Place your Supabase SQL schema here. See the main schema in the documentation folder or root README for details.

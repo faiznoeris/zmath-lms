@@ -16,15 +16,11 @@ interface RegisterFormInputs {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
 // Simulate register API call
 async function registerApi(data: RegisterFormInputs) {
   await new Promise(res => setTimeout(res, 1000));
-  if (data.password !== data.confirmPassword) {
-    throw new Error('Passwords do not match');
-  }
   // Simulate username taken
   if (data.username === 'admin') {
     throw new Error('Username already taken');
@@ -97,32 +93,6 @@ const RegisterForm = () => {
             value: 6,
             message: 'Password must be at least 6 characters',
           },
-        })}
-      />
-      <TextField
-        error={!!errors.confirmPassword}
-        label="Confirm Password"
-        helperText={errors.confirmPassword?.message}
-        type={showPassword ? 'text' : 'password'}
-        slotProps={{
-          input: {
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={
-                    showPassword ? 'hide the password' : 'display the password'
-                  }
-                  onClick={handleClickShowPassword}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          },
-        }}
-        {...register('confirmPassword', {
-          required: 'Please confirm your password',
         })}
       />
       {mutation.isError && mutation.error instanceof Error && (

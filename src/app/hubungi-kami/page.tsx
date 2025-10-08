@@ -40,7 +40,7 @@ const HubungiKamiPage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -95,7 +95,6 @@ const HubungiKamiPage = () => {
 
   return (
     <>
-      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography
@@ -163,7 +162,10 @@ const HubungiKamiPage = () => {
                   />
                 </Box>
                 <Box sx={{ flex: 1, textAlign: { xs: "center", md: "left" } }}>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "primary.main", mb: 2 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "primary.main", mb: 2 }}
+                  >
                     Idhata Nurbaiti
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 1 }}>
@@ -174,7 +176,8 @@ const HubungiKamiPage = () => {
                   </Typography>
                   <Box component="ul" sx={{ pl: 2, mb: 2 }}>
                     <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                      1. TK <Chip label="Diponogoro 49 Purwokerto" size="small" />
+                      1. TK{" "}
+                      <Chip label="Diponogoro 49 Purwokerto" size="small" />
                     </Typography>
                     <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
                       2. SD Negeri 1 <Chip label="Karang Klesem" size="small" />
@@ -186,7 +189,8 @@ const HubungiKamiPage = () => {
                       4. SMA Negeri 1 Patikraja
                     </Typography>
                     <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                      5. Universitas Muh. <Chip label="Purwoekrto" size="small" />
+                      5. Universitas Muh.{" "}
+                      <Chip label="Purwoekrto" size="small" />
                     </Typography>
                   </Box>
                   <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider" }}>

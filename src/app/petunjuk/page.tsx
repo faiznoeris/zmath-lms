@@ -28,7 +28,6 @@ import {
   CheckCircle as CheckCircleIcon,
   PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
-import Header from "../components/Header";
 
 const PetunjukPage = () => {
   const navigationItems = [
@@ -90,7 +89,8 @@ const PetunjukPage = () => {
     {
       step: 3,
       title: "Akses Materi",
-      description: "Pelajari materi pembelajaran melalui file PDF yang tersedia",
+      description:
+        "Pelajari materi pembelajaran melalui file PDF yang tersedia",
     },
     {
       step: 4,
@@ -106,7 +106,6 @@ const PetunjukPage = () => {
 
   return (
     <>
-      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography
@@ -125,18 +124,24 @@ const PetunjukPage = () => {
           >
             Petunjuk Penggunaan
           </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-            Panduan lengkap untuk menggunakan platform pembelajaran matematika ZMATH
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{ maxWidth: 600, mx: "auto" }}
+          >
+            Panduan lengkap untuk menggunakan platform pembelajaran matematika
+            ZMATH
           </Typography>
         </Box>
 
-        <Alert 
-          severity="info" 
+        <Alert
+          severity="info"
           sx={{ mb: 4, borderRadius: 2 }}
           icon={<LightbulbIcon />}
         >
-          Platform ZMATH dirancang untuk memberikan pengalaman pembelajaran matematika yang 
-          interaktif dan mudah dipahami. Ikuti petunjuk berikut untuk memaksimalkan penggunaan platform.
+          Platform ZMATH dirancang untuk memberikan pengalaman pembelajaran
+          matematika yang interaktif dan mudah dipahami. Ikuti petunjuk berikut
+          untuk memaksimalkan penggunaan platform.
         </Alert>
 
         <Box
@@ -233,7 +238,9 @@ const PetunjukPage = () => {
                       },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
+                    >
                       <Box
                         sx={{
                           width: 32,
@@ -251,7 +258,10 @@ const PetunjukPage = () => {
                         {step.step}
                       </Box>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 600, mb: 0.5 }}
+                        >
                           {step.title}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -287,7 +297,10 @@ const PetunjukPage = () => {
               }}
             >
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <CheckCircleIcon color="success" />
                   Hal yang Perlu Diperhatikan
                 </Typography>
@@ -323,7 +336,10 @@ const PetunjukPage = () => {
               </Box>
 
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <LightbulbIcon color="warning" />
                   Rekomendasi Belajar
                 </Typography>

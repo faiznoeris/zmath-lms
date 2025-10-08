@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
+import Header from "./components/Header";
 import MuiThemeProvider from "./providers/MuiThemeProvider";
 import ClientProviders from "./ClientProviders";
-
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -33,7 +33,10 @@ export default function RootLayout({
       </head>
       <body className={plusJakartaSans.className}>
         <ClientProviders>
-          <MuiThemeProvider>{children}</MuiThemeProvider>
+          <MuiThemeProvider>
+            <Header />
+            <main>{children}</main>
+          </MuiThemeProvider>
         </ClientProviders>
       </body>
     </html>

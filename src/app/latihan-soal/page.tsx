@@ -16,20 +16,18 @@ export default function LatihanSoalPage() {
   };
 
   const handleStartTest = () => {
-    alert('Ujian akan dimulai!');
+    alert("Ujian akan dimulai!");
     // Add logic to start the actual test
   };
 
   return (
     <>
-      <Header />
-      
       {/* Main Content */}
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>LATIHAN SOAL</h1>
         </div>
-        
+
         <div className={styles.instructionContainer}>
           <div className={styles.instruction}>
             <p>Berdoalah sebelum memulai Latihan soal</p>
@@ -47,13 +45,13 @@ export default function LatihanSoalPage() {
             <p>Latihan Soal berbentuk pilihan ganda</p>
           </div>
         </div>
-        
+
         {!showPreview && (
           <>
             <button className={styles.actionButton} onClick={handleStartClick}>
               Mulai Mengerjakan
             </button>
-            
+
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -92,14 +90,14 @@ export default function LatihanSoalPage() {
             </table>
           </>
         )}
-        
+
         {showPreview && (
           <div className={styles.previewContainer}>
             <div className={styles.previewHeading}>
               <h2>Preview Latihan Soal</h2>
               <p>Waktu: 30 menit</p>
             </div>
-            
+
             <div className={styles.question}>
               <h3>Soal 1</h3>
               <p>Jika x + y = 8 dan xy = 15, berapakah nilai dari x² + y²?</p>
@@ -118,10 +116,14 @@ export default function LatihanSoalPage() {
                 </label>
               </div>
             </div>
-            
+
             <div className={styles.question}>
               <h3>Soal 2</h3>
-              <p>Sebuah bola dilempar ke atas dengan kecepatan awal 20 m/s. Jika percepatan gravitasi adalah 10 m/s², berapa ketinggian maksimum yang dicapai bola tersebut?</p>
+              <p>
+                Sebuah bola dilempar ke atas dengan kecepatan awal 20 m/s. Jika
+                percepatan gravitasi adalah 10 m/s², berapa ketinggian maksimum
+                yang dicapai bola tersebut?
+              </p>
               <div className={styles.options}>
                 <label className={styles.option}>
                   <input type="radio" name="q2" value="a" /> a) 10 meter
@@ -137,9 +139,12 @@ export default function LatihanSoalPage() {
                 </label>
               </div>
             </div>
-            
+
             <div className={styles.controls}>
-              <button className={styles.secondaryButton} onClick={handleBackClick}>
+              <button
+                className={styles.secondaryButton}
+                onClick={handleBackClick}
+              >
                 Kembali
               </button>
               <button className={styles.actionButton} onClick={handleStartTest}>

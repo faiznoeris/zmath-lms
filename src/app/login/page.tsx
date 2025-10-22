@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import styles from "./login.module.css";
 
-
 type LoginFormInputs = {
   username: string;
   password: string;
@@ -14,7 +13,7 @@ type LoginFormInputs = {
 // Simulate login API call
 async function loginApi(data: LoginFormInputs) {
   // Replace with your real API call
-  await new Promise((res) => setTimeout(res, 1000));
+  await new Promise(res => setTimeout(res, 1000));
   if (data.username !== "admin" || data.password !== "admin") {
     throw new Error("Invalid credentials");
   }
@@ -22,11 +21,15 @@ async function loginApi(data: LoginFormInputs) {
 }
 
 export default function LoginPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormInputs>();
 
   const mutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: (data) => {
+    onSuccess: () => {
       // TODO: handle successful login (e.g., save token, redirect)
       // window.location.href = "/dashboard";
     },
@@ -41,7 +44,9 @@ export default function LoginPage() {
     <div className={styles.loginContainer}>
       <form className={styles.loginForm} onSubmit={handleSubmit(onSubmit)}>
         <h2 className={styles.title}>Login</h2>
-        <label className={styles.label} htmlFor="username">Username</label>
+        <label className={styles.label} htmlFor="username">
+          Username
+        </label>
         <input
           className={styles.input}
           id="username"
@@ -52,7 +57,9 @@ export default function LoginPage() {
         {errors.username && (
           <div className={styles.error}>{errors.username.message}</div>
         )}
-        <label className={styles.label} htmlFor="password">Password</label>
+        <label className={styles.label} htmlFor="password">
+          Password
+        </label>
         <input
           className={styles.input}
           id="password"
@@ -77,14 +84,14 @@ export default function LoginPage() {
           <button
             type="button"
             className={styles.linkButton}
-            onClick={() => window.location.href = "/register"}
+            onClick={() => (window.location.href = "/register")}
           >
             Register
           </button>
           <button
             type="button"
             className={styles.linkButton}
-            onClick={() => window.location.href = "/forgot-password"}
+            onClick={() => (window.location.href = "/forgot-password")}
           >
             Forgot Password?
           </button>

@@ -3,7 +3,7 @@ export interface Submission {
   user_id: string;
   quiz_id: string;
   score?: number;
-  answers?: any;
+  answers?: object;
   submitted_at: string;
   time_spent_seconds?: number;
   attempt_number: number;

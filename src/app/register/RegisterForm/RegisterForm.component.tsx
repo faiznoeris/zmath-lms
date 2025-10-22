@@ -1,5 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import {
   Alert,
@@ -20,6 +21,7 @@ export interface RegisterFormInputs {
 }
 
 const RegisterForm = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword(show => !show);
 
@@ -98,9 +100,7 @@ const RegisterForm = () => {
         >
           Register
         </Button>
-        <Button onClick={() => (window.location.href = "/login")}>
-          Back to Login
-        </Button>
+        <Button onClick={() => router.push("/login")}>Back to Login</Button>
       </div>
     </form>
   );

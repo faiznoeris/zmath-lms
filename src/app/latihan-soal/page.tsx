@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Header from "../components/Header";
 import styles from "./latihan-soal.module.css";
 
 export default function LatihanSoalPage() {

@@ -1,4 +1,3 @@
-import Header from "../components/Header";
 import styles from "./materi.module.css";
 
 export default function MateriPage() {

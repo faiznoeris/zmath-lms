@@ -27,7 +27,6 @@ import {
 } from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "../components/Header";
 
 const HubungiKamiPage = () => {
   const [formData, setFormData] = useState({

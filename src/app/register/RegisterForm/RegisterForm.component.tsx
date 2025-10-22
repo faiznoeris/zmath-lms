@@ -30,7 +30,7 @@ const RegisterForm = () => {
   } = useForm<RegisterFormInputs>();
   const mutation = useMutation({
     mutationFn: registerApi,
-    onSuccess: data => {
+    onSuccess: () => {
       // TODO: handle successful registration (e.g., redirect to login)
       window.location.href = "/";
     },

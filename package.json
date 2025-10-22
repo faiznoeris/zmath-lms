@@ -19,7 +19,8 @@
     "next": "15.5.4",
     "react": "^19",
     "react-dom": "^19",
-    "react-hook-form": "^7.64.0"
+    "react-hook-form": "^7.64.0",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",

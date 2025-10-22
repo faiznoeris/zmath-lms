@@ -19,9 +19,9 @@ interface QuizFormInputs {
 }
 
 // Simulate API call
-async function createQuizApi() {
+async function createQuizApi(data: QuizFormInputs) {
   await new Promise(res => setTimeout(res, 1000));
-  return { success: true };
+  return { success: true, data };
 }
 
 export default function AdminQuizzesPage() {

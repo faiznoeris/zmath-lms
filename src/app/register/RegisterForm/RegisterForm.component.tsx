@@ -2,14 +2,9 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import {
-  Alert,
-  TextField,
-  Button,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
-import { VisibilityOff, Visibility } from "@mui/icons-material";
+import { Alert, TextField, Button } from "@mui/material";
+
+import PasswordField from "../../components/PasswordField/PasswordField.component";
 import { registerApi } from "../actions";
 
 import styles from "./RegisterForm.module.css";
@@ -18,18 +13,19 @@ export interface RegisterFormInputs {
   username: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 const RegisterForm = () => {
   const router = useRouter();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const handleClickShowPassword = () => setShowPassword(show => !show);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormInputs>();
+
   const mutation = useMutation({
     mutationFn: registerApi,
     onSuccess: () => {
@@ -58,33 +54,28 @@ const RegisterForm = () => {
         helperText={errors.email?.message}
         {...register("email", { required: "Email is required" })}
       />
-      <TextField
+      <PasswordField
         error={!!errors.password}
         label="Password"
         helperText={errors.password?.message}
-        type={showPassword ? "text" : "password"}
-        slotProps={{
-          input: {
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={
-                    showPassword ? "hide the password" : "display the password"
-                  }
-                  onClick={handleClickShowPassword}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          },
-        }}
         {...register("password", {
           required: "Password is required",
           minLength: {
             value: 6,
             message: "Password must be at least 6 characters",
+          },
+        })}
+      />
+      <PasswordField
+        error={!!errors.confirmPassword}
+        label="Confirm Password"
+        helperText={errors.confirmPassword?.message}
+        {...register("confirmPassword", {
+          required: "Please confirm your password",
+          validate: (val: string) => {
+            if (watch("password") != val) {
+              return "Your password does not match";
+            }
           },
         })}
       />

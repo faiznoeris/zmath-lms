@@ -34,7 +34,7 @@ const RegisterForm = () => {
     mutationFn: registerApi,
     onSuccess: () => {
       // TODO: handle successful registration (e.g., redirect to login)
-      window.location.href = "/";
+      router.push("/");
     },
   });
 

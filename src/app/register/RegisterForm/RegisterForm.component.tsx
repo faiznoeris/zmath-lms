@@ -3,7 +3,9 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, TextField, Button } from "@mui/material";
+import { yupResolver } from "@hookform/resolvers/yup";
 
+import { registerSchema } from "@/src/schemas";
 import PasswordField from "../../components/PasswordField/PasswordField.component";
 import { registerApi } from "../actions";
 
@@ -22,9 +24,10 @@ const RegisterForm = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
-  } = useForm<RegisterFormInputs>();
+  } = useForm<RegisterFormInputs>({
+    resolver: yupResolver(registerSchema),
+  });
 
   const mutation = useMutation({
     mutationFn: registerApi,
@@ -44,40 +47,27 @@ const RegisterForm = () => {
       <h2 className={styles.title}>Register</h2>
       <TextField
         error={!!errors.fullname}
-        label="Fullname"
+        label="Full Name"
         helperText={errors.fullname?.message}
-        {...register("fullname", { required: "fullname is required" })}
+        {...register("fullname")}
       />
       <TextField
         error={!!errors.email}
         label="Email"
         helperText={errors.email?.message}
-        {...register("email", { required: "Email is required" })}
+        {...register("email")}
       />
       <PasswordField
         error={!!errors.password}
         label="Password"
         helperText={errors.password?.message}
-        {...register("password", {
-          required: "Password is required",
-          minLength: {
-            value: 6,
-            message: "Password must be at least 6 characters",
-          },
-        })}
+        {...register("password")}
       />
       <PasswordField
         error={!!errors.confirmPassword}
         label="Confirm Password"
         helperText={errors.confirmPassword?.message}
-        {...register("confirmPassword", {
-          required: "Please confirm your password",
-          validate: (val: string) => {
-            if (watch("password") != val) {
-              return "Your password does not match";
-            }
-          },
-        })}
+        {...register("confirmPassword")}
       />
       {mutation.isError && mutation.error instanceof Error && (
         <Alert severity="error">{mutation.error.message}</Alert>

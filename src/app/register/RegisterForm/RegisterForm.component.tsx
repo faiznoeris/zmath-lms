@@ -10,7 +10,7 @@ import { registerApi } from "../actions";
 import styles from "./RegisterForm.module.css";
 
 export interface RegisterFormInputs {
-  username: string;
+  fullname: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -43,10 +43,10 @@ const RegisterForm = () => {
     <form className={styles.registerForm} onSubmit={handleSubmit(onSubmit)}>
       <h2 className={styles.title}>Register</h2>
       <TextField
-        error={!!errors.username}
-        label="Username"
-        helperText={errors.username?.message}
-        {...register("username", { required: "Username is required" })}
+        error={!!errors.fullname}
+        label="Fullname"
+        helperText={errors.fullname?.message}
+        {...register("fullname", { required: "fullname is required" })}
       />
       <TextField
         error={!!errors.email}

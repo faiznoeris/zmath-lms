@@ -12,7 +12,7 @@ import { registerApi } from "../actions";
 import styles from "./RegisterForm.module.css";
 
 export interface RegisterFormInputs {
-  fullname: string;
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -46,10 +46,10 @@ const RegisterForm = () => {
     <form className={styles.registerForm} onSubmit={handleSubmit(onSubmit)}>
       <h2 className={styles.title}>Register</h2>
       <TextField
-        error={!!errors.fullname}
+        error={!!errors.fullName}
         label="Full Name"
-        helperText={errors.fullname?.message}
-        {...register("fullname")}
+        helperText={errors.fullName?.message}
+        {...register("fullName")}
       />
       <TextField
         error={!!errors.email}

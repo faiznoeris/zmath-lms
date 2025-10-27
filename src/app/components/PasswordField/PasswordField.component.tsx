@@ -1,12 +1,13 @@
 import React from "react";
-import { TextField, InputAdornment, IconButton } from "@mui/material";
+import {
+  TextField,
+  InputAdornment,
+  IconButton,
+  TextFieldProps,
+} from "@mui/material";
 import { VisibilityOff, Visibility } from "@mui/icons-material";
 
-interface PasswordFieldProps {
-  error: boolean;
-  label: string;
-  helperText: string | undefined;
-}
+type PasswordFieldProps = Omit<TextFieldProps, "type">;
 
 const PasswordField = ({
   error,
@@ -41,9 +42,7 @@ const PasswordField = ({
         },
       }}
       {...restProps}
-    >
-      PasswordField
-    </TextField>
+    />
   );
 };
 

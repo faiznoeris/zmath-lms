@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -18,14 +18,36 @@ import {
   Close as CloseIcon,
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
+import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
+import { createClient } from "@/src/utils/supabase/client";
+import UserMenu from "./UserMenu/UserMenu.component";
+
 const Header = () => {
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
-  const [materiMenuAnchor, setMateriMenuAnchor] = useState<null | HTMLElement>(null);
-  const [latihanMenuAnchor, setLatihanMenuAnchor] = useState<null | HTMLElement>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [materiMenuAnchor, setMateriMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [latihanMenuAnchor, setLatihanMenuAnchor] =
+    useState<null | HTMLElement>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+  }, []);
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -120,7 +142,7 @@ const Header = () => {
             alignItems: "center",
           }}
         >
-          {simpleMenuItems.map((item) => (
+          {simpleMenuItems.map(item => (
             <Button
               key={item.label}
               component={Link}
@@ -139,7 +161,7 @@ const Header = () => {
               {item.label}
             </Button>
           ))}
-          
+
           {/* Materi Dropdown */}
           <Button
             onClick={handleMateriMenuOpen}
@@ -169,7 +191,7 @@ const Header = () => {
               },
             }}
           >
-            {materiSubMenus.map((item) => (
+            {materiSubMenus.map(item => (
               <MenuItem
                 key={item.label}
                 component={Link}
@@ -217,7 +239,7 @@ const Header = () => {
               },
             }}
           >
-            {latihanSubMenus.map((item) => (
+            {latihanSubMenus.map(item => (
               <MenuItem
                 key={item.label}
                 component={Link}
@@ -244,18 +266,24 @@ const Header = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <TextField
                 value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
                 placeholder="Cari..."
                 size="small"
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     backgroundColor: "rgba(255, 255, 255, 0.1)",
                     "& fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.5)" },
+                    "&:hover fieldset": {
+                      borderColor: "rgba(255, 255, 255, 0.5)",
+                    },
                     "&.Mui-focused fieldset": { borderColor: "white" },
                   },
                   "& .MuiInputBase-input": { color: "white" },
-                  "& .MuiInputBase-input::placeholder": { color: "rgba(255, 255, 255, 0.7)" },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: "rgba(255, 255, 255, 0.7)",
+                  },
                 }}
               />
               <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
@@ -266,6 +294,25 @@ const Header = () => {
             <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
               <SearchIcon />
             </IconButton>
+          )}
+          {user ? (
+            <UserMenu />
+          ) : (
+            <Button
+              component={Link}
+              href="/login"
+              variant="outlined"
+              sx={{
+                color: "white",
+                borderColor: "rgba(255, 255, 255, 0.5)",
+                "&:hover": {
+                  borderColor: "white",
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                },
+              }}
+            >
+              Login
+            </Button>
           )}
 
           {/* Mobile Menu Button */}
@@ -291,7 +338,7 @@ const Header = () => {
             },
           }}
         >
-          {simpleMenuItems.map((item) => (
+          {simpleMenuItems.map(item => (
             <MenuItem
               key={item.label}
               component={Link}

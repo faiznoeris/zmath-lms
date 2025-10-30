@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "../../utils/supabase/client";
 import styles from "./latihan-soal.module.css";
+import { Question } from "@/src/models/Question";
 
 interface Quiz {
   id: number;
@@ -14,7 +15,7 @@ interface Quiz {
   passing_score: number;
   is_active: boolean;
   created_at: string;
-  questions?: any[];
+  questions?: Question[];
 }
 
 interface Result {
@@ -336,7 +337,7 @@ export default function LatihanSoalPage() {
               <ul style={{ margin: 0, paddingLeft: "1.5rem" }}>
                 <li>Pastikan koneksi internet Anda stabil</li>
                 <li>Jangan refresh atau keluar dari halaman saat mengerjakan</li>
-                <li>Waktu akan mulai berjalan setelah Anda klik "Mulai Ujian"</li>
+                <li>Waktu akan mulai berjalan setelah Anda klik &quot;Mulai Ujian&quot;</li>
                 <li>Jawaban akan otomatis tersimpan</li>
               </ul>
             </div>

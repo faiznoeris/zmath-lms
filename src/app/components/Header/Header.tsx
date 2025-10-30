@@ -21,8 +21,8 @@ import {
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
-import { createClient } from "@/src/utils/supabase/client";
-import UserMenu from "./UserMenu/UserMenu.component";
+import { createClient } from "@/src/utils/supabase/server";
+import UserMenu from "../UserMenu/UserMenu.component";
 
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -39,11 +39,14 @@ const Header = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data?.user) {
+        setUser(null);
+      }
+
+      setUser(data.user);
     };
 
     fetchUser();

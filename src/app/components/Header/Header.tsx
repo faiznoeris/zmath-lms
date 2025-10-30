@@ -21,7 +21,7 @@ import {
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
-import { createClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/client";
 import UserMenu from "../UserMenu/UserMenu.component";
 
 const Header = () => {

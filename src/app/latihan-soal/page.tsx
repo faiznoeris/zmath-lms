@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "../../utils/supabase/client";
@@ -73,7 +73,7 @@ async function fetchUserResultsApi(): Promise<Result[]> {
   return data || [];
 }
 
-export default function LatihanSoalPage() {
+function LatihanSoalContent() {
   const searchParams = useSearchParams();
   const quizId = searchParams.get("id");
   const [showPreview, setShowPreview] = useState(false);
@@ -357,5 +357,24 @@ export default function LatihanSoalPage() {
         )}
       </div>
     </>
+  );
+}
+
+export default function LatihanSoalPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        minHeight: "60vh",
+        fontSize: "1.1rem",
+        color: "#888"
+      }}>
+        Memuat halaman...
+      </div>
+    }>
+      <LatihanSoalContent />
+    </Suspense>
   );
 }

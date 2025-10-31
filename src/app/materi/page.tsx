@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "../../utils/supabase/client";
@@ -35,7 +36,7 @@ async function fetchMaterialsApi(materialId?: string): Promise<Material[]> {
   return data || [];
 }
 
-export default function MateriPage() {
+function MateriContent() {
   const searchParams = useSearchParams();
   const materialId = searchParams.get("id");
 
@@ -180,5 +181,24 @@ export default function MateriPage() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function MateriPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        minHeight: "60vh",
+        fontSize: "1.1rem",
+        color: "#888"
+      }}>
+        Memuat halaman...
+      </div>
+    }>
+      <MateriContent />
+    </Suspense>
   );
 }

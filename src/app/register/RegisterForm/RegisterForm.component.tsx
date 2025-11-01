@@ -32,7 +32,6 @@ const RegisterForm = () => {
   const mutation = useMutation({
     mutationFn: registerApi,
     onSuccess: () => {
-      // TODO: handle successful registration (e.g., redirect to login)
       router.push("/");
     },
   });

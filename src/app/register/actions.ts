@@ -13,6 +13,7 @@ export const registerApi = async (data: RegisterFormInputs) => {
     options: {
       data: {
         display_name: fullName,
+        role: "student",
       },
     },
   });

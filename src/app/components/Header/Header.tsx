@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -22,6 +22,18 @@ import Link from "next/link";
 
 import { useAuthStore } from "@/src/stores";
 import UserMenu from "../UserMenu/UserMenu.component";
+import { createClient } from "@/src/utils/supabase/client";
+
+interface Material {
+  id: number;
+  title: string;
+  type: string;
+}
+
+interface Quiz {
+  id: number;
+  title: string;
+}
 
 const Header = () => {
   const isLoggedIn = useAuthStore(state => state.isLoggedIn);
@@ -35,6 +47,38 @@ const Header = () => {
     useState<null | HTMLElement>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+
+  // Fetch materials and quizzes on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClient();
+
+      // Fetch materials
+      const { data: materialsData } = await supabase
+        .from("materials")
+        .select("id, title, type")
+        .order("order_index", { ascending: true });
+
+      if (materialsData) {
+        setMaterials(materialsData);
+      }
+
+      // Fetch active quizzes
+      const { data: quizzesData } = await supabase
+        .from("quizzes")
+        .select("id, title")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (quizzesData) {
+        setQuizzes(quizzesData);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -67,20 +111,23 @@ const Header = () => {
     }
   };
 
-  const materiSubMenus = [
-    { label: "Aljabar", href: "/materi" },
-    { label: "Geometri", href: "/materi/geometri" },
-    { label: "Kalkulus", href: "/materi/kalkulus" },
-    { label: "Statistika", href: "/materi/statistika" },
-    { label: "Trigonometri", href: "/materi/trigonometri" },
-  ];
+  // Dynamic submenu for materials
+  const materiSubMenus =
+    materials.length > 0
+      ? materials.map(material => ({
+          label: material.title,
+          href: `/materi?id=${material.id}`,
+        }))
+      : [{ label: "Lihat Semua Materi", href: "/materi" }];
 
-  const latihanSubMenus = [
-    { label: "Soal Mudah", href: "/latihan-soal" },
-    { label: "Soal Sedang", href: "/latihan-soal/sedang" },
-    { label: "Soal Sulit", href: "/latihan-soal/sulit" },
-    { label: "Soal Campuran", href: "/latihan-soal/campuran" },
-  ];
+  // Dynamic submenu for quizzes
+  const latihanSubMenus =
+    quizzes.length > 0
+      ? quizzes.map(quiz => ({
+          label: quiz.title,
+          href: `/latihan-soal?id=${quiz.id}`,
+        }))
+      : [{ label: "Lihat Semua Soal", href: "/latihan-soal" }];
 
   const simpleMenuItems = [
     { label: "Beranda", href: "/" },

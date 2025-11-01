@@ -24,6 +24,14 @@
   padding: 3rem 0 5rem;
 }
 
+/* Materials Grid */
+.materialsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
 /* PDF Viewer styles */
 .pdfContainer {
   background-color: var(--white);
@@ -31,6 +39,12 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   max-width: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pdfContainer:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .pdfToolbar {

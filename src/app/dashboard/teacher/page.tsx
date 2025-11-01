@@ -13,11 +13,11 @@ export default function AdminDashboard() {
         <section className={styles.section}>
           <h2>Admin Actions</h2>
           <div className={styles.quickLinks}>
-            <a href="/dashboard/admin/quizzes" className={styles.card}>
+            <a href="/dashboard/teacher/quizzes/list" className={styles.card}>
               <span>📝</span>
               <div>Create & Manage Quizzes</div>
             </a>
-            <a href="/dashboard/admin/materials" className={styles.card}>
+            <a href="/dashboard/teacher/materials/list" className={styles.card}>
               <span>📚</span>
               <div>Upload & Manage Materials</div>
             </a>

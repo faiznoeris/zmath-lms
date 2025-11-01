@@ -2,6 +2,7 @@
 import React from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
+import { createClient } from "../../../../utils/supabase/client";
 import styles from "../../dashboard.module.css";
 
 interface QuestionInput {
@@ -18,10 +19,48 @@ interface QuizFormInputs {
   questions: QuestionInput[];
 }
 
-// Simulate API call
+// Supabase API call
 async function createQuizApi(data: QuizFormInputs) {
-  await new Promise(res => setTimeout(res, 1000));
-  return { success: true, data };
+  const supabase = createClient();
+  
+  // First, create the quiz
+  const { data: quiz, error: quizError } = await supabase
+    .from("quizzes")
+    .insert([
+      {
+        title: data.title,
+        description: data.description,
+        time_limit_minutes: data.time_limit_minutes,
+      },
+    ])
+    .select()
+    .single();
+
+  if (quizError) {
+    throw new Error(quizError.message);
+  }
+
+  // Then, create the questions for this quiz
+  if (data.questions && data.questions.length > 0) {
+    const questionsToInsert = data.questions.map((q, index) => ({
+      quiz_id: quiz.id,
+      question_text: q.question_text,
+      question_type: q.question_type,
+      options: q.options,
+      correct_answer: q.correct_answer,
+      order_index: index + 1,
+    }));
+
+    const { error: questionsError } = await supabase
+      .from("questions")
+      .insert(questionsToInsert);
+
+    if (questionsError) {
+      throw new Error(questionsError.message);
+    }
+  }
+
+  return { success: true, quiz };
 }
 
 export default function AdminQuizzesPage() {
@@ -51,7 +90,12 @@ export default function AdminQuizzesPage() {
     mutationFn: createQuizApi,
     onSuccess: () => {
       reset();
-      // TODO: Show success message or redirect
+      alert("Quiz created successfully!");
+      // Optionally redirect to quiz list
+      // window.location.href = "/dashboard/admin/quizzes/list";
+    },
+    onError: (error: Error) => {
+      alert(`Error creating quiz: ${error.message}`);
     },
   });
 
@@ -66,6 +110,13 @@ export default function AdminQuizzesPage() {
         <p className={styles.subtitle}>
           Add a new quiz and insert multiple questions.
         </p>
+        <button
+          className={styles.formButton}
+          onClick={() => window.location.href = "/dashboard/admin/quizzes/list"}
+          style={{ maxWidth: "200px", margin: "1rem auto" }}
+        >
+          View All Quizzes
+        </button>
       </header>
       <main className={styles.main}>
         <section className={styles.section}>

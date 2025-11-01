@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
+import { createClient } from "../../../../utils/supabase/client";
 import styles from "../../dashboard.module.css";
 
 interface MaterialFormInputs {
@@ -9,24 +10,44 @@ interface MaterialFormInputs {
   type: "video" | "document" | "interactive" | "image";
   content_url: string;
   description?: string;
+  order_index?: number;
 }
 
-// Simulate API call
 async function uploadMaterialApi(data: MaterialFormInputs) {
-  await new Promise((res) => setTimeout(res, 1000));
-  return { id: Math.random().toString(36).slice(2), ...data };
+  const supabase = createClient();
+  
+  const { data: material, error } = await supabase
+    .from("materials")
+    .insert([
+      {
+        title: data.title,
+        type: data.type,
+        content_url: data.content_url,
+        description: data.description,
+        order_index: data.order_index || 0,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return material;
 }
 
 export default function AdminMaterialsPage() {
   const [materials, setMaterials] = useState<MaterialFormInputs[]>([]);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<MaterialFormInputs>({
-    defaultValues: { type: "video" },
+    defaultValues: { type: "video", order_index: 0 },
   });
   const mutation = useMutation({
     mutationFn: uploadMaterialApi,
     onSuccess: (data) => {
       setMaterials((prev) => [...prev, data]);
       reset();
+      alert("Material uploaded successfully!");
     },
   });
 
@@ -39,6 +60,13 @@ export default function AdminMaterialsPage() {
       <header className={styles.header}>
         <h1 className={styles.title}>Manage Materials</h1>
         <p className={styles.subtitle}>Upload new materials or edit existing ones.</p>
+        <button
+          className={styles.formButton}
+          onClick={() => window.location.href = "/dashboard/admin/materials/list"}
+          style={{ maxWidth: "200px", margin: "1rem auto" }}
+        >
+          View All Materials
+        </button>
       </header>
       <main className={styles.main}>
         <section className={styles.section}>
@@ -61,6 +89,9 @@ export default function AdminMaterialsPage() {
 
             <label className={styles.label}>Description</label>
             <textarea className={styles.formField} {...register("description")} />
+
+            <label className={styles.label}>Order Index</label>
+            <input className={styles.formField} type="number" {...register("order_index", { valueAsNumber: true })} />
 
             {mutation.isError && mutation.error instanceof Error && (
               <div className={styles.error}>{mutation.error.message}</div>

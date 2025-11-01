@@ -2,54 +2,46 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, TextField, Button } from "@mui/material";
+import { TextField, Alert, Button } from "@mui/material";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-import { registerSchema } from "@/src/schemas";
-import PasswordField from "../../components/PasswordField/PasswordField.component";
-import { registerApi } from "../actions";
+import { PasswordField } from "../../components";
+import { loginSchema } from "@/src/schemas";
 
-import styles from "./RegisterForm.module.css";
+import styles from "./LoginForm.module.css";
+import { loginApi } from "../actions";
 
-export interface RegisterFormInputs {
-  fullName: string;
+export interface LoginFormInputs {
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
-const RegisterForm = () => {
+const LoginForm = () => {
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormInputs>({
-    resolver: yupResolver(registerSchema),
+  } = useForm<LoginFormInputs>({
+    resolver: yupResolver(loginSchema),
   });
 
   const mutation = useMutation({
-    mutationFn: registerApi,
+    mutationFn: loginApi,
     onSuccess: () => {
       router.push("/");
     },
   });
 
-  const onSubmit = (data: RegisterFormInputs) => {
+  const onSubmit = (data: LoginFormInputs) => {
     mutation.reset();
     mutation.mutate(data);
   };
 
   return (
     <form className={styles.registerForm} onSubmit={handleSubmit(onSubmit)}>
-      <h2 className={styles.title}>Register</h2>
-      <TextField
-        error={!!errors.fullName}
-        label="Full Name"
-        helperText={errors.fullName?.message}
-        {...register("fullName")}
-      />
+      <h2 className={styles.title}>Selamat Datang Kembali!</h2>
       <TextField
         error={!!errors.email}
         label="Email"
@@ -62,12 +54,6 @@ const RegisterForm = () => {
         helperText={errors.password?.message}
         {...register("password")}
       />
-      <PasswordField
-        error={!!errors.confirmPassword}
-        label="Confirm Password"
-        helperText={errors.confirmPassword?.message}
-        {...register("confirmPassword")}
-      />
       {mutation.isError && mutation.error instanceof Error && (
         <Alert severity="error">{mutation.error.message}</Alert>
       )}
@@ -78,12 +64,14 @@ const RegisterForm = () => {
           variant="contained"
           type="submit"
         >
-          Register
+          Login
         </Button>
-        <Button onClick={() => router.push("/login")}>Back to Login</Button>
+        <Button onClick={() => router.push("/register")}>
+          Belum memiliki akun? <span className="font-bold">Daftar</span>
+        </Button>
       </div>
     </form>
   );
 };
 
-export default RegisterForm;
+export default LoginForm;

@@ -41,6 +41,11 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
+    request.nextUrl.pathname !== "/" &&
+    request.nextUrl.pathname !== "/petunjuk" &&
+    request.nextUrl.pathname !== "/evaluasi" &&
+    request.nextUrl.pathname !== "/referensi" &&
+    request.nextUrl.pathname !== "/hubungi-kami" &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/register") &&
     !request.nextUrl.pathname.startsWith("/auth") &&

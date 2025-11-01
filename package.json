@@ -22,7 +22,8 @@
     "react-dom": "^19",
     "react-hook-form": "^7.64.0",
     "yup": "^1.7.1",
-    "yup-password": "^0.4.0"
+    "yup-password": "^0.4.0",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",

@@ -19,7 +19,10 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
-import { createClient } from "../../utils/supabase/client";
+
+import { useAuthStore } from "@/src/stores";
+import UserMenu from "../UserMenu/UserMenu.component";
+import { createClient } from "@/src/utils/supabase/client";
 
 interface Material {
   id: number;
@@ -33,9 +36,15 @@ interface Quiz {
 }
 
 const Header = () => {
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
-  const [materiMenuAnchor, setMateriMenuAnchor] = useState<null | HTMLElement>(null);
-  const [latihanMenuAnchor, setLatihanMenuAnchor] = useState<null | HTMLElement>(null);
+  const isLoggedIn = useAuthStore(state => state.isLoggedIn);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [materiMenuAnchor, setMateriMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [latihanMenuAnchor, setLatihanMenuAnchor] =
+    useState<null | HTMLElement>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -45,29 +54,29 @@ const Header = () => {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient();
-      
+
       // Fetch materials
       const { data: materialsData } = await supabase
         .from("materials")
         .select("id, title, type")
         .order("order_index", { ascending: true });
-      
+
       if (materialsData) {
         setMaterials(materialsData);
       }
-      
+
       // Fetch active quizzes
       const { data: quizzesData } = await supabase
         .from("quizzes")
         .select("id, title")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
-      
+
       if (quizzesData) {
         setQuizzes(quizzesData);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -103,20 +112,22 @@ const Header = () => {
   };
 
   // Dynamic submenu for materials
-  const materiSubMenus = materials.length > 0 
-    ? materials.map(material => ({
-        label: material.title,
-        href: `/materi?id=${material.id}`,
-      }))
-    : [{ label: "Lihat Semua Materi", href: "/materi" }];
+  const materiSubMenus =
+    materials.length > 0
+      ? materials.map(material => ({
+          label: material.title,
+          href: `/materi?id=${material.id}`,
+        }))
+      : [{ label: "Lihat Semua Materi", href: "/materi" }];
 
   // Dynamic submenu for quizzes
-  const latihanSubMenus = quizzes.length > 0
-    ? quizzes.map(quiz => ({
-        label: quiz.title,
-        href: `/latihan-soal?id=${quiz.id}`,
-      }))
-    : [{ label: "Lihat Semua Soal", href: "/latihan-soal" }];
+  const latihanSubMenus =
+    quizzes.length > 0
+      ? quizzes.map(quiz => ({
+          label: quiz.title,
+          href: `/latihan-soal?id=${quiz.id}`,
+        }))
+      : [{ label: "Lihat Semua Soal", href: "/latihan-soal" }];
 
   const simpleMenuItems = [
     { label: "Beranda", href: "/" },
@@ -165,7 +176,7 @@ const Header = () => {
             alignItems: "center",
           }}
         >
-          {simpleMenuItems.map((item) => (
+          {simpleMenuItems.map(item => (
             <Button
               key={item.label}
               component={Link}
@@ -184,7 +195,7 @@ const Header = () => {
               {item.label}
             </Button>
           ))}
-          
+
           {/* Materi Dropdown */}
           <Button
             onClick={handleMateriMenuOpen}
@@ -214,7 +225,7 @@ const Header = () => {
               },
             }}
           >
-            {materiSubMenus.map((item) => (
+            {materiSubMenus.map(item => (
               <MenuItem
                 key={item.label}
                 component={Link}
@@ -262,7 +273,7 @@ const Header = () => {
               },
             }}
           >
-            {latihanSubMenus.map((item) => (
+            {latihanSubMenus.map(item => (
               <MenuItem
                 key={item.label}
                 component={Link}
@@ -289,18 +300,24 @@ const Header = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <TextField
                 value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
                 placeholder="Cari..."
                 size="small"
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     backgroundColor: "rgba(255, 255, 255, 0.1)",
                     "& fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
-                    "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.5)" },
+                    "&:hover fieldset": {
+                      borderColor: "rgba(255, 255, 255, 0.5)",
+                    },
                     "&.Mui-focused fieldset": { borderColor: "white" },
                   },
                   "& .MuiInputBase-input": { color: "white" },
-                  "& .MuiInputBase-input::placeholder": { color: "rgba(255, 255, 255, 0.7)" },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: "rgba(255, 255, 255, 0.7)",
+                  },
                 }}
               />
               <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
@@ -311,6 +328,25 @@ const Header = () => {
             <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
               <SearchIcon />
             </IconButton>
+          )}
+          {isLoggedIn ? (
+            <UserMenu />
+          ) : (
+            <Button
+              component={Link}
+              href="/login"
+              variant="outlined"
+              sx={{
+                color: "white",
+                borderColor: "rgba(255, 255, 255, 0.5)",
+                "&:hover": {
+                  borderColor: "white",
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                },
+              }}
+            >
+              Login
+            </Button>
           )}
 
           {/* Mobile Menu Button */}
@@ -336,7 +372,7 @@ const Header = () => {
             },
           }}
         >
-          {simpleMenuItems.map((item) => (
+          {simpleMenuItems.map(item => (
             <MenuItem
               key={item.label}
               component={Link}

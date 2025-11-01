@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -18,14 +18,13 @@ import {
   Close as CloseIcon,
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
-import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
-import { createClient } from "@/src/utils/supabase/client";
+import { useAuthStore } from "@/src/stores";
 import UserMenu from "../UserMenu/UserMenu.component";
 
 const Header = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const isLoggedIn = useAuthStore(state => state.isLoggedIn);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -36,21 +35,6 @@ const Header = () => {
     useState<null | HTMLElement>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = await createClient();
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data?.user) {
-        setUser(null);
-      }
-
-      setUser(data.user);
-    };
-
-    fetchUser();
-  }, []);
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -298,7 +282,7 @@ const Header = () => {
               <SearchIcon />
             </IconButton>
           )}
-          {user ? (
+          {isLoggedIn ? (
             <UserMenu />
           ) : (
             <Button

@@ -1,6 +1,6 @@
-"use client";
+"use server";
 
-import { createClient } from "@/src/utils/supabase/client";
+import { createClient } from "@/src/utils/supabase/server";
 import { RegisterFormInputs } from "./RegisterForm/RegisterForm.component";
 
 export const registerApi = async (data: RegisterFormInputs) => {

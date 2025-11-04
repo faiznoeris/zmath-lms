@@ -2,7 +2,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { TextField, Alert, Button } from "@mui/material";
+import { TextField, Alert, Button, FormControlLabel, Checkbox } from "@mui/material";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import { PasswordField } from "../../components";
@@ -14,6 +14,7 @@ import { loginApi } from "../actions";
 export interface LoginFormInputs {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 const LoginForm = () => {
@@ -44,6 +45,12 @@ const LoginForm = () => {
 
   const onSubmit = (data: LoginFormInputs) => {
     mutation.reset();
+    // Store remember me preference in localStorage before login
+    if (data.rememberMe) {
+      localStorage.setItem("zmath-remember-me", "true");
+    } else {
+      localStorage.removeItem("zmath-remember-me");
+    }
     mutation.mutate(data);
   };
 
@@ -61,6 +68,10 @@ const LoginForm = () => {
         label="Password"
         helperText={errors.password?.message}
         {...register("password")}
+      />
+      <FormControlLabel
+        control={<Checkbox {...register("rememberMe")} />}
+        label="Remember me"
       />
       {mutation.isError && mutation.error instanceof Error && (
         <Alert severity="error">{mutation.error.message}</Alert>

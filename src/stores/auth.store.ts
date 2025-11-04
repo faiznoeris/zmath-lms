@@ -9,6 +9,18 @@ export interface IuseAuthStore {
   setIsLoggedIn: (isLoggedIn: boolean) => void;
 }
 
+// Helper to get the appropriate storage based on 'remember me' preference
+const getStorage = () => {
+  if (typeof window === "undefined") return sessionStorage;
+  
+  try {
+    const rememberMe = localStorage.getItem("zmath-remember-me");
+    return rememberMe === "true" ? localStorage : sessionStorage;
+  } catch {
+    return sessionStorage;
+  }
+};
+
 export const useAuthStore = create<IuseAuthStore>()(
   persist(
     devtools(set => ({
@@ -19,7 +31,7 @@ export const useAuthStore = create<IuseAuthStore>()(
     })),
     {
       name: "zmath-auth",
-      storage: createJSONStorage(() => sessionStorage), 
+      storage: createJSONStorage(() => getStorage()), 
     },
   )
 );

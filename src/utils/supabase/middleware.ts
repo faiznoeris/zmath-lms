@@ -39,18 +39,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    request.nextUrl.pathname !== "/" &&
-    request.nextUrl.pathname !== "/petunjuk" &&
-    request.nextUrl.pathname !== "/evaluasi" &&
-    request.nextUrl.pathname !== "/referensi" &&
-    request.nextUrl.pathname !== "/hubungi-kami" &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/register") &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/error")
-  ) {
+  const protectedRoute = [
+    "/dashboard",
+    "/dashboard/student",
+    "/dashboard/teacher",
+    "/dashboard/admin",
+    "/materi",
+    "/latihan-soal",
+  ];
+
+  const pathname = request.nextUrl.pathname;
+  const isProtectedRoute = protectedRoute.includes(pathname);
+
+  if (!user && isProtectedRoute) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/login";

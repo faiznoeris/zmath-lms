@@ -10,8 +10,9 @@ export interface IuseAuthStore {
 }
 
 // Helper to get the appropriate storage based on 'remember me' preference
-const getStorage = () => {
-  if (typeof window === "undefined") return sessionStorage;
+const getStorage = (): Storage | undefined => {
+  // In SSR environments, return undefined (Zustand will handle it gracefully)
+  if (typeof window === "undefined") return undefined;
   
   try {
     const rememberMe = localStorage.getItem("zmath-remember-me");

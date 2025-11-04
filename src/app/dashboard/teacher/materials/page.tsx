@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,28 +64,6 @@ async function deleteMaterialApi(id: number) {
   }
 
   return { success: true };
-}
-
-async function updateMaterialApi(material: Material) {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("materials")
-    .update({
-      title: material.title,
-      type: material.type,
-      content_url: material.content_url,
-      description: material.description,
-      order_index: material.order_index,
-    })
-    .eq("id", material.id)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
 }
 
 export default function MaterialsListPage() {

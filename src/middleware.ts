@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll() {
             // Not needed for reading
           },
         },

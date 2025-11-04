@@ -156,7 +156,6 @@ export default function EditQuizPage() {
     register,
     handleSubmit,
     control,
-    reset,
     formState: { errors },
     setValue,
   } = useForm<QuizFormInputs>({

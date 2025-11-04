@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -92,11 +93,11 @@ async function uploadMaterialApi(data: MaterialFormInputs & { file: File }) {
 }
 
 export default function AdminMaterialsPage() {
-  const [materials, setMaterials] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<never[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors }, watch } = useForm<MaterialFormInputs>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<MaterialFormInputs>({
     defaultValues: { type: "video", order_index: 0 },
   });
 

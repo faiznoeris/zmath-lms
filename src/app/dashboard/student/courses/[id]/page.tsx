@@ -166,7 +166,7 @@ export default function CourseDetailPage() {
             No Lessons Yet
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            This course doesn't have any lessons yet.
+            This course doesn&apos;t have any lessons yet.
           </Typography>
         </Box>
       ) : (

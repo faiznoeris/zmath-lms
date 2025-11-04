@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -137,7 +139,7 @@ export default function EditMaterialPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<MaterialFormInputs>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<MaterialFormInputs>({
     defaultValues: { type: "video", order_index: 0 },
   });
 

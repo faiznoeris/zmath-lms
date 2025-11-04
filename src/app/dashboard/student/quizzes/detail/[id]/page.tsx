@@ -6,7 +6,6 @@ import {
   Box,
   Typography,
   Card,
-  CardContent,
   Button,
   Breadcrumbs,
   Link,
@@ -334,7 +333,7 @@ export default function QuizDetailPage() {
             No Attempts Yet
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Click "Start Attempt" above to take this quiz for the first time.
+            Click &quot;Start Attempt&quot; above to take this quiz for the first time.
           </Typography>
         </Card>
       )}

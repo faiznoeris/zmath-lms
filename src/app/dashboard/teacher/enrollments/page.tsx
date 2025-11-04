@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -24,7 +23,7 @@ import {
   OutlinedInput,
   SelectChangeEvent,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -36,11 +35,9 @@ import {
 } from "../../../../services/enrollment.service";
 import { fetchCoursesApi } from "../../../../services/course.service";
 import { EnrollmentWithDetails } from "../../../../models/Enrollment";
-import { Course } from "../../../../models/Course";
 import { fetchStudentsAction, AuthUser } from "./actions";
 
 export default function EnrollmentsPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

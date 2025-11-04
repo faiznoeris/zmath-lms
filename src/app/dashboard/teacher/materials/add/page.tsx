@@ -32,6 +32,12 @@ interface MaterialFormInputs {
   order_index?: number;
   lesson_id?: string;
 }
+interface Material {
+  title: string;
+  type: string;
+  content_url: string;
+  description?: string;
+}
 
 // Fetch all lessons
 const fetchLessonsApi = async (): Promise<Lesson[]> => {
@@ -93,7 +99,7 @@ async function uploadMaterialApi(data: MaterialFormInputs & { file: File }) {
 }
 
 export default function AdminMaterialsPage() {
-  const [materials, setMaterials] = useState<never[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 

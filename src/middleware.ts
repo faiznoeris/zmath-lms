@@ -40,6 +40,8 @@ export async function middleware(request: NextRequest) {
     const role = user.user_metadata?.role as "student" | "teacher" | "admin" | undefined;
     const isApproved = user.user_metadata?.is_approved;
 
+    console.log("Role", role)
+
     // Check if teacher is not approved yet
     if (role === "teacher" && isApproved === false) {
       // Redirect unapproved teachers to a pending approval page or login

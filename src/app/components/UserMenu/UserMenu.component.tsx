@@ -11,8 +11,8 @@ import {
   Avatar,
   ListItemIcon,
 } from "@mui/material";
-import { Logout } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { Home, Logout } from "@mui/icons-material";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuthStore } from "@/src/stores";
 import { stringAvatar } from "@/src/utils/stringAvatar";
@@ -20,12 +20,15 @@ import { stringAvatar } from "@/src/utils/stringAvatar";
 import { logoutUser } from "./actions";
 
 const UserMenu = () => {
+  const pathname = usePathname();
   const user = useAuthStore(state => state.user);
   const router = useRouter();
 
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null
   );
+
+  const isDashboard = pathname?.startsWith("/dashboard");
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -38,6 +41,10 @@ const UserMenu = () => {
   const handleLogoutBtn = async () => {
     await logoutUser();
     router.push("/login");
+  };
+
+  const handleRedirectToDashboard = () => {
+    router.push("/dashboard"); // will redirect based on role
   };
 
   return (
@@ -53,6 +60,14 @@ const UserMenu = () => {
         open={Boolean(anchorElUser)}
         onClose={handleCloseUserMenu}
       >
+        {!isDashboard && (
+          <MenuItem onClick={handleRedirectToDashboard}>
+            <ListItemIcon>
+              <Home />
+            </ListItemIcon>
+            <Typography>Dashboard</Typography>
+          </MenuItem>
+        )}
         <MenuItem onClick={handleLogoutBtn}>
           <ListItemIcon>
             <Logout />

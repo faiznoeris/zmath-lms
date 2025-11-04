@@ -40,12 +40,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const protectedRoute = [
-    "/dashboard",
-    "/dashboard/student",
-    "/dashboard/teacher",
-    "/dashboard/admin",
-    "/materi",
-    "/latihan-soal",
+    "/dashboard/",
   ];
 
   const pathname = request.nextUrl.pathname;

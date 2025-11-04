@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { User } from "@supabase/supabase-js";
 
 export interface IuseAuthStore {
@@ -10,10 +10,16 @@ export interface IuseAuthStore {
 }
 
 export const useAuthStore = create<IuseAuthStore>()(
-  devtools(set => ({
-    user: null,
-    isLoggedIn: false,
-    setUser: userObj => set(state => ({ user: (state.user = userObj) })),
-    setIsLoggedIn: isLoggedIn => set({ isLoggedIn }),
-  }))
+  persist(
+    devtools(set => ({
+      user: null,
+      isLoggedIn: false,
+      setUser: userObj => set(state => ({ user: (state.user = userObj) })),
+      setIsLoggedIn: isLoggedIn => set({ isLoggedIn }),
+    })),
+    {
+      name: "zmath-auth",
+      storage: createJSONStorage(() => sessionStorage), 
+    },
+  )
 );

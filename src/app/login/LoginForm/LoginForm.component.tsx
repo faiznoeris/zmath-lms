@@ -29,12 +29,15 @@ const LoginForm = () => {
 
   const mutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: (data) => {
-      // Redirect based on user role
-      if (data.role === 'teacher' || data.role === 'admin') {
+    onSuccess: data => {
+      if (data.role === "admin") {
+        router.push("/dashboard/admin");
+      }
+      if (data.role === "teacher") {
         router.push("/dashboard/teacher");
-      } else {
-        router.push("/dashboard");
+      }
+      if (data.role === "student") {
+        router.push("/dashboard/student");
       }
     },
   });

@@ -1,40 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
   Typography,
   Button,
   IconButton,
-  TextField,
   Menu,
   MenuItem,
   Box,
 } from "@mui/material";
-import {
-  Menu as MenuIcon,
-  Search as SearchIcon,
-  Close as CloseIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
+import { Menu as MenuIcon } from "@mui/icons-material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAuthStore } from "@/src/stores";
 import UserMenu from "../UserMenu/UserMenu.component";
-import { createClient } from "@/src/utils/supabase/client";
 
-interface Material {
-  id: number;
-  title: string;
-  type: string;
-}
-
-interface Quiz {
-  id: number;
-  title: string;
-}
+const simpleMenuItems = [
+  { label: "Beranda", href: "/" },
+  { label: "Petunjuk", href: "/petunjuk" },
+  // { label: "Evaluasi", href: "/evaluasi" },
+  { label: "Referensi", href: "/referensi" },
+  { label: "Hubungi Kami", href: "/hubungi-kami" },
+];
 
 const Header = () => {
   const pathname = usePathname();
@@ -42,48 +32,9 @@ const Header = () => {
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
     null
   );
-  const [materiMenuAnchor, setMateriMenuAnchor] = useState<null | HTMLElement>(
-    null
-  );
-  const [latihanMenuAnchor, setLatihanMenuAnchor] =
-    useState<null | HTMLElement>(null);
-  const [searchMode, setSearchMode] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
   // Check if current path is dashboard
-  const isDashboard = pathname?.startsWith('/dashboard');
-
-  // Fetch materials and quizzes on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient();
-
-      // Fetch materials
-      const { data: materialsData } = await supabase
-        .from("materials")
-        .select("id, title, type")
-        .order("order_index", { ascending: true });
-
-      if (materialsData) {
-        setMaterials(materialsData);
-      }
-
-      // Fetch active quizzes
-      const { data: quizzesData } = await supabase
-        .from("quizzes")
-        .select("id, title")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (quizzesData) {
-        setQuizzes(quizzesData);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const isDashboard = pathname?.startsWith("/dashboard");
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -92,55 +43,6 @@ const Header = () => {
   const handleMobileMenuClose = () => {
     setMobileMenuAnchor(null);
   };
-
-  const handleMateriMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setMateriMenuAnchor(event.currentTarget);
-  };
-
-  const handleMateriMenuClose = () => {
-    setMateriMenuAnchor(null);
-  };
-
-  const handleLatihanMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setLatihanMenuAnchor(event.currentTarget);
-  };
-
-  const handleLatihanMenuClose = () => {
-    setLatihanMenuAnchor(null);
-  };
-
-  const handleSearchToggle = () => {
-    setSearchMode(!searchMode);
-    if (searchMode) {
-      setSearchTerm("");
-    }
-  };
-
-  // Dynamic submenu for materials
-  const materiSubMenus =
-    materials.length > 0
-      ? materials.map(material => ({
-          label: material.title,
-          href: `/materi?id=${material.id}`,
-        }))
-      : [{ label: "Lihat Semua Materi", href: "/materi" }];
-
-  // Dynamic submenu for quizzes
-  const latihanSubMenus =
-    quizzes.length > 0
-      ? quizzes.map(quiz => ({
-          label: quiz.title,
-          href: `/latihan-soal?id=${quiz.id}`,
-        }))
-      : [{ label: "Lihat Semua Soal", href: "/latihan-soal" }];
-
-  const simpleMenuItems = [
-    { label: "Beranda", href: "/" },
-    { label: "Petunjuk", href: "/petunjuk" },
-    { label: "Evaluasi", href: "/evaluasi" },
-    { label: "Referensi", href: "/referensi" },
-    { label: "Hubungi Kami", href: "/hubungi-kami" },
-  ];
 
   return (
     <AppBar
@@ -161,12 +63,6 @@ const Header = () => {
               fontWeight: 800,
               color: "white",
               textDecoration: "none",
-              "&::before": {
-                content: "'•'",
-                color: "#fbbf24",
-                fontSize: "1.5rem",
-                mr: 0.5,
-              },
             }}
           >
             ZMATH
@@ -201,141 +97,11 @@ const Header = () => {
                 {item.label}
               </Button>
             ))}
-
-            {/* Materi Dropdown */}
-            <Button
-              onClick={handleMateriMenuOpen}
-              endIcon={<ExpandMoreIcon />}
-              sx={{
-                color: "white",
-                textTransform: "none",
-                px: 2,
-                py: 1,
-                borderRadius: 2,
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              Materi
-            </Button>
-            <Menu
-              anchorEl={materiMenuAnchor}
-              open={Boolean(materiMenuAnchor)}
-              onClose={handleMateriMenuClose}
-              sx={{
-                "& .MuiPaper-root": {
-                  mt: 1,
-                  borderRadius: 2,
-                  minWidth: 180,
-                },
-              }}
-            >
-              {materiSubMenus.map(item => (
-                <MenuItem
-                  key={item.label}
-                  component={Link}
-                  href={item.href}
-                  onClick={handleMateriMenuClose}
-                  sx={{
-                    py: 1.5,
-                    px: 3,
-                    "&:hover": {
-                      backgroundColor: "rgba(37, 99, 235, 0.1)",
-                    },
-                  }}
-                >
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Menu>
-
-            {/* Latihan Soal Dropdown */}
-            <Button
-              onClick={handleLatihanMenuOpen}
-              endIcon={<ExpandMoreIcon />}
-              sx={{
-                color: "white",
-                textTransform: "none",
-                px: 2,
-                py: 1,
-                borderRadius: 2,
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              Latihan Soal
-            </Button>
-            <Menu
-              anchorEl={latihanMenuAnchor}
-              open={Boolean(latihanMenuAnchor)}
-              onClose={handleLatihanMenuClose}
-              sx={{
-                "& .MuiPaper-root": {
-                  mt: 1,
-                  borderRadius: 2,
-                  minWidth: 180,
-                },
-              }}
-            >
-              {latihanSubMenus.map(item => (
-                <MenuItem
-                  key={item.label}
-                  component={Link}
-                  href={item.href}
-                  onClick={handleLatihanMenuClose}
-                  sx={{
-                    py: 1.5,
-                    px: 3,
-                    "&:hover": {
-                      backgroundColor: "rgba(37, 99, 235, 0.1)",
-                    },
-                  }}
-                >
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Menu>
           </Box>
         )}
 
         {/* Search and Mobile Menu */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Search */}
-          {searchMode ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <TextField
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearchTerm(e.target.value)
-                }
-                placeholder="Cari..."
-                size="small"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
-                    "&:hover fieldset": {
-                      borderColor: "rgba(255, 255, 255, 0.5)",
-                    },
-                    "&.Mui-focused fieldset": { borderColor: "white" },
-                  },
-                  "& .MuiInputBase-input": { color: "white" },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "rgba(255, 255, 255, 0.7)",
-                  },
-                }}
-              />
-              <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          ) : (
-            <IconButton onClick={handleSearchToggle} sx={{ color: "white" }}>
-              <SearchIcon />
-            </IconButton>
-          )}
           {isLoggedIn ? (
             <UserMenu />
           ) : (
@@ -396,34 +162,6 @@ const Header = () => {
               {item.label}
             </MenuItem>
           ))}
-          <MenuItem
-            component={Link}
-            href="/materi"
-            onClick={handleMobileMenuClose}
-            sx={{
-              py: 1.5,
-              px: 3,
-              "&:hover": {
-                backgroundColor: "rgba(37, 99, 235, 0.1)",
-              },
-            }}
-          >
-            Materi
-          </MenuItem>
-          <MenuItem
-            component={Link}
-            href="/latihan-soal"
-            onClick={handleMobileMenuClose}
-            sx={{
-              py: 1.5,
-              px: 3,
-              "&:hover": {
-                backgroundColor: "rgba(37, 99, 235, 0.1)",
-              },
-            }}
-          >
-            Latihan Soal
-          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

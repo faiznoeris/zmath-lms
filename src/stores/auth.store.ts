@@ -19,7 +19,7 @@ export const useAuthStore = create<IuseAuthStore>()(
     })),
     {
       name: "zmath-auth",
-      storage: createJSONStorage(() => sessionStorage), 
-    },
+      storage: createJSONStorage(() => localStorage),
+    }
   )
 );

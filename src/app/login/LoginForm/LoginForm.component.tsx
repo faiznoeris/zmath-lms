@@ -32,11 +32,9 @@ const LoginForm = () => {
     onSuccess: data => {
       if (data.role === "admin") {
         router.push("/dashboard/admin");
-      }
-      if (data.role === "teacher") {
+      } else if (data.role === "teacher") {
         router.push("/dashboard/teacher");
-      }
-      if (data.role === "student") {
+      } else if (data.role === "student") {
         router.push("/dashboard/student");
       }
     },

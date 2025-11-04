@@ -46,10 +46,15 @@ const LoginForm = () => {
   const onSubmit = (data: LoginFormInputs) => {
     mutation.reset();
     // Store remember me preference in localStorage before login
-    if (data.rememberMe) {
-      localStorage.setItem("zmath-remember-me", "true");
-    } else {
-      localStorage.removeItem("zmath-remember-me");
+    try {
+      if (data.rememberMe) {
+        localStorage.setItem("zmath-remember-me", "true");
+      } else {
+        localStorage.removeItem("zmath-remember-me");
+      }
+    } catch (error) {
+      // If localStorage is not available, continue anyway with default sessionStorage behavior
+      console.warn("Unable to save remember me preference:", error);
     }
     mutation.mutate(data);
   };

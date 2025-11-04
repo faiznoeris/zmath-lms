@@ -29,8 +29,13 @@ const LoginForm = () => {
 
   const mutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: () => {
-      router.push("/");
+    onSuccess: (data) => {
+      // Redirect based on user role
+      if (data.role === 'teacher' || data.role === 'admin') {
+        router.push("/dashboard/teacher");
+      } else {
+        router.push("/dashboard");
+      }
     },
   });
 

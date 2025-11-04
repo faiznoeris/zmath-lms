@@ -19,6 +19,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { useAuthStore } from "@/src/stores";
 import UserMenu from "../UserMenu/UserMenu.component";
@@ -36,6 +37,7 @@ interface Quiz {
 }
 
 const Header = () => {
+  const pathname = usePathname();
   const isLoggedIn = useAuthStore(state => state.isLoggedIn);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -49,6 +51,9 @@ const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [materials, setMaterials] = useState<Material[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+
+  // Check if current path is dashboard
+  const isDashboard = pathname?.startsWith('/dashboard');
 
   // Fetch materials and quizzes on component mount
   useEffect(() => {
@@ -169,18 +174,38 @@ const Header = () => {
         </Box>
 
         {/* Desktop Navigation */}
-        <Box
-          sx={{
-            display: { xs: "none", md: "flex" },
-            gap: 1,
-            alignItems: "center",
-          }}
-        >
-          {simpleMenuItems.map(item => (
+        {!isDashboard && (
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              gap: 1,
+              alignItems: "center",
+            }}
+          >
+            {simpleMenuItems.map(item => (
+              <Button
+                key={item.label}
+                component={Link}
+                href={item.href}
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+
+            {/* Materi Dropdown */}
             <Button
-              key={item.label}
-              component={Link}
-              href={item.href}
+              onClick={handleMateriMenuOpen}
+              endIcon={<ExpandMoreIcon />}
               sx={{
                 color: "white",
                 textTransform: "none",
@@ -192,106 +217,88 @@ const Header = () => {
                 },
               }}
             >
-              {item.label}
+              Materi
             </Button>
-          ))}
+            <Menu
+              anchorEl={materiMenuAnchor}
+              open={Boolean(materiMenuAnchor)}
+              onClose={handleMateriMenuClose}
+              sx={{
+                "& .MuiPaper-root": {
+                  mt: 1,
+                  borderRadius: 2,
+                  minWidth: 180,
+                },
+              }}
+            >
+              {materiSubMenus.map(item => (
+                <MenuItem
+                  key={item.label}
+                  component={Link}
+                  href={item.href}
+                  onClick={handleMateriMenuClose}
+                  sx={{
+                    py: 1.5,
+                    px: 3,
+                    "&:hover": {
+                      backgroundColor: "rgba(37, 99, 235, 0.1)",
+                    },
+                  }}
+                >
+                  {item.label}
+                </MenuItem>
+              ))}
+            </Menu>
 
-          {/* Materi Dropdown */}
-          <Button
-            onClick={handleMateriMenuOpen}
-            endIcon={<ExpandMoreIcon />}
-            sx={{
-              color: "white",
-              textTransform: "none",
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            Materi
-          </Button>
-          <Menu
-            anchorEl={materiMenuAnchor}
-            open={Boolean(materiMenuAnchor)}
-            onClose={handleMateriMenuClose}
-            sx={{
-              "& .MuiPaper-root": {
-                mt: 1,
+            {/* Latihan Soal Dropdown */}
+            <Button
+              onClick={handleLatihanMenuOpen}
+              endIcon={<ExpandMoreIcon />}
+              sx={{
+                color: "white",
+                textTransform: "none",
+                px: 2,
+                py: 1,
                 borderRadius: 2,
-                minWidth: 180,
-              },
-            }}
-          >
-            {materiSubMenus.map(item => (
-              <MenuItem
-                key={item.label}
-                component={Link}
-                href={item.href}
-                onClick={handleMateriMenuClose}
-                sx={{
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    backgroundColor: "rgba(37, 99, 235, 0.1)",
-                  },
-                }}
-              >
-                {item.label}
-              </MenuItem>
-            ))}
-          </Menu>
-
-          {/* Latihan Soal Dropdown */}
-          <Button
-            onClick={handleLatihanMenuOpen}
-            endIcon={<ExpandMoreIcon />}
-            sx={{
-              color: "white",
-              textTransform: "none",
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            Latihan Soal
-          </Button>
-          <Menu
-            anchorEl={latihanMenuAnchor}
-            open={Boolean(latihanMenuAnchor)}
-            onClose={handleLatihanMenuClose}
-            sx={{
-              "& .MuiPaper-root": {
-                mt: 1,
-                borderRadius: 2,
-                minWidth: 180,
-              },
-            }}
-          >
-            {latihanSubMenus.map(item => (
-              <MenuItem
-                key={item.label}
-                component={Link}
-                href={item.href}
-                onClick={handleLatihanMenuClose}
-                sx={{
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    backgroundColor: "rgba(37, 99, 235, 0.1)",
-                  },
-                }}
-              >
-                {item.label}
-              </MenuItem>
-            ))}
-          </Menu>
-        </Box>
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                },
+              }}
+            >
+              Latihan Soal
+            </Button>
+            <Menu
+              anchorEl={latihanMenuAnchor}
+              open={Boolean(latihanMenuAnchor)}
+              onClose={handleLatihanMenuClose}
+              sx={{
+                "& .MuiPaper-root": {
+                  mt: 1,
+                  borderRadius: 2,
+                  minWidth: 180,
+                },
+              }}
+            >
+              {latihanSubMenus.map(item => (
+                <MenuItem
+                  key={item.label}
+                  component={Link}
+                  href={item.href}
+                  onClick={handleLatihanMenuClose}
+                  sx={{
+                    py: 1.5,
+                    px: 3,
+                    "&:hover": {
+                      backgroundColor: "rgba(37, 99, 235, 0.1)",
+                    },
+                  }}
+                >
+                  {item.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        )}
 
         {/* Search and Mobile Menu */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

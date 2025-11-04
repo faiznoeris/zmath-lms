@@ -5,6 +5,7 @@ export interface User {
   avatar_url?: string;
   bio?: string;
   role: 'student' | 'teacher' | 'admin';
+  is_approved?: boolean; // For teacher approval workflow
   created_at: string;
   updated_at: string;
 }

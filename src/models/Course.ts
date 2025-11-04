@@ -1,11 +1,20 @@
 export interface Course {
-  id: string;
+  id: number;
   title: string;
   description?: string;
-  difficulty_level?: 'beginner' | 'intermediate' | 'advanced';
-  thumbnail_url?: string;
-  creator_id?: string;
-  is_published: boolean;
   created_at: string;
-  updated_at: string;
+  user_id: string; // Creator/Owner
+  teacher_id?: string; // Assigned teacher
+}
+
+export interface CreateCourseInput {
+  title: string;
+  description?: string;
+  teacher_id?: string;
+}
+
+export interface UpdateCourseInput {
+  title?: string;
+  description?: string;
+  teacher_id?: string;
 }

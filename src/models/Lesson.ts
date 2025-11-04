@@ -1,11 +1,22 @@
 export interface Lesson {
-  id: string;
-  course_id: string;
+  id: number;
   title: string;
-  description?: string;
   content?: string;
-  order_index: number;
-  estimated_minutes?: number;
+  order_number: number;
   created_at: string;
-  updated_at: string;
+  course_id: number; // Foreign key to courses table
+}
+
+export interface CreateLessonInput {
+  title: string;
+  content?: string;
+  order_number: number;
+  course_id: number;
+}
+
+export interface UpdateLessonInput {
+  title?: string;
+  content?: string;
+  order_number?: number;
+  course_id?: number;
 }

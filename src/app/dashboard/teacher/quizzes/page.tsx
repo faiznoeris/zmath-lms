@@ -1,279 +1,366 @@
 "use client";
-import React from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { createClient } from "../../../../utils/supabase/client";
-import styles from "../../dashboard.module.css";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  CircularProgress,
+  Breadcrumbs,
+  Link,
+} from "@mui/material";
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import QuizIcon from "@mui/icons-material/Quiz";
 
-interface QuestionInput {
+interface Question {
+  id: number;
   question_text: string;
   question_type: "multiple_choice" | "true_false" | "essay";
   options?: string[];
   correct_answer?: string;
+  order_index: number;
 }
 
-interface QuizFormInputs {
+interface Quiz {
+  id: number;
   title: string;
   description?: string;
   time_limit_minutes?: number;
-  questions: QuestionInput[];
+  course_id?: number;
+  created_at: string;
+  questions?: Question[];
 }
 
-// Supabase API call
-async function createQuizApi(data: QuizFormInputs) {
+// Supabase API calls
+async function fetchQuizzesApi(): Promise<Quiz[]> {
   const supabase = createClient();
-  
-  // First, create the quiz
-  const { data: quiz, error: quizError } = await supabase
+  const { data, error } = await supabase
     .from("quizzes")
-    .insert([
-      {
-        title: data.title,
-        description: data.description,
-        time_limit_minutes: data.time_limit_minutes,
-      },
-    ])
-    .select()
-    .single();
+    .select(`
+      *,
+      questions (
+        id,
+        question_text,
+        question_type,
+        options,
+        correct_answer,
+        order_index
+      )
+    `)
+    .order("created_at", { ascending: false });
 
-  if (quizError) {
-    throw new Error(quizError.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  // Then, create the questions for this quiz
-  if (data.questions && data.questions.length > 0) {
-    const questionsToInsert = data.questions.map((q, index) => ({
-      quiz_id: quiz.id,
-      question_text: q.question_text,
-      question_type: q.question_type,
-      options: q.options,
-      correct_answer: q.correct_answer,
-      order_index: index + 1,
-    }));
-
-    const { error: questionsError } = await supabase
-      .from("questions")
-      .insert(questionsToInsert);
-
-    if (questionsError) {
-      throw new Error(questionsError.message);
-    }
-  }
-
-  return { success: true, quiz };
+  return data || [];
 }
 
-export default function AdminQuizzesPage() {
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors },
-  } = useForm<QuizFormInputs>({
-    defaultValues: {
-      questions: [
-        {
-          question_text: "",
-          question_type: "multiple_choice",
-          options: ["", "", "", ""],
-          correct_answer: "",
-        },
-      ],
-    },
+async function deleteQuizApi(id: number) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("quizzes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+}
+
+export default function QuizzesListPage() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const { data: quizzes, isLoading, error, isError } = useQuery({
+    queryKey: ["quizzes"],
+    queryFn: fetchQuizzesApi,
   });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "questions",
-  });
-  const mutation = useMutation({
-    mutationFn: createQuizApi,
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteQuizApi,
     onSuccess: () => {
-      reset();
-      alert("Quiz created successfully!");
-      // Optionally redirect to quiz list
-      // window.location.href = "/dashboard/admin/quizzes/list";
-    },
-    onError: (error: Error) => {
-      alert(`Error creating quiz: ${error.message}`);
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      setDeleteConfirmOpen(false);
+      setSelectedId(null);
     },
   });
 
-  const onSubmit = (data: QuizFormInputs) => {
-    mutation.mutate(data);
+  const handleEdit = (quiz: Quiz) => {
+    router.push(`/dashboard/teacher/quizzes/edit/${quiz.id}`);
   };
 
-  return (
-    <div className={styles.dashboardContainer}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Create & Manage Quizzes</h1>
-        <p className={styles.subtitle}>
-          Add a new quiz and insert multiple questions.
-        </p>
-        <button
-          className={styles.formButton}
-          onClick={() => window.location.href = "/dashboard/admin/quizzes/list"}
-          style={{ maxWidth: "200px", margin: "1rem auto" }}
+  const handleDeleteClick = (id: number) => {
+    setSelectedId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedId) {
+      deleteMutation.mutate(selectedId);
+    }
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "id",
+      headerName: "ID",
+      width: 70,
+      sortable: true,
+    },
+    {
+      field: "title",
+      headerName: "Title",
+      flex: 1,
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: "description",
+      headerName: "Description",
+      flex: 1,
+      minWidth: 250,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box
+          sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
-          View All Quizzes
-        </button>
-      </header>
-      <main className={styles.main}>
-        <section className={styles.section}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <label className={styles.label}>Quiz Title</label>
-            <input
-              className={styles.formField}
-              {...register("title", { required: "Title is required" })}
-            />
-            {errors.title && (
-              <div className={styles.error}>{errors.title.message}</div>
-            )}
+          {params.value || "-"}
+        </Box>
+      ),
+    },
+    {
+      field: "questions",
+      headerName: "Questions",
+      width: 120,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value?.length || 0}
+          color="primary"
+          size="small"
+          icon={<QuizIcon />}
+        />
+      ),
+    },
+    {
+      field: "time_limit_minutes",
+      headerName: "Time Limit",
+      width: 130,
+      sortable: true,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography variant="body2">
+          {params.value ? `${params.value} min` : "-"}
+        </Typography>
+      ),
+    },
+    {
+      field: "created_at",
+      headerName: "Created",
+      width: 120,
+      sortable: true,
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography variant="body2">
+          {new Date(params.value).toLocaleDateString()}
+        </Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ 
+          display: "flex", 
+          gap: 0.5, 
+          justifyContent: "center", 
+          alignItems: "center",
+          height: "100%",
+          width: "100%"
+        }}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => handleEdit(params.row)}
+            title="Edit"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDeleteClick(params.row.id)}
+            title="Delete"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
-            <label className={styles.label}>Description</label>
-            <textarea
-              className={styles.formField}
-              {...register("description")}
-            />
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-            <label className={styles.label}>Time Limit (minutes)</label>
-            <input
-              className={styles.formField}
-              type="number"
-              min={1}
-              {...register("time_limit_minutes", { valueAsNumber: true })}
-            />
-
-            <h3 style={{ marginTop: "2rem" }}>Questions</h3>
-            {fields.map((field, idx) => (
-              <div
-                key={field.id}
-                style={{
-                  border: "1px solid #e0e0e0",
-                  borderRadius: 8,
-                  padding: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <label className={styles.label}>Question Text</label>
-                <input
-                  className={styles.formField}
-                  {...register(`questions.${idx}.question_text`, {
-                    required: "Question text is required",
-                  })}
-                />
-                {errors.questions?.[idx]?.question_text && (
-                  <div className={styles.error}>
-                    {errors.questions[idx]?.question_text?.message}
-                  </div>
-                )}
-
-                <label className={styles.label}>Type</label>
-                <select
-                  className={styles.formField}
-                  {...register(`questions.${idx}.question_type`)}
-                >
-                  <option value="multiple_choice">Multiple Choice</option>
-                  <option value="true_false">True/False</option>
-                  <option value="essay">Essay</option>
-                </select>
-
-                {/* Multiple Choice Options */}
-                {control._formValues.questions?.[idx]?.question_type ===
-                  "multiple_choice" && (
-                  <>
-                    <label className={styles.label}>Options</label>
-                    {[0, 1, 2, 3].map(optIdx => (
-                      <input
-                        key={optIdx}
-                        className={styles.formField}
-                        placeholder={`Option ${optIdx + 1}`}
-                        {...register(
-                          `questions.${idx}.options.${optIdx}` as const,
-                          { required: "Option required" }
-                        )}
-                      />
-                    ))}
-                    <label className={styles.label}>Correct Answer</label>
-                    <input
-                      className={styles.formField}
-                      {...register(`questions.${idx}.correct_answer`, {
-                        required: "Correct answer required",
-                      })}
-                    />
-                  </>
-                )}
-                {/* True/False Options */}
-                {control._formValues.questions?.[idx]?.question_type ===
-                  "true_false" && (
-                  <>
-                    <label className={styles.label}>Correct Answer</label>
-                    <select
-                      className={styles.formField}
-                      {...register(`questions.${idx}.correct_answer`)}
-                    >
-                      <option value="true">True</option>
-                      <option value="false">False</option>
-                    </select>
-                  </>
-                )}
-                {/* Essay: no options, just answer */}
-                {control._formValues.questions?.[idx]?.question_type ===
-                  "essay" && (
-                  <>
-                    <label className={styles.label}>
-                      Sample Answer (optional)
-                    </label>
-                    <input
-                      className={styles.formField}
-                      {...register(`questions.${idx}.correct_answer`)}
-                    />
-                  </>
-                )}
-                <button
-                  type="button"
-                  className={styles.formButton}
-                  onClick={() => remove(idx)}
-                  style={{
-                    marginTop: 8,
-                    width: "auto",
-                    background: "#fff",
-                    color: "#d32f2f",
-                    border: "1.5px solid #d32f2f",
-                  }}
-                >
-                  Remove Question
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className={styles.formButton}
-              onClick={() =>
-                append({
-                  question_text: "",
-                  question_type: "multiple_choice",
-                  options: ["", "", "", ""],
-                  correct_answer: "",
-                })
-              }
+  if (isError) {
+    return (
+      <Box sx={{ maxWidth: 900, mx: "auto", p: 3 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["quizzes"] })}
             >
-              + Add Question
-            </button>
-            {mutation.isError && mutation.error instanceof Error && (
-              <div className={styles.error}>{mutation.error.message}</div>
-            )}
-            <button
-              className={styles.formButton}
-              type="submit"
-              disabled={mutation.isPending}
-              style={{ marginTop: 16 }}
-            >
-              {mutation.isPending ? "Saving..." : "Save Quiz"}
-            </button>
-          </form>
-        </section>
-      </main>
-    </div>
+              Retry
+            </Button>
+          }
+        >
+          Error loading quizzes: {error instanceof Error ? error.message : "Unknown error"}
+        </Alert>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ maxWidth: 1400, mx: "auto", p: 3 }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        separator={<NavigateNextIcon fontSize="small" />} 
+        sx={{ mb: 3 }}
+        aria-label="breadcrumb"
+      >
+        <Link
+          underline="hover"
+          color="inherit"
+          href="/dashboard/teacher"
+          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+        >
+          Dashboard
+        </Link>
+        <Typography color="text.primary" sx={{ display: "flex", alignItems: "center" }}>
+          Quizzes
+        </Typography>
+      </Breadcrumbs>
+
+      {/* Header */}
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+            Quizzes
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your quizzes and questions
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => router.push("/dashboard/teacher/quizzes/add")}
+        >
+          Add Quiz
+        </Button>
+      </Box>
+
+      {/* DataGrid */}
+      <Box sx={{ height: 600, width: "100%", bgcolor: "background.paper", borderRadius: 1 }}>
+        <DataGrid
+          rows={quizzes || []}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 10, page: 0 },
+            },
+          }}
+          pageSizeOptions={[5, 10, 25, 50]}
+          checkboxSelection={false}
+          disableRowSelectionOnClick
+          sx={{
+            border: "none",
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid #f0f0f0",
+              display: "flex",
+              alignItems: "center",
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#fafafa",
+              borderBottom: "2px solid #e0e0e0",
+              fontWeight: 600,
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "#f5f5f5",
+            },
+          }}
+        />
+      </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Delete Quiz</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this quiz? This will also delete all associated questions. This action cannot be undone.
+          </Typography>
+          {deleteMutation.isError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {deleteMutation.error instanceof Error ? deleteMutation.error.message : "Delete failed"}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            disabled={deleteMutation.isPending}
+            startIcon={deleteMutation.isPending ? <CircularProgress size={20} /> : null}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

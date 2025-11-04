@@ -1,6 +1,7 @@
 export interface Quiz {
   id: string;
   lesson_id?: string;
+  course_id?: number; // Foreign key to courses table
   title: string;
   description?: string;
   time_limit_minutes?: number;

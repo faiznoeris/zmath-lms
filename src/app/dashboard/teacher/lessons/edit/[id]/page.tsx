@@ -3,7 +3,8 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
-import { createClient } from "../../../../../../utils/supabase/client";
+import { fetchCourses } from "@/src/services/course.service";
+import { fetchLessonById, updateLesson } from "@/src/services/lesson.service";
 import {
   Box,
   Typography,
@@ -24,54 +25,12 @@ import {
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Lesson, UpdateLessonInput } from "../../../../../../models/Lesson";
-import { Course } from "../../../../../../models/Course";
-
-// Fetch all courses
-const fetchCoursesApi = async (): Promise<Course[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Fetch lesson by ID
-const fetchLessonApi = async (id: number): Promise<Lesson> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
-};
-
-// Update lesson
-const updateLessonApi = async (id: number, data: UpdateLessonInput) => {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("lessons")
-    .update({
-      title: data.title,
-      content: data.content,
-      order_number: data.order_number,
-      course_id: data.course_id,
-    })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
-};
+import { UpdateLessonInput } from "../../../../../../models/Lesson";
 
 export default function EditLessonPage() {
   const router = useRouter();
   const params = useParams();
-  const lessonId = Number(params.id);
+  const lessonId = params.id as string;
   const queryClient = useQueryClient();
 
   const {
@@ -84,13 +43,21 @@ export default function EditLessonPage() {
   // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: fetchCoursesApi,
+    queryFn: async () => {
+      const result = await fetchCourses();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   // Fetch lesson data
   const { data: lesson, isLoading, error } = useQuery({
     queryKey: ["lesson", lessonId],
-    queryFn: () => fetchLessonApi(lessonId),
+    queryFn: async () => {
+      const result = await fetchLessonById(lessonId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!lessonId,
   });
 
@@ -99,14 +66,16 @@ export default function EditLessonPage() {
     if (lesson) {
       setValue("title", lesson.title);
       setValue("content", lesson.content || "");
-      setValue("order_number", lesson.order_number);
       setValue("course_id", lesson.course_id);
     }
   }, [lesson, setValue]);
 
   // Update mutation
   const mutation = useMutation({
-    mutationFn: (data: UpdateLessonInput) => updateLessonApi(lessonId, data),
+    mutationFn: async (data: UpdateLessonInput) => {
+      const result = await updateLesson(lessonId, data);
+      if (!result.success) throw new Error(result.error);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lessons"] });
       queryClient.invalidateQueries({ queryKey: ["lesson", lessonId] });
@@ -174,14 +143,6 @@ export default function EditLessonPage() {
         <Typography variant="body2" color="text.secondary">
           Update lesson information
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => router.push("/dashboard/teacher/lessons")}
-          sx={{ mt: 2 }}
-        >
-          View All Lessons
-        </Button>
       </Box>
 
       <Card elevation={2}>
@@ -202,10 +163,9 @@ export default function EditLessonPage() {
                 <InputLabel>Course *</InputLabel>
                 <Select
                   label="Course *"
-                  defaultValue=""
+                  value={lesson?.course_id || ""}
                   {...register("course_id", { 
-                    required: "Course is required",
-                    setValueAs: (value) => Number(value) 
+                    required: "Course is required"
                   })}
                 >
                   <MenuItem value="">
@@ -224,20 +184,6 @@ export default function EditLessonPage() {
                   <FormHelperText>Select the course this lesson belongs to</FormHelperText>
                 )}
               </FormControl>
-
-              {/* Order Number */}
-              <TextField
-                label="Order Number"
-                fullWidth
-                type="number"
-                error={!!errors.order_number}
-                helperText={errors.order_number?.message || "Determines the lesson sequence"}
-                {...register("order_number", { 
-                  required: "Order number is required",
-                  valueAsNumber: true,
-                  min: { value: 1, message: "Order must be at least 1" }
-                })}
-              />
 
               {/* Content */}
               <TextField

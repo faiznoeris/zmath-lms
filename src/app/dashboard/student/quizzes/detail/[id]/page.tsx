@@ -28,60 +28,10 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { createClient } from "@/src/utils/supabase/client";
-import { Quiz } from "@/src/models/Quiz";
+import { fetchQuizById, fetchMyQuizResults } from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
-
-const supabase = createClient();
-
-// Fetch quiz details
-const fetchQuizApi = async (id: string): Promise<Quiz> => {
-  const { data, error } = await supabase
-    .from("quizzes")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Fetch quiz results/history for current user
-const fetchQuizResultsApi = async (quizId: string): Promise<Result[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-
-  const { data, error } = await supabase
-    .from("results")
-    .select("*")
-    .eq("quiz_id", parseInt(quizId))
-    .eq("user_id", user.id)
-    .order("completed_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-};
-
-// Helper to format date
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// Helper to get pass/fail status
-const getResultStatus = (score: number, passingScore?: number) => {
-  if (!passingScore) return null;
-  return score >= passingScore ? "Passed" : "Failed";
-};
+import { formatDate } from "@/src/utils/dateFormat";
+import { getResultStatus } from "@/src/utils/quizHelpers";
 
 export default function QuizDetailPage() {
   const router = useRouter();
@@ -91,14 +41,22 @@ export default function QuizDetailPage() {
   // Fetch quiz details
   const { data: quiz, isLoading: quizLoading, error: quizError } = useQuery({
     queryKey: ["quiz", quizId],
-    queryFn: () => fetchQuizApi(quizId),
+    queryFn: async () => {
+      const result = await fetchQuizById(quizId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!quizId,
   });
 
   // Fetch quiz results/history
   const { data: results = [], isLoading: resultsLoading } = useQuery<Result[]>({
     queryKey: ["quiz-results", quizId],
-    queryFn: () => fetchQuizResultsApi(quizId),
+    queryFn: async () => {
+      const result = await fetchMyQuizResults(quizId);
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
     enabled: !!quizId,
   });
 

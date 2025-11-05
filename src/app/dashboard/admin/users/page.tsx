@@ -13,9 +13,13 @@ import {
   Alert,
   TextField,
   MenuItem,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { fetchAllUsersAction } from "./actions";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import { fetchAllUsers } from "@/src/services/user.service";
 
 interface UserData {
   id: string;
@@ -50,7 +54,7 @@ export default function UsersPage() {
       }
 
       try {
-        const result = await fetchAllUsersAction();
+        const result = await fetchAllUsers();
         if (result.success && result.data) {
           setUsers(result.data);
           setFilteredUsers(result.data);
@@ -162,6 +166,23 @@ export default function UsersPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, margin: "0 auto", padding: 3 }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 3 }}
+      >
+        <Link
+          underline="hover"
+          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+          color="inherit"
+          onClick={() => router.push("/dashboard")}
+        >
+          <AdminPanelSettingsIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          Dashboard
+        </Link>
+        <Typography color="text.primary">Users</Typography>
+      </Breadcrumbs>
+
       <Typography variant="h4" gutterBottom>
         User Settings
       </Typography>

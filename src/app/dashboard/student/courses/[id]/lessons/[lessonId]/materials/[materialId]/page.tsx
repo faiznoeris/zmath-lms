@@ -16,30 +16,8 @@ import {
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import DescriptionIcon from "@mui/icons-material/Description";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
-import ImageIcon from "@mui/icons-material/Image";
-import { createClient } from "@/src/utils/supabase/client";
-import { Material } from "@/src/models/Material";
-
-const supabase = createClient();
-
-// Fetch material details
-const fetchMaterialApi = async (id: string): Promise<Material> => {
-  const { data, error } = await supabase
-    .from("materials")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Helper to extract YouTube video ID
-const getYouTubeVideoId = (url: string): string | null => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
-};
+import { fetchMaterialById } from "@/src/services/material.service";
+import { getYouTubeVideoId } from "@/src/utils/youtube";
 
 export default function MaterialDetailPage() {
   const router = useRouter();
@@ -51,7 +29,11 @@ export default function MaterialDetailPage() {
   // Fetch material
   const { data: material, isLoading, error } = useQuery({
     queryKey: ["material", materialId],
-    queryFn: () => fetchMaterialApi(materialId),
+    queryFn: async () => {
+      const result = await fetchMaterialById(materialId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!materialId,
   });
 
@@ -178,21 +160,6 @@ export default function MaterialDetailPage() {
           </Paper>
         );
 
-      case "image":
-        return (
-          <Box
-            component="img"
-            src={material.content_url}
-            alt={material.title}
-            sx={{
-              width: "100%",
-              maxHeight: "800px",
-              objectFit: "contain",
-              borderRadius: 2,
-            }}
-          />
-        );
-
       default:
         return (
           <Alert severity="info">
@@ -213,8 +180,6 @@ export default function MaterialDetailPage() {
         return <VideoLibraryIcon sx={{ fontSize: 40, color: "error.main" }} />;
       case "document":
         return <DescriptionIcon sx={{ fontSize: 40, color: "primary.main" }} />;
-      case "image":
-        return <ImageIcon sx={{ fontSize: 40, color: "success.main" }} />;
       default:
         return <DescriptionIcon sx={{ fontSize: 40, color: "text.secondary" }} />;
     }

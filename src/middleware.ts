@@ -37,14 +37,20 @@ export async function middleware(request: NextRequest) {
     }
 
     // Get role from user metadata
-    const role = user.user_metadata?.role as "student" | "teacher" | "admin" | undefined;
+    const role = user.user_metadata?.role as
+      | "student"
+      | "teacher"
+      | "admin"
+      | undefined;
     const isApproved = user.user_metadata?.is_approved;
 
     // Check if teacher is not approved yet
     if (role === "teacher" && isApproved === false) {
       // Redirect unapproved teachers to a pending approval page or login
       if (pathname !== "/login") {
-        return NextResponse.redirect(new URL("/login?message=pending_approval", request.url));
+        return NextResponse.redirect(
+          new URL("/login?message=pending_approval", request.url)
+        );
       }
     }
 
@@ -64,14 +70,26 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    // Protect /dashboard/student routes - only for students
+    if (pathname.startsWith("/dashboard/student")) {
+      if (role !== "student") {
+        // Redirect non-students away from student dashboard
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+    }
+
     // Redirect based on role from main dashboard
     if (pathname === "/dashboard") {
       if (role === "admin") {
         return NextResponse.redirect(new URL("/dashboard/admin", request.url));
       } else if (role === "teacher") {
-        return NextResponse.redirect(new URL("/dashboard/teacher", request.url));
+        return NextResponse.redirect(
+          new URL("/dashboard/teacher", request.url)
+        );
       } else if (role === "student") {
-        return NextResponse.redirect(new URL("/dashboard/student", request.url));
+        return NextResponse.redirect(
+          new URL("/dashboard/student", request.url)
+        );
       }
     }
   }

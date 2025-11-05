@@ -19,72 +19,47 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SchoolIcon from "@mui/icons-material/School";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import QuizIcon from "@mui/icons-material/Quiz";
-import { createClient } from "@/src/utils/supabase/client";
+import { fetchCourseById } from "@/src/services/course.service";
+import { fetchLessonsByCourse } from "@/src/services/lesson.service";
+import { fetchQuizzesByCourse } from "@/src/services/quiz.service";
 import { Lesson } from "@/src/models/Lesson";
-import { Course } from "@/src/models/Course";
 import { Quiz } from "@/src/models/Quiz";
-
-const supabase = createClient();
-
-// Fetch course details
-const fetchCourseApi = async (id: number): Promise<Course> => {
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Fetch lessons for a course
-const fetchCourseLessonsApi = async (courseId: number): Promise<Lesson[]> => {
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("course_id", courseId)
-    .order("order_number", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-};
-
-// Fetch quizzes for a course
-const fetchCourseQuizzesApi = async (courseId: number): Promise<Quiz[]> => {
-  const { data, error } = await supabase
-    .from("quizzes")
-    .select("*")
-    .eq("course_id", courseId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-};
 
 export default function CourseDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const courseId = parseInt(params.id as string);
+  const courseId = params.id as string;
 
   // Fetch course
   const { data: course, isLoading: courseLoading, error: courseError } = useQuery({
     queryKey: ["course", courseId],
-    queryFn: () => fetchCourseApi(courseId),
+    queryFn: async () => {
+      const result = await fetchCourseById(courseId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!courseId,
   });
 
   // Fetch lessons
   const { data: lessons = [], isLoading: lessonsLoading, error: lessonsError } = useQuery<Lesson[]>({
     queryKey: ["course-lessons", courseId],
-    queryFn: () => fetchCourseLessonsApi(courseId),
+    queryFn: async () => {
+      const result = await fetchLessonsByCourse(courseId);
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
     enabled: !!courseId,
   });
 
   // Fetch quizzes
   const { data: quizzes = [], isLoading: quizzesLoading } = useQuery<Quiz[]>({
     queryKey: ["course-quizzes", courseId],
-    queryFn: () => fetchCourseQuizzesApi(courseId),
+    queryFn: async () => {
+      const result = await fetchQuizzesByCourse(courseId);
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
     enabled: !!courseId,
   });
 
@@ -198,11 +173,6 @@ export default function CourseDetailPage() {
                       gap: 2,
                     }}
                   >
-                    <Chip
-                      label={`#${lesson.order_number}`}
-                      color="primary"
-                      size="small"
-                    />
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="h6" fontWeight={600}>
                         {lesson.title}

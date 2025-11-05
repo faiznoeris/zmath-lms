@@ -5,6 +5,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../../utils/supabase/client";
+import { fetchCourses } from "@/src/services/course.service";
 import {
   Box,
   Typography,
@@ -29,7 +30,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import QuizIcon from "@mui/icons-material/Quiz";
-import { Course } from "../../../../../models/Course";
 
 interface QuestionInput {
   question_text: string;
@@ -42,23 +42,11 @@ interface QuizFormInputs {
   title: string;
   description?: string;
   time_limit_minutes?: number;
-  course_id?: number;
+  course_id?: string;
   questions: QuestionInput[];
 }
 
-// Fetch all courses
-const fetchCoursesApi = async (): Promise<Course[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Supabase API call
+// Supabase API call for creating quiz with questions
 async function createQuizApi(data: QuizFormInputs) {
   const supabase = createClient();
   
@@ -82,13 +70,12 @@ async function createQuizApi(data: QuizFormInputs) {
 
   // Then, create the questions for this quiz
   if (data.questions && data.questions.length > 0) {
-    const questionsToInsert = data.questions.map((q, index) => ({
+    const questionsToInsert = data.questions.map((q) => ({
       quiz_id: quiz.id,
       question_text: q.question_text,
       question_type: q.question_type,
       options: q.options,
       correct_answer: q.correct_answer,
-      order_index: index + 1,
     }));
 
     const { error: questionsError } = await supabase
@@ -131,7 +118,11 @@ export default function AddQuizPage() {
   // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: fetchCoursesApi,
+    queryFn: async () => {
+      const result = await fetchCourses();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   const mutation = useMutation({
@@ -221,17 +212,17 @@ export default function AddQuizPage() {
                       <InputLabel>Course</InputLabel>
                       <Select
                         label="Course"
-                        value={field.value?.toString() ?? ""}
+                        value={field.value ?? ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          field.onChange(val === "" ? undefined : Number(val));
+                          field.onChange(val === "" ? undefined : val);
                         }}
                       >
                         <MenuItem value="">
                           <em>No Course</em>
                         </MenuItem>
                         {courses.map((course) => (
-                          <MenuItem key={course.id} value={course.id.toString()}>
+                          <MenuItem key={course.id} value={course.id}>
                             {course.title}
                           </MenuItem>
                         ))}

@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import { fetchMyEnrollmentsApi } from "@/src/services/enrollment.service";
+import { fetchMyEnrollments } from "@/src/services/enrollment.service";
 import { EnrollmentWithDetails } from "@/src/models/Enrollment";
 
 export default function StudentDashboard() {
@@ -23,7 +23,13 @@ export default function StudentDashboard() {
   // Fetch student's enrolled courses
   const { data: enrollments = [], isLoading, error } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["student-enrollments"],
-    queryFn: fetchMyEnrollmentsApi,
+    queryFn: async () => {
+      const result = await fetchMyEnrollments();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch enrollments");
+      }
+      return result.data || [];
+    },
   });
 
   if (error) {

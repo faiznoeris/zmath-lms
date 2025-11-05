@@ -1,30 +1,24 @@
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- First, drop existing tables if they exist
 DROP TABLE IF EXISTS submissions CASCADE;
 DROP TABLE IF EXISTS results CASCADE;
 DROP TABLE IF EXISTS questions CASCADE;
 DROP TABLE IF EXISTS quizzes CASCADE;
 DROP TABLE IF EXISTS lessons CASCADE;
+DROP TABLE IF EXISTS materials CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
-DROP TABLE IF EXISTS educations CASCADE;
 
 -- ===============================
 -- TABLES
 -- ===============================
 
--- Educations table (connected to auth.users)
-CREATE TABLE educations (
-  id SERIAL PRIMARY KEY,
-  institutions VARCHAR NOT NULL,
-  start_year DATE,
-  end_year DATE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
-);
-
 -- Courses table
 CREATE TABLE courses (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR NOT NULL,
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -34,61 +28,60 @@ CREATE TABLE courses (
 
 -- Enrollments table
 CREATE TABLE enrollments (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE, -- student_id
-  course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   UNIQUE(user_id, course_id)
 );
 
 -- Lessons table
 CREATE TABLE lessons (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR NOT NULL,
   content TEXT,
-  order_number INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE
 );
 
 -- Quizzes table
 CREATE TABLE quizzes (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR NOT NULL,
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE
 );
 
 -- Questions table
 CREATE TABLE questions (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   question_text TEXT NOT NULL,
   option_a VARCHAR,
   option_b VARCHAR,
   option_c VARCHAR,
   option_d VARCHAR,
   correct_answer CHAR(1) CHECK (correct_answer IN ('A', 'B', 'C', 'D')),
-  quizzes_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
+  quizzes_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
 );
 
 -- Submissions table
 CREATE TABLE submissions (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   selected_answer CHAR(1) CHECK (selected_answer IN ('A', 'B', 'C', 'D')),
   is_correct BOOLEAN,
   submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE, -- student_id
   student_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 -- Results table
 CREATE TABLE results (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   score INTEGER NOT NULL CHECK (score >= 0),
   completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+  quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   UNIQUE(quiz_id, user_id)
 );
@@ -98,7 +91,6 @@ CREATE TABLE results (
 -- ===============================
 
 -- Enable RLS on all tables
-ALTER TABLE educations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
@@ -106,19 +98,6 @@ ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE results ENABLE ROW LEVEL SECURITY;
-
--- Educations policies
-CREATE POLICY "Users can view their own educations" 
-ON educations FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own educations" 
-ON educations FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own educations" 
-ON educations FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own educations" 
-ON educations FOR DELETE USING (auth.uid() = user_id);
 
 -- Courses policies
 CREATE POLICY "Anyone can view courses" 
@@ -147,8 +126,26 @@ ON enrollments FOR SELECT USING (
 CREATE POLICY "Users can enroll in courses" 
 ON enrollments FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "Course creators can enroll students" 
+ON enrollments FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM courses 
+    WHERE courses.id = course_id 
+    AND courses.user_id = auth.uid()
+  )
+);
+
 CREATE POLICY "Users can unenroll from courses" 
 ON enrollments FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Course creators can unenroll students" 
+ON enrollments FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM courses 
+    WHERE courses.id = enrollments.course_id 
+    AND courses.user_id = auth.uid()
+  )
+);
 
 -- Lessons policies
 CREATE POLICY "Anyone can view lessons" 
@@ -341,27 +338,33 @@ CREATE TRIGGER check_answer_on_submit
 
 
 
+-- Drop existing materials policies if they exist
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Anyone can view materials" ON materials;
+  DROP POLICY IF EXISTS "Authenticated users can create materials" ON materials;
+  DROP POLICY IF EXISTS "Authenticated users can update materials" ON materials;
+  DROP POLICY IF EXISTS "Authenticated users can delete materials" ON materials;
+  DROP POLICY IF EXISTS "Users can update materials" ON materials;
+  DROP POLICY IF EXISTS "Users can delete materials" ON materials;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+END $$;
+
 -- Create materials table if not exists
 CREATE TABLE IF NOT EXISTS materials (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR NOT NULL,
-  type TEXT CHECK (type IN ('video', 'document', 'interactive', 'image')) NOT NULL,
+  type TEXT CHECK (type IN ('video', 'document')) NOT NULL,
   content_url TEXT NOT NULL,
   description TEXT,
-  lesson_id INTEGER REFERENCES lessons(id) ON DELETE CASCADE,
-  order_index INTEGER NOT NULL DEFAULT 0,
+  lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Enable RLS
 ALTER TABLE materials ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Anyone can view materials" ON materials;
-DROP POLICY IF EXISTS "Authenticated users can create materials" ON materials;
-DROP POLICY IF EXISTS "Users can update materials" ON materials;
-DROP POLICY IF EXISTS "Users can delete materials" ON materials;
 
 -- Materials policies
 CREATE POLICY "Anyone can view materials" 
@@ -394,7 +397,6 @@ CREATE TRIGGER update_materials_timestamp
 -- Create index for better performance
 CREATE INDEX IF NOT EXISTS idx_materials_lesson_id ON materials(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(type);
-CREATE INDEX IF NOT EXISTS idx_materials_order_index ON materials(order_index);
 
 
 
@@ -403,24 +405,23 @@ DROP TABLE IF EXISTS quizzes CASCADE;
 
 -- Create quizzes table if not exists
 CREATE TABLE IF NOT EXISTS quizzes (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR NOT NULL,
   description TEXT,
   time_limit_minutes INTEGER,
-  course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create questions table if not exists
 CREATE TABLE IF NOT EXISTS questions (
-  id SERIAL PRIMARY KEY,
-  quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   question_text TEXT NOT NULL,
   question_type TEXT CHECK (question_type IN ('multiple_choice', 'true_false', 'essay')) NOT NULL,
   options JSONB,
   correct_answer TEXT,
-  order_index INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -429,16 +430,33 @@ CREATE TABLE IF NOT EXISTS questions (
 ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Anyone can view quizzes" ON quizzes;
-DROP POLICY IF EXISTS "Authenticated users can create quizzes" ON quizzes;
-DROP POLICY IF EXISTS "Users can update quizzes" ON quizzes;
-DROP POLICY IF EXISTS "Users can delete quizzes" ON quizzes;
+-- Drop existing quizzes policies if they exist
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Anyone can view quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Authenticated users can create quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Authenticated users can update quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Authenticated users can delete quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Course creators can create quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Course creators can update their course quizzes" ON quizzes;
+  DROP POLICY IF EXISTS "Course creators can delete their course quizzes" ON quizzes;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+END $$;
 
-DROP POLICY IF EXISTS "Anyone can view questions" ON questions;
-DROP POLICY IF EXISTS "Authenticated users can create questions" ON questions;
-DROP POLICY IF EXISTS "Users can update questions" ON questions;
-DROP POLICY IF EXISTS "Users can delete questions" ON questions;
+-- Drop existing questions policies if they exist
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Anyone can view questions" ON questions;
+  DROP POLICY IF EXISTS "Authenticated users can create questions" ON questions;
+  DROP POLICY IF EXISTS "Authenticated users can update questions" ON questions;
+  DROP POLICY IF EXISTS "Authenticated users can delete questions" ON questions;
+  DROP POLICY IF EXISTS "Course creators can create questions" ON questions;
+  DROP POLICY IF EXISTS "Course creators can update questions" ON questions;
+  DROP POLICY IF EXISTS "Course creators can delete questions" ON questions;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+END $$;
 
 -- Quizzes policies
 CREATE POLICY "Anyone can view quizzes" 
@@ -499,5 +517,4 @@ CREATE TRIGGER update_questions_timestamp
 CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON quizzes(course_id);
 CREATE INDEX IF NOT EXISTS idx_quizzes_created_at ON quizzes(created_at);
 CREATE INDEX IF NOT EXISTS idx_questions_quiz_id ON questions(quiz_id);
-CREATE INDEX IF NOT EXISTS idx_questions_order_index ON questions(order_index);
 CREATE INDEX IF NOT EXISTS idx_questions_question_type ON questions(question_type);

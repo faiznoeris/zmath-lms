@@ -57,13 +57,13 @@ export default function AdminDashboard() {
               <span>📖</span>
               <div>Create & Manage Lessons</div>
             </a>
-            <a href="/dashboard/teacher/quizzes" className={styles.card}>
-              <span>📝</span>
-              <div>Create & Manage Quizzes</div>
-            </a>
             <a href="/dashboard/teacher/materials" className={styles.card}>
               <span>📚</span>
               <div>Upload & Manage Materials</div>
+            </a>
+            <a href="/dashboard/teacher/quizzes" className={styles.card}>
+              <span>📝</span>
+              <div>Create & Manage Quizzes</div>
             </a>
             <a href="/dashboard/teacher/enrollments" className={styles.card}>
               <span>👥</span>

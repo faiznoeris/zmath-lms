@@ -3,7 +3,6 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../../../utils/supabase/client";
 import {
   Box,
   Typography,
@@ -19,26 +18,7 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { CreateCourseInput } from "../../../../../models/Course";
-
-// Create course
-const createCourseApi = async (data: CreateCourseInput) => {
-  const supabase = createClient();
-  
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
-
-  const { error } = await supabase.from("courses").insert([
-    {
-      title: data.title,
-      description: data.description,
-      teacher_id: data.teacher_id || null,
-      user_id: user.id,
-    },
-  ]);
-
-  if (error) throw new Error(error.message);
-};
+import { createCourse } from "@/src/services/course.service";
 
 export default function AddCoursePage() {
   const router = useRouter();
@@ -49,7 +29,17 @@ export default function AddCoursePage() {
   } = useForm<CreateCourseInput>();
 
   const mutation = useMutation({
-    mutationFn: createCourseApi,
+    mutationFn: async (data: CreateCourseInput) => {
+      const result = await createCourse({
+        title: data.title,
+        description: data.description,
+        teacher_id: data.teacher_id,
+        user_id: "", // Will be set by server action
+      });
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create course");
+      }
+    },
     onSuccess: () => {
       router.push("/dashboard/teacher/courses");
     },
@@ -96,14 +86,6 @@ export default function AddCoursePage() {
         <Typography variant="body2" color="text.secondary">
           Add a new course to the system
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => router.push("/dashboard/teacher/courses")}
-          sx={{ mt: 2 }}
-        >
-          View All Courses
-        </Button>
       </Box>
 
       <Card elevation={2}>
@@ -127,15 +109,6 @@ export default function AddCoursePage() {
                 rows={4}
                 placeholder="Provide a brief description of the course..."
                 {...register("description")}
-              />
-
-              {/* Teacher ID (optional) */}
-              <TextField
-                label="Teacher ID (Optional)"
-                fullWidth
-                placeholder="Assign a teacher to this course"
-                helperText="Leave empty if not assigning a specific teacher"
-                {...register("teacher_id")}
               />
 
               {/* Error Message */}

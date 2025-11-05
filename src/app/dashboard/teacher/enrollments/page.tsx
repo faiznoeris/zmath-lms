@@ -29,39 +29,59 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import {
-  fetchEnrollmentsApi,
-  createEnrollmentApi,
-  deleteEnrollmentApi,
+  fetchEnrollments,
+  createEnrollment,
+  deleteEnrollment,
+  fetchStudents,
+  AuthUser,
 } from "../../../../services/enrollment.service";
-import { fetchCoursesApi } from "../../../../services/course.service";
+import { fetchCourses } from "../../../../services/course.service";
 import { EnrollmentWithDetails } from "../../../../models/Enrollment";
-import { fetchStudentsAction, AuthUser } from "./actions";
+import { CreateEnrollmentInput } from "@/src/models/Enrollment";
 
 export default function EnrollmentsPage() {
   const queryClient = useQueryClient();
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [enrollmentToDelete, setEnrollmentToDelete] = useState<number | null>(null);
+  const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
-  const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
-  const [courseFilter, setCourseFilter] = useState<number[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [courseFilter, setCourseFilter] = useState<string[]>([]);
 
   // Fetch enrollments
   const { data: enrollments = [], isLoading, error } = useQuery({
     queryKey: ["enrollments"],
-    queryFn: fetchEnrollmentsApi,
+    queryFn: async () => {
+      const result = await fetchEnrollments();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch enrollments");
+      }
+      return result.data || [];
+    },
   });
 
   // Fetch students
   const { data: students = [] } = useQuery<AuthUser[]>({
     queryKey: ["students"],
-    queryFn: () => fetchStudentsAction(),
+    queryFn: async () => {
+      const result = await fetchStudents();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch students");
+      }
+      return result.data || [];
+    },
   });
 
   // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: fetchCoursesApi,
+    queryFn: async () => {
+      const result = await fetchCourses();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch courses");
+      }
+      return result.data || [];
+    },
   });
 
   // Merge enrollments with student data from Auth
@@ -83,7 +103,13 @@ export default function EnrollmentsPage() {
 
   // Create enrollment mutation
   const createMutation = useMutation({
-    mutationFn: createEnrollmentApi,
+    mutationFn: async (input: CreateEnrollmentInput) => {
+      const result = await createEnrollment(input);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create enrollment");
+      }
+      return result.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] });
     },
@@ -91,7 +117,12 @@ export default function EnrollmentsPage() {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: deleteEnrollmentApi,
+    mutationFn: async (id: string) => {
+      const result = await deleteEnrollment(id);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete enrollment");
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] });
       setDeleteDialogOpen(false);
@@ -165,7 +196,7 @@ export default function EnrollmentsPage() {
     }
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setEnrollmentToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -176,9 +207,9 @@ export default function EnrollmentsPage() {
     }
   };
 
-  const handleCourseFilterChange = (event: SelectChangeEvent<number[]>) => {
+  const handleCourseFilterChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
-    setCourseFilter(typeof value === 'string' ? [] : value);
+    setCourseFilter(typeof value === 'string' ? value.split(',') : value);
   };
 
   const columns: GridColDef[] = [

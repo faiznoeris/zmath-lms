@@ -19,37 +19,12 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import DescriptionIcon from "@mui/icons-material/Description";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import ImageIcon from "@mui/icons-material/Image";
-import { createClient } from "@/src/utils/supabase/client";
-import { Lesson } from "@/src/models/Lesson";
+import { fetchLessonById } from "@/src/services/lesson.service";
+import { fetchMaterialsByLesson } from "@/src/services/material.service";
 import { Material } from "@/src/models/Material";
+import { getMaterialTypeLabel } from "@/src/utils/materialHelpers";
 
-const supabase = createClient();
-
-// Fetch lesson details
-const fetchLessonApi = async (id: number): Promise<Lesson> => {
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Fetch materials for a lesson
-const fetchLessonMaterialsApi = async (lessonId: string): Promise<Material[]> => {
-  const { data, error } = await supabase
-    .from("materials")
-    .select("*")
-    .eq("lesson_id", lessonId)
-    .order("order_index", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-};
-
-// Helper function to get material icon
+// Helper function to get material icon (page-specific - returns JSX)
 const getMaterialIcon = (type: string) => {
   switch (type) {
     case "video":
@@ -63,39 +38,31 @@ const getMaterialIcon = (type: string) => {
   }
 };
 
-// Helper function to get material type label
-const getMaterialTypeLabel = (type: string) => {
-  switch (type) {
-    case "video":
-      return "Video";
-    case "document":
-      return "Document";
-    case "image":
-      return "Image";
-    case "interactive":
-      return "Interactive";
-    default:
-      return "Material";
-  }
-};
-
 export default function LessonDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const lessonId = parseInt(params.lessonId as string);
-  const courseId = parseInt(params.id as string);
+  const lessonId = params.lessonId as string;
+  const courseId = params.id as string;
 
   // Fetch lesson
   const { data: lesson, isLoading: lessonLoading, error: lessonError } = useQuery({
     queryKey: ["lesson", lessonId],
-    queryFn: () => fetchLessonApi(lessonId),
+    queryFn: async () => {
+      const result = await fetchLessonById(lessonId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!lessonId,
   });
 
   // Fetch materials
   const { data: materials = [], isLoading: materialsLoading } = useQuery<Material[]>({
     queryKey: ["lesson-materials", lessonId],
-    queryFn: () => fetchLessonMaterialsApi(lessonId.toString()),
+    queryFn: async () => {
+      const result = await fetchMaterialsByLesson(lessonId);
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
     enabled: !!lessonId,
   });
 
@@ -145,11 +112,6 @@ export default function LessonDetailPage() {
       ) : (
         <Card elevation={2} sx={{ mb: 4, p: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <Chip
-              label={`Lesson #${lesson?.order_number}`}
-              color="primary"
-              size="small"
-            />
             <MenuBookIcon sx={{ fontSize: 32, color: "primary.main" }} />
             <Typography variant="h4" component="h1" fontWeight={600}>
               {lesson?.title}

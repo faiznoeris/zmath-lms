@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../../utils/supabase/client";
+import { fetchLessons, deleteLesson } from "@/src/services/lesson.service";
 import {
   Box,
   Typography,
@@ -17,60 +17,37 @@ import {
   Chip,
   Alert,
   Skeleton,
+  IconButton,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import { Lesson } from "../../../../models/Lesson";
-import { Course } from "../../../../models/Course";
-
-interface LessonWithCourse extends Lesson {
-  courses?: Course;
-}
-
-// Fetch all lessons with course info
-const fetchLessonsApi = async (): Promise<LessonWithCourse[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("lessons")
-    .select(`
-      *,
-      courses (
-        id,
-        title
-      )
-    `)
-    .order("order_number", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Delete lesson
-const deleteLessonApi = async (id: number): Promise<void> => {
-  const supabase = createClient();
-  const { error } = await supabase.from("lessons").delete().eq("id", id);
-  if (error) throw new Error(error.message);
-};
 
 export default function LessonsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [lessonToDelete, setLessonToDelete] = useState<number | null>(null);
+  const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
 
   // Fetch lessons
   const { data: lessons = [], isLoading, error } = useQuery({
     queryKey: ["lessons"],
-    queryFn: fetchLessonsApi,
+    queryFn: async () => {
+      const result = await fetchLessons();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: deleteLessonApi,
+    mutationFn: async (id: string) => {
+      const result = await deleteLesson(id);
+      if (!result.success) throw new Error(result.error);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lessons"] });
       setDeleteDialogOpen(false);
@@ -78,7 +55,7 @@ export default function LessonsPage() {
     },
   });
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setLessonToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -98,32 +75,20 @@ export default function LessonsPage() {
       align: "center",
     },
     {
-      field: "order_number",
-      headerName: "Order",
-      width: 100,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params) => (
-        <Box sx={{ height: "100%", display: "flex", alignItems: "center" }}>
-          <Chip label={`#${params.value}`} color="primary" size="small" variant="outlined" />
-        </Box>
-      ),
-    },
-    {
       field: "title",
       headerName: "Title",
       flex: 1,
       minWidth: 250,
     },
     {
-      field: "courses",
+      field: "course",
       headerName: "Course",
       flex: 1,
       minWidth: 200,
       renderCell: (params) => (
         <Box sx={{ height: "100%", display: "flex", alignItems: "center" }}>
-          {params.value ? (
-            <Chip label={params.value.title} color="success" size="small" />
+          {params.row.course ? (
+            <Chip label={params.row.course.title} color="primary" size="small" />
           ) : (
             <Chip label="No Course" color="default" size="small" />
           )}
@@ -157,25 +122,38 @@ export default function LessonsPage() {
     },
     {
       field: "actions",
-      type: "actions",
       headerName: "Actions",
-      width: 100,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={<EditIcon />}
-          label="Edit"
-          onClick={() => router.push(`/dashboard/teacher/lessons/edit/${params.id}`)}
-          showInMenu={false}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<DeleteIcon />}
-          label="Delete"
-          onClick={() => handleDeleteClick(params.id as number)}
-          showInMenu={false}
-        />,
-      ],
+      width: 120,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ 
+          display: "flex", 
+          gap: 0.5, 
+          justifyContent: "center", 
+          alignItems: "center",
+          height: "100%",
+          width: "100%"
+        }}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => router.push(`/dashboard/teacher/lessons/edit/${params.id}`)}
+            title="Edit"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDeleteClick(params.id as string)}
+            title="Delete"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      ),
     },
   ];
 

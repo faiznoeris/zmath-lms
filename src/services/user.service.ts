@@ -9,7 +9,17 @@ interface UserMetadata {
   is_approved?: boolean;
 }
 
-interface PendingTeacher {
+export interface FormattedUser {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  role: string;
+  is_approved: boolean | null;
+  created_at: string;
+}
+
+export interface PendingTeacher {
   id: string;
   email: string;
   username: string;
@@ -17,7 +27,10 @@ interface PendingTeacher {
   created_at: string;
 }
 
-export async function fetchPendingTeachersAction() {
+/**
+ * Fetch all users from Supabase Auth
+ */
+export async function fetchAllUsers(): Promise<{ success: boolean; data?: FormattedUser[]; error?: string }> {
   try {
     const supabaseAdmin = createAdminClient();
 
@@ -33,7 +46,58 @@ export async function fetchPendingTeachersAction() {
       };
     }
 
-    // Filter for teachers who are not approved (is_approved is false or null)
+    const formattedUsers: FormattedUser[] = users.map((user) => {
+      const metadata = user.user_metadata as UserMetadata;
+      return {
+        id: user.id,
+        email: user.email || "",
+        username: metadata?.username || "",
+        full_name: metadata?.full_name || "",
+        role: metadata?.role || "student",
+        is_approved: metadata?.is_approved ?? null,
+        created_at: user.created_at,
+      };
+    });
+
+    // Sort by created_at descending (newest first)
+    formattedUsers.sort(
+      (a: FormattedUser, b: FormattedUser) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    return {
+      success: true,
+      data: formattedUsers,
+    };
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return {
+      success: false,
+      error: "An unexpected error occurred",
+    };
+  }
+}
+
+/**
+ * Fetch teachers pending approval
+ */
+export async function fetchPendingTeachers(): Promise<{ success: boolean; data?: PendingTeacher[]; error?: string }> {
+  try {
+    const supabaseAdmin = createAdminClient();
+
+    const {
+      data: { users },
+      error,
+    } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    // Filter for teachers who are not approved
     const pendingTeachers: PendingTeacher[] = users
       .filter((user) => {
         const metadata = user.user_metadata as UserMetadata;
@@ -72,7 +136,10 @@ export async function fetchPendingTeachersAction() {
   }
 }
 
-export async function approveTeacherAction(userId: string) {
+/**
+ * Approve a teacher
+ */
+export async function approveTeacher(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const supabaseAdmin = createAdminClient();
 
@@ -119,11 +186,13 @@ export async function approveTeacherAction(userId: string) {
   }
 }
 
-export async function rejectTeacherAction(userId: string) {
+/**
+ * Reject a teacher (deletes the user account)
+ */
+export async function rejectTeacher(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const supabaseAdmin = createAdminClient();
 
-    // Option 1: Delete the user completely
     const { error: deleteError } =
       await supabaseAdmin.auth.admin.deleteUser(userId);
 
@@ -133,22 +202,6 @@ export async function rejectTeacherAction(userId: string) {
         error: deleteError.message,
       };
     }
-
-    // Option 2: If you want to keep the user but mark as rejected, use this instead:
-    // const { data: { user }, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(userId);
-    // if (fetchError || !user) {
-    //   return { success: false, error: "User not found" };
-    // }
-    // const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-    //   user_metadata: {
-    //     ...user.user_metadata,
-    //     is_approved: false,
-    //     rejected_at: new Date().toISOString(),
-    //   },
-    // });
-    // if (updateError) {
-    //   return { success: false, error: updateError.message };
-    // }
 
     return {
       success: true,

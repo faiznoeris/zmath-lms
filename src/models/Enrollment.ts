@@ -1,13 +1,13 @@
 export interface Enrollment {
-  id: number;
+  id: string;
   enrolled_at: string;
   user_id: string;
-  course_id: number;
+  course_id: string;
 }
 
 export interface CreateEnrollmentInput {
   user_id: string;
-  course_id: number;
+  course_id: string;
 }
 
 export interface EnrollmentWithDetails extends Enrollment {
@@ -17,7 +17,7 @@ export interface EnrollmentWithDetails extends Enrollment {
     full_name?: string;
   };
   course?: {
-    id: number;
+    id: string;
     title: string;
     description?: string;
   };

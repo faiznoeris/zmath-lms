@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../../utils/supabase/client";
 import { fetchCourses } from "@/src/services/course.service";
+import { MathPreview } from "@/src/components";
 import {
   Box,
   Typography,
@@ -92,11 +93,13 @@ async function createQuizApi(data: QuizFormInputs) {
 
 export default function AddQuizPage() {
   const router = useRouter();
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const {
     register,
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<QuizFormInputs>({
     defaultValues: {
@@ -294,18 +297,33 @@ export default function AddQuizPage() {
                     </Stack>
 
                     <Stack spacing={2}>
-                      <TextField
-                        label="Question"
-                        fullWidth
-                        multiline
-                        rows={2}
-                        size="small"
-                        {...register(`questions.${index}.question_text`, {
-                          required: "Question is required",
-                        })}
-                        error={!!errors.questions?.[index]?.question_text}
-                        helperText={errors.questions?.[index]?.question_text?.message}
-                      />
+                      <Box>
+                        <TextField
+                          label="Question"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          size="small"
+                          {...register(`questions.${index}.question_text`, {
+                            required: "Question is required",
+                          })}
+                          error={!!errors.questions?.[index]?.question_text}
+                          helperText={
+                            errors.questions?.[index]?.question_text?.message ||
+                            "Use $...$ for inline math (e.g., $x^2$) and $$...$$ for block equations"
+                          }
+                        />
+                        
+                        {/* Math Preview */}
+                        {watch(`questions.${index}.question_text`) && (
+                          <Box sx={{ mt: 1 }}>
+                            <MathPreview 
+                              content={watch(`questions.${index}.question_text`) || ""} 
+                              title="Question Preview"
+                            />
+                          </Box>
+                        )}
+                      </Box>
 
                       <Controller
                         name={`questions.${index}.question_type`}

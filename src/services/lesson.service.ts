@@ -1,6 +1,6 @@
-"use server";
 
-import { createClient } from "@/src/utils/supabase/server";
+
+import { createClient } from "@/src/utils/supabase/client";
 import { Lesson } from "@/src/models/Lesson";
 
 export interface LessonWithCourse extends Lesson {
@@ -15,7 +15,7 @@ export interface LessonWithCourse extends Lesson {
  */
 export async function fetchLessons(): Promise<{ success: boolean; data?: LessonWithCourse[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("lessons")
       .select(`
@@ -41,7 +41,7 @@ export async function fetchLessons(): Promise<{ success: boolean; data?: LessonW
  */
 export async function fetchLessonById(id: string): Promise<{ success: boolean; data?: Lesson; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("lessons")
       .select("*")
@@ -64,7 +64,7 @@ export async function fetchLessonById(id: string): Promise<{ success: boolean; d
  */
 export async function createLesson(lesson: Omit<Lesson, "id" | "created_at">): Promise<{ success: boolean; data?: Lesson; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("lessons")
       .insert(lesson)
@@ -87,7 +87,7 @@ export async function createLesson(lesson: Omit<Lesson, "id" | "created_at">): P
  */
 export async function updateLesson(id: string, lesson: Partial<Omit<Lesson, "id" | "created_at">>): Promise<{ success: boolean; data?: Lesson; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("lessons")
       .update(lesson)
@@ -111,7 +111,7 @@ export async function updateLesson(id: string, lesson: Partial<Omit<Lesson, "id"
  */
 export async function deleteLesson(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase.from("lessons").delete().eq("id", id);
 
     if (error) {
@@ -130,7 +130,7 @@ export async function deleteLesson(id: string): Promise<{ success: boolean; erro
  */
 export async function fetchLessonsByCourse(courseId: string): Promise<{ success: boolean; data?: Lesson[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("lessons")
       .select("*")

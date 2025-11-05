@@ -117,37 +117,37 @@ FROM (VALUES
 -- ===============================
 
 -- Questions untuk Kuis Dasar Aljabar
-INSERT INTO public.questions (quiz_id, question_text, question_type, options, correct_answer)
+INSERT INTO public.questions (quiz_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation)
 SELECT 
   (SELECT id FROM quizzes WHERE title = 'Kuis Dasar Aljabar' LIMIT 1) as quiz_id,
-  question_text, question_type, options::jsonb, correct_answer
+  question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation
 FROM (VALUES
-  ('Selesaikan untuk x: 2x + 5 = 13', 'multiple_choice', '["A) x = 4", "B) x = 9", "C) x = 6", "D) x = 8"]', 'A'),
-  ('Berapakah nilai dari 3² × 3³?', 'multiple_choice', '["A) 3⁵", "B) 9⁵", "C) 3⁶", "D) 6⁵"]', 'A'),
-  ('Sederhanakan: 4(x + 2)', 'multiple_choice', '["A) 4x + 2", "B) 4x + 8", "C) x + 8", "D) 4x + 6"]', 'B')
-) AS questions(question_text, question_type, options, correct_answer);
+  ('Selesaikan untuk x: $2x + 5 = 13$', 'multiple_choice', 'x = 4', 'x = 9', 'x = 6', 'x = 8', 'x = 4', 10, 'Untuk menyelesaikan persamaan linear: \n1. Kurangi 5 dari kedua sisi: $2x = 8$ \n2. Bagi kedua sisi dengan 2: $x = 4$'),
+  ('Berapakah nilai dari $3^2 \times 3^3$?', 'multiple_choice', '$3^5$', '$9^5$', '$3^6$', '$6^5$', '$3^5$', 10, 'Menggunakan aturan eksponen: $a^m \times a^n = a^{m+n}$ \nJadi: $3^2 \times 3^3 = 3^{2+3} = 3^5$'),
+  ('Sederhanakan: $4(x + 2)$', 'multiple_choice', '$4x + 2$', '$4x + 8$', '$x + 8$', '$4x + 6$', '$4x + 8$', 10, 'Gunakan sifat distributif: $4(x + 2) = 4 \times x + 4 \times 2 = 4x + 8$')
+) AS questions(question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation);
 
 -- Questions untuk Kuis Bentuk Geometri
-INSERT INTO public.questions (quiz_id, question_text, question_type, options, correct_answer)
+INSERT INTO public.questions (quiz_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation)
 SELECT 
   (SELECT id FROM quizzes WHERE title = 'Kuis Bentuk Geometri' LIMIT 1) as quiz_id,
-  question_text, question_type, options::jsonb, correct_answer
+  question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation
 FROM (VALUES
-  ('Berapakah jumlah sudut dalam segitiga?', 'multiple_choice', '["A) 90°", "B) 180°", "C) 270°", "D) 360°"]', 'B'),
-  ('Jika sebuah lingkaran memiliki jari-jari 5 cm, berapakah diameternya?', 'multiple_choice', '["A) 5 cm", "B) 10 cm", "C) 15 cm", "D) 25 cm"]', 'B'),
-  ('Sudut pelengkap dari 30° adalah:', 'multiple_choice', '["A) 30°", "B) 60°", "C) 90°", "D) 150°"]', 'B')
-) AS questions(question_text, question_type, options, correct_answer);
+  ('Berapakah jumlah sudut dalam segitiga?', 'multiple_choice', '$90°$', '$180°$', '$270°$', '$360°$', '$180°$', 10, 'Jumlah semua sudut interior dalam segitiga selalu sama dengan $180°$. Ini adalah teorema dasar dalam geometri Euclidean.'),
+  ('Jika sebuah lingkaran memiliki jari-jari 5 cm, berapakah diameternya?', 'multiple_choice', '5 cm', '10 cm', '15 cm', '25 cm', '10 cm', 10, 'Diameter lingkaran adalah dua kali jari-jarinya: $d = 2r = 2 \times 5 = 10$ cm'),
+  ('Sudut pelengkap dari $30°$ adalah:', 'multiple_choice', '$30°$', '$60°$', '$90°$', '$150°$', '$60°$', 10, 'Dua sudut disebut pelengkap jika jumlahnya $90°$. \nJadi: $90° - 30° = 60°$')
+) AS questions(question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation);
 
 -- Questions untuk Kuis Dasar Kalkulus
-INSERT INTO public.questions (quiz_id, question_text, question_type, options, correct_answer)
+INSERT INTO public.questions (quiz_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation)
 SELECT 
   (SELECT id FROM quizzes WHERE title = 'Kuis Dasar Kalkulus' LIMIT 1) as quiz_id,
-  question_text, question_type, options::jsonb, correct_answer
+  question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation
 FROM (VALUES
-  ('Berapakah turunan dari x²?', 'multiple_choice', '["A) x", "B) 2x", "C) x³", "D) 2"]', 'B'),
-  ('Limit dari (x - 2)/(x - 2) ketika x mendekati 2 adalah:', 'multiple_choice', '["A) 0", "B) 1", "C) 2", "D) tidak terdefinisi"]', 'D'),
-  ('Jika f(x) = 5x, berapakah f''(x)?', 'multiple_choice', '["A) 0", "B) 5", "C) 10x", "D) 5x"]', 'A')
-) AS questions(question_text, question_type, options, correct_answer);
+  ('Berapakah turunan dari $x^2$?', 'multiple_choice', '$x$', '$2x$', '$x^3$', '$2$', '$2x$', 15, 'Menggunakan aturan pangkat: $\frac{d}{dx}(x^n) = nx^{n-1}$ \nJadi: $\frac{d}{dx}(x^2) = 2x^{2-1} = 2x$'),
+  ('Limit dari $\frac{x - 2}{x - 2}$ ketika $x$ mendekati 2 adalah:', 'multiple_choice', '$0$', '$1$', '$2$', 'tidak terdefinisi', 'tidak terdefinisi', 15, 'Ketika $x = 2$, kita mendapatkan bentuk $\frac{0}{0}$ yang tidak terdefinisi. Meskipun untuk $x \neq 2$ ekspresi ini sama dengan 1, limit di titik ini tidak ada karena diskontinuitas.'),
+  ('Jika $f(x) = 5x$, berapakah $f''''(x)$?', 'multiple_choice', '$0$', '$5$', '$10x$', '$5x$', '$0$', 15, 'Turunan pertama: $f''(x) = 5$ \nTurunan kedua: $f''''(x) = 0$ \nTurunan konstanta selalu 0.')
+) AS questions(question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points, explanation);
 
 -- ===============================
 -- VERIFICATION QUERIES

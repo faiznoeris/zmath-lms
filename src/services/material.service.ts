@@ -1,6 +1,6 @@
-"use server";
 
-import { createClient } from "@/src/utils/supabase/server";
+
+import { createClient } from "@/src/utils/supabase/client";
 import { Material } from "@/src/models/Material";
 
 export interface MaterialWithLesson extends Material {
@@ -15,7 +15,7 @@ export interface MaterialWithLesson extends Material {
  */
 export async function fetchMaterials(): Promise<{ success: boolean; data?: MaterialWithLesson[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("materials")
       .select(`
@@ -41,7 +41,7 @@ export async function fetchMaterials(): Promise<{ success: boolean; data?: Mater
  */
 export async function fetchMaterialById(id: string): Promise<{ success: boolean; data?: Material; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("materials")
       .select("*")
@@ -64,7 +64,7 @@ export async function fetchMaterialById(id: string): Promise<{ success: boolean;
  */
 export async function createMaterial(material: Omit<Material, "id" | "created_at">): Promise<{ success: boolean; data?: Material; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("materials")
       .insert(material)
@@ -87,7 +87,7 @@ export async function createMaterial(material: Omit<Material, "id" | "created_at
  */
 export async function updateMaterial(id: string, material: Partial<Omit<Material, "id" | "created_at">>): Promise<{ success: boolean; data?: Material; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("materials")
       .update(material)
@@ -111,7 +111,7 @@ export async function updateMaterial(id: string, material: Partial<Omit<Material
  */
 export async function deleteMaterial(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase.from("materials").delete().eq("id", id);
 
     if (error) {
@@ -130,7 +130,7 @@ export async function deleteMaterial(id: string): Promise<{ success: boolean; er
  */
 export async function fetchMaterialsByLesson(lessonId: string): Promise<{ success: boolean; data?: Material[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("materials")
       .select("*")

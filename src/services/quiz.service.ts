@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/client";
 import { Quiz } from "@/src/models/Quiz";
 import { Question } from "@/src/models/Question";
 import { Result } from "@/src/models/Result";
@@ -25,7 +23,7 @@ export async function fetchQuizzes(): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select(
@@ -54,7 +52,7 @@ export async function fetchQuizById(
   id: string
 ): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select("*")
@@ -79,7 +77,7 @@ export async function fetchQuizWithQuestions(
   id: string
 ): Promise<{ success: boolean; data?: QuizWithQuestions; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch quiz
     const { data: quiz, error: quizError } = await supabase
@@ -120,7 +118,7 @@ export async function createQuiz(
   quiz: Omit<Quiz, "id" | "created_at">
 ): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .insert(quiz)
@@ -146,7 +144,7 @@ export async function updateQuiz(
   quiz: Partial<Omit<Quiz, "id" | "created_at">>
 ): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .update(quiz)
@@ -198,7 +196,7 @@ export async function fetchQuizzesByCourse(
   courseId: string
 ): Promise<{ success: boolean; data?: Quiz[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select("*")
@@ -223,7 +221,7 @@ export async function createQuestions(
   questions: Omit<Question, "id">[]
 ): Promise<{ success: boolean; data?: Question[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("questions")
       .insert(questions)
@@ -278,7 +276,7 @@ export async function fetchQuizResults(
   userId: string
 ): Promise<{ success: boolean; data?: Result[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("results")
       .select("*")

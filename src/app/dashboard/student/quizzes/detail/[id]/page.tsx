@@ -66,7 +66,9 @@ export default function QuizDetailPage() {
 
   const isLoading = quizLoading || resultsLoading;
   const hasAttempts = results.length > 0;
-  const bestScore = hasAttempts ? Math.max(...results.map(r => r.score)) : null;
+  const bestScore = hasAttempts
+    ? Math.max(...results.map(r => r.percentage))
+    : null;
   const latestAttempt = hasAttempts ? results[0] : null;
 
   if (quizError) {
@@ -212,7 +214,7 @@ export default function QuizDetailPage() {
                   Best Score
                 </Typography>
                 <Typography variant="h4" fontWeight={600} color="success.main">
-                  {bestScore}%
+                  {bestScore?.toFixed(2)}%
                 </Typography>
               </Card>
               {latestAttempt && (
@@ -283,6 +285,11 @@ export default function QuizDetailPage() {
                       <TableRow key={result.id} hover>
                         <TableCell>{results.length - index}</TableCell>
                         <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {result.score} / {result.total_points} points
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
                           <Typography
                             fontWeight={600}
                             color={
@@ -293,7 +300,7 @@ export default function QuizDetailPage() {
                                   : "text.primary"
                             }
                           >
-                            {result.score}%
+                            {result.percentage.toFixed(2)}%
                           </Typography>
                         </TableCell>
                         <TableCell>

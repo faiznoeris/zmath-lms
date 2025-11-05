@@ -1,4 +1,4 @@
-"use server";
+
 
 import { createAdminClient } from "@/src/utils/supabase/admin";
 

@@ -3,7 +3,8 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../../../utils/supabase/client";
+import { fetchCourses } from "@/src/services/course.service";
+import { createLesson } from "@/src/services/lesson.service";
 import {
   Box,
   Typography,
@@ -24,35 +25,6 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { CreateLessonInput } from "../../../../../models/Lesson";
-import { Course } from "../../../../../models/Course";
-
-// Fetch all courses
-const fetchCoursesApi = async (): Promise<Course[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Create lesson
-const createLessonApi = async (data: CreateLessonInput) => {
-  const supabase = createClient();
-
-  const { error } = await supabase.from("lessons").insert([
-    {
-      title: data.title,
-      content: data.content,
-      order_number: data.order_number,
-      course_id: data.course_id,
-    },
-  ]);
-
-  if (error) throw new Error(error.message);
-};
 
 export default function AddLessonPage() {
   const router = useRouter();
@@ -65,11 +37,18 @@ export default function AddLessonPage() {
   // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: fetchCoursesApi,
+    queryFn: async () => {
+      const result = await fetchCourses();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: createLessonApi,
+    mutationFn: async (data: CreateLessonInput) => {
+      const result = await createLesson(data);
+      if (!result.success) throw new Error(result.error);
+    },
     onSuccess: () => {
       router.push("/dashboard/teacher/lessons");
     },
@@ -116,14 +95,6 @@ export default function AddLessonPage() {
         <Typography variant="body2" color="text.secondary">
           Add a new lesson to a course
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => router.push("/dashboard/teacher/lessons")}
-          sx={{ mt: 2 }}
-        >
-          View All Lessons
-        </Button>
       </Box>
 
       <Card elevation={2}>
@@ -146,8 +117,7 @@ export default function AddLessonPage() {
                   label="Course *"
                   defaultValue=""
                   {...register("course_id", { 
-                    required: "Course is required",
-                    setValueAs: (value) => Number(value) 
+                    required: "Course is required"
                   })}
                 >
                   <MenuItem value="">
@@ -166,20 +136,6 @@ export default function AddLessonPage() {
                   <FormHelperText>Select the course this lesson belongs to</FormHelperText>
                 )}
               </FormControl>
-
-              {/* Order Number */}
-              <TextField
-                label="Order Number"
-                fullWidth
-                type="number"
-                error={!!errors.order_number}
-                helperText={errors.order_number?.message || "Determines the lesson sequence"}
-                {...register("order_number", { 
-                  required: "Order number is required",
-                  valueAsNumber: true,
-                  min: { value: 1, message: "Order must be at least 1" }
-                })}
-              />
 
               {/* Content */}
               <TextField

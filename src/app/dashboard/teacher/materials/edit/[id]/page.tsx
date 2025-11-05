@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from "react";
@@ -6,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { createClient } from "../../../../../../utils/supabase/client";
+import { fetchLessons } from "@/src/services/lesson.service";
+import { fetchMaterialById } from "@/src/services/material.service";
 import {
   Box,
   Card,
@@ -27,62 +28,35 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import { Lesson } from "../../../../../../models/Lesson";
-
-interface Material {
-  id: number;
-  title: string;
-  type: "video" | "document" | "interactive" | "image";
-  content_url: string;
-  description?: string;
-  order_index: number;
-  lesson_id?: string;
-}
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import { detectMaterialType } from "@/src/utils/materialHelpers";
+import { formatYouTubeUrl } from "@/src/utils/youtube";
 
 interface MaterialFormInputs {
   title: string;
-  type: "video" | "document" | "interactive" | "image";
   description?: string;
-  order_index: number;
   lesson_id?: string;
-}
-
-// Fetch all lessons
-const fetchLessonsApi = async (): Promise<Lesson[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .order("order_number", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Fetch single material
-async function fetchMaterialApi(id: string): Promise<Material> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("materials")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
+  youtube_url?: string;
 }
 
 // Update material
-async function updateMaterialApi(id: string, material: MaterialFormInputs & { file?: File }) {
+async function updateMaterialApi(id: string, material: MaterialFormInputs & { file?: File; isYouTube?: boolean; currentType?: string }) {
   const supabase = createClient();
   
-  let content_url = material.file ? "" : undefined;
+  let content_url: string | undefined = undefined;
+  let type: "video" | "document" | undefined = undefined;
 
-  // If there's a new file, upload it
-  if (material.file) {
+  // Handle YouTube URL update
+  if (material.isYouTube && material.youtube_url) {
+    const formattedUrl = formatYouTubeUrl(material.youtube_url);
+    if (!formattedUrl) {
+      throw new Error("Invalid YouTube URL");
+    }
+    content_url = formattedUrl;
+    type = "video";
+  }
+  // Handle file upload
+  else if (material.file) {
     const fileExt = material.file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `materials/${fileName}`;
@@ -103,19 +77,22 @@ async function updateMaterialApi(id: string, material: MaterialFormInputs & { fi
       .getPublicUrl(filePath);
 
     content_url = urlData.publicUrl;
+    type = detectMaterialType(material.file);
   }
 
   // Update material record
   const updateData: any = {
     title: material.title,
-    type: material.type,
     description: material.description,
-    order_index: material.order_index,
     lesson_id: material.lesson_id || null,
   };
 
   if (content_url) {
     updateData.content_url = content_url;
+  }
+  
+  if (type) {
+    updateData.type = type;
   }
 
   const { data, error } = await supabase
@@ -137,22 +114,31 @@ export default function EditMaterialPage() {
   const router = useRouter();
   const materialId = params.id as string;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<"file" | "youtube" | "keep">("keep");
+  const [selectedLessonId, setSelectedLessonId] = useState<string>("");
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<MaterialFormInputs>({
-    defaultValues: { type: "video", order_index: 0 },
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<MaterialFormInputs>({
+    defaultValues: {},
   });
 
   // Fetch lessons
   const { data: lessons = [] } = useQuery({
     queryKey: ["lessons"],
-    queryFn: fetchLessonsApi,
+    queryFn: async () => {
+      const result = await fetchLessons();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   // Fetch material data
   const { data: material, isLoading, error, isError } = useQuery({
     queryKey: ["material", materialId],
-    queryFn: () => fetchMaterialApi(materialId),
+    queryFn: async () => {
+      const result = await fetchMaterialById(materialId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!materialId,
   });
 
@@ -160,15 +146,18 @@ export default function EditMaterialPage() {
   useEffect(() => {
     if (material) {
       setValue("title", material.title);
-      setValue("type", material.type);
       setValue("description", material.description || "");
-      setValue("order_index", material.order_index);
-      setValue("lesson_id", material.lesson_id || "");
+      setSelectedLessonId(material.lesson_id || "");
+      if (material.type === "video" && material.content_url.includes("youtube")) {
+        setValue("youtube_url", material.content_url);
+        setUploadMode("youtube");
+      }
     }
   }, [material, setValue]);
 
   const mutation = useMutation({
-    mutationFn: (data: MaterialFormInputs & { file?: File }) => updateMaterialApi(materialId, data),
+    mutationFn: (data: MaterialFormInputs & { file?: File; isYouTube?: boolean; currentType?: string }) => 
+      updateMaterialApi(materialId, data),
     onSuccess: () => {
       router.push("/dashboard/teacher/materials");
     },
@@ -178,21 +167,31 @@ export default function EditMaterialPage() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      // Create preview for images
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewUrl(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPreviewUrl(null);
-      }
     }
   };
 
   const onSubmit = (data: MaterialFormInputs) => {
-    mutation.mutate({ ...data, file: selectedFile || undefined });
+    const submitData = {
+      ...data,
+      lesson_id: selectedLessonId || undefined,
+    };
+    
+    if (uploadMode === "youtube") {
+      if (!data.youtube_url) {
+        alert("Please enter a YouTube URL");
+        return;
+      }
+      mutation.mutate({ ...submitData, isYouTube: true, currentType: material?.type });
+    } else if (uploadMode === "file") {
+      if (!selectedFile) {
+        alert("Please select a file to upload");
+        return;
+      }
+      mutation.mutate({ ...submitData, file: selectedFile, currentType: material?.type });
+    } else {
+      // Keep existing file
+      mutation.mutate({ ...submitData, currentType: material?.type });
+    }
   };
 
   if (isLoading) {
@@ -255,7 +254,11 @@ export default function EditMaterialPage() {
           Edit Material
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Update material information and optionally replace the file
+          {uploadMode === "keep"
+            ? "Update material information"
+            : uploadMode === "file"
+            ? "Upload a new document to replace the existing material"
+            : "Add a YouTube video URL to replace the existing material"}
         </Typography>
       </Box>
 
@@ -263,51 +266,110 @@ export default function EditMaterialPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {/* Current File Info */}
+              {/* Current Material Info */}
               <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Current File
+                  Current Material
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Type: {material?.type === "video" ? "Video" : "Document"}
                 </Typography>
                 <Link
                   href={material?.content_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  sx={{ wordBreak: "break-all" }}
+                  sx={{ wordBreak: "break-all", fontSize: "0.875rem" }}
                 >
                   {material?.content_url}
                 </Link>
               </Box>
 
-              {/* File Upload (Optional) */}
+              {/* Upload Mode Selector */}
               <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  Replace File (Optional)
+                <Typography variant="subtitle2" gutterBottom sx={{ mb: 1 }}>
+                  Content Action
                 </Typography>
-                <Button
-                  component="label"
-                  variant="outlined"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ height: 56, justifyContent: "flex-start", textAlign: "left" }}
-                >
-                  {selectedFile ? selectedFile.name : "Choose New File"}
-                  <input
-                    type="file"
-                    hidden
-                    onChange={handleFileChange}
-                    accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx"
-                  />
-                </Button>
-                {previewUrl && (
-                  <Box sx={{ mt: 2, textAlign: "center" }}>
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8 }}
-                    />
-                  </Box>
-                )}
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Button
+                    variant={uploadMode === "keep" ? "contained" : "outlined"}
+                    onClick={() => {
+                      setUploadMode("keep");
+                      setSelectedFile(null);
+                      setValue("youtube_url", "");
+                    }}
+                    fullWidth
+                  >
+                    Keep Current
+                  </Button>
+                  <Button
+                    variant={uploadMode === "file" ? "contained" : "outlined"}
+                    onClick={() => {
+                      setUploadMode("file");
+                      setValue("youtube_url", "");
+                    }}
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                  >
+                    Upload Document
+                  </Button>
+                  <Button
+                    variant={uploadMode === "youtube" ? "contained" : "outlined"}
+                    onClick={() => {
+                      setUploadMode("youtube");
+                      setSelectedFile(null);
+                    }}
+                    startIcon={<VideoLibraryIcon />}
+                    fullWidth
+                  >
+                    YouTube Video
+                  </Button>
+                </Box>
               </Box>
+
+              {/* Conditional Input - File Upload */}
+              {uploadMode === "file" && (
+                <Box>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ height: 56, justifyContent: "flex-start", textAlign: "left" }}
+                  >
+                    {selectedFile ? selectedFile.name : "Choose Document File"}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                    />
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                    Accepted formats: PDF, DOC, DOCX, PPT, PPTX
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Conditional Input - YouTube URL */}
+              {uploadMode === "youtube" && (
+                <TextField
+                  label="YouTube Video URL"
+                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                  fullWidth
+                  error={!!errors.youtube_url}
+                  helperText={errors.youtube_url?.message || "Enter a valid YouTube video URL"}
+                  {...register("youtube_url", {
+                    required: uploadMode === "youtube" ? "YouTube URL is required" : false,
+                  })}
+                />
+              )}
+
+              {/* Keep Current - No Additional Input */}
+              {uploadMode === "keep" && (
+                <Alert severity="info">
+                  Material content will remain unchanged. You can still update the title, lesson assignment, and description below.
+                </Alert>
+              )}
 
               {/* Title */}
               <TextField
@@ -318,35 +380,20 @@ export default function EditMaterialPage() {
                 {...register("title", { required: "Title is required" })}
               />
 
-              {/* Type */}
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  label="Type"
-                  defaultValue="video"
-                  {...register("type")}
-                >
-                  <MenuItem value="video">Video</MenuItem>
-                  <MenuItem value="document">Document</MenuItem>
-                  <MenuItem value="interactive">Interactive</MenuItem>
-                  <MenuItem value="image">Image</MenuItem>
-                </Select>
-              </FormControl>
-
               {/* Lesson Selection */}
               <FormControl fullWidth>
                 <InputLabel>Lesson (Optional)</InputLabel>
                 <Select
                   label="Lesson (Optional)"
-                  defaultValue=""
-                  {...register("lesson_id")}
+                  value={selectedLessonId}
+                  onChange={(e) => setSelectedLessonId(e.target.value)}
                 >
                   <MenuItem value="">
                     <em>None - No Lesson Assigned</em>
                   </MenuItem>
                   {lessons.map((lesson) => (
                     <MenuItem key={lesson.id} value={lesson.id}>
-                      {lesson.title} (Order #{lesson.order_number})
+                      {lesson.title}
                     </MenuItem>
                   ))}
                 </Select>
@@ -362,15 +409,6 @@ export default function EditMaterialPage() {
                 {...register("description")}
               />
 
-              {/* Order Index */}
-              <TextField
-                label="Order Index"
-                fullWidth
-                type="number"
-                defaultValue={0}
-                {...register("order_index", { valueAsNumber: true })}
-              />
-
               {/* Error Message */}
               {mutation.isError && (
                 <Alert severity="error">
@@ -384,11 +422,21 @@ export default function EditMaterialPage() {
                   type="submit"
                   variant="contained"
                   size="large"
-                  disabled={mutation.isPending}
+                  disabled={
+                    mutation.isPending ||
+                    (uploadMode === "file" && !selectedFile) ||
+                    (uploadMode === "youtube" && !watch("youtube_url"))
+                  }
                   startIcon={mutation.isPending ? <CircularProgress size={20} /> : <SaveIcon />}
                   fullWidth
                 >
-                  {mutation.isPending ? "Saving..." : "Save Changes"}
+                  {mutation.isPending
+                    ? "Saving..."
+                    : uploadMode === "keep"
+                    ? "Save Changes"
+                    : uploadMode === "file"
+                    ? "Upload & Save"
+                    : "Update Video & Save"}
                 </Button>
                 <Button
                   variant="outlined"

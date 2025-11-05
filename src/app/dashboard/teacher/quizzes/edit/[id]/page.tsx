@@ -4,6 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { createClient } from "../../../../../../utils/supabase/client";
+import { fetchCourses } from "@/src/services/course.service";
+import { fetchQuizWithQuestions } from "@/src/services/quiz.service";
 import {
   Box,
   Typography,
@@ -29,73 +31,24 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import QuizIcon from "@mui/icons-material/Quiz";
-import { Course } from "../../../../../../models/Course";
 
 interface QuestionInput {
-  id?: number;
+  id?: string;
   question_text: string;
   question_type: "multiple_choice" | "true_false" | "essay";
   options?: string[];
   correct_answer?: string;
-  order_index?: number;
 }
 
 interface QuizFormInputs {
   title: string;
   description?: string;
   time_limit_minutes?: number;
-  course_id?: number;
+  course_id?: string;
   questions: QuestionInput[];
 }
 
-interface Quiz {
-  id: number;
-  title: string;
-  description?: string;
-  time_limit_minutes?: number;
-  course_id?: number;
-  questions?: QuestionInput[];
-}
-
-// Fetch all courses
-const fetchCoursesApi = async (): Promise<Course[]> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Fetch single quiz with questions
-async function fetchQuizApi(id: string): Promise<Quiz> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("quizzes")
-    .select(`
-      *,
-      questions (
-        id,
-        question_text,
-        question_type,
-        options,
-        correct_answer,
-        order_index
-      )
-    `)
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-// Update quiz
+// Update quiz (keep old implementation for complex logic)
 async function updateQuizApi(id: string, data: QuizFormInputs) {
   const supabase = createClient();
   
@@ -126,13 +79,12 @@ async function updateQuizApi(id: string, data: QuizFormInputs) {
 
   // Insert updated questions
   if (data.questions && data.questions.length > 0) {
-    const questionsToInsert = data.questions.map((q, index) => ({
-      quiz_id: parseInt(id),
+    const questionsToInsert = data.questions.map((q) => ({
+      quiz_id: id,
       question_text: q.question_text,
       question_type: q.question_type,
       options: q.options,
       correct_answer: q.correct_answer,
-      order_index: index + 1,
     }));
 
     const { error: questionsError } = await supabase
@@ -172,13 +124,21 @@ export default function EditQuizPage() {
   // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: fetchCoursesApi,
+    queryFn: async () => {
+      const result = await fetchCourses();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   // Fetch quiz data
   const { data: quiz, isLoading, error, isError } = useQuery({
     queryKey: ["quiz", quizId],
-    queryFn: () => fetchQuizApi(quizId),
+    queryFn: async () => {
+      const result = await fetchQuizWithQuestions(quizId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!quizId,
   });
 
@@ -305,17 +265,17 @@ export default function EditQuizPage() {
                       <InputLabel>Course</InputLabel>
                       <Select
                         label="Course"
-                        value={field.value?.toString() ?? ""}
+                        value={field.value ?? ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          field.onChange(val === "" ? undefined : Number(val));
+                          field.onChange(val === "" ? undefined : val);
                         }}
                       >
                         <MenuItem value="">
                           <em>No Course</em>
                         </MenuItem>
                         {courses.map((course) => (
-                          <MenuItem key={course.id} value={course.id.toString()}>
+                          <MenuItem key={course.id} value={course.id}>
                             {course.title}
                           </MenuItem>
                         ))}

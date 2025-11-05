@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { TextField, Alert, Button } from "@mui/material";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-import { PasswordField } from "../../components";
+import { PasswordField } from "../../../components";
 import { loginSchema } from "@/src/schemas";
 
 import styles from "./LoginForm.module.css";
@@ -73,7 +73,8 @@ const LoginForm = () => {
           Login
         </Button>
         <Button onClick={() => router.push("/register")}>
-          Belum memiliki akun? <span className="font-bold">Daftar</span>
+          <span className="mr-1">Belum memiliki akun?</span>
+          <span className="font-bold">Daftar</span>
         </Button>
       </div>
     </form>

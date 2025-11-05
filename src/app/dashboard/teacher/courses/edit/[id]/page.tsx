@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
-import { createClient } from "../../../../../../utils/supabase/client";
 import {
   Box,
   Typography,
@@ -19,40 +18,13 @@ import {
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Course, UpdateCourseInput } from "../../../../../../models/Course";
-
-// Fetch course by ID
-const fetchCourseApi = async (id: number): Promise<Course> => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
-};
-
-// Update course
-const updateCourseApi = async (id: number, data: UpdateCourseInput) => {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("courses")
-    .update({
-      title: data.title,
-      description: data.description,
-      teacher_id: data.teacher_id || null,
-    })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
-};
+import { UpdateCourseInput } from "../../../../../../models/Course";
+import { fetchCourseById, updateCourse } from "@/src/services/course.service";
 
 export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
-  const courseId = Number(params.id);
+  const courseId = params.id as string;
   const queryClient = useQueryClient();
 
   const {
@@ -65,7 +37,13 @@ export default function EditCoursePage() {
   // Fetch course data
   const { data: course, isLoading, error } = useQuery({
     queryKey: ["course", courseId],
-    queryFn: () => fetchCourseApi(courseId),
+    queryFn: async () => {
+      const result = await fetchCourseById(courseId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch course");
+      }
+      return result.data;
+    },
     enabled: !!courseId,
   });
 
@@ -74,13 +52,17 @@ export default function EditCoursePage() {
     if (course) {
       setValue("title", course.title);
       setValue("description", course.description || "");
-      setValue("teacher_id", course.teacher_id || "");
     }
   }, [course, setValue]);
 
   // Update mutation
   const mutation = useMutation({
-    mutationFn: (data: UpdateCourseInput) => updateCourseApi(courseId, data),
+    mutationFn: async (data: UpdateCourseInput) => {
+      const result = await updateCourse(courseId, data);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update course");
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
       queryClient.invalidateQueries({ queryKey: ["course", courseId] });
@@ -148,14 +130,6 @@ export default function EditCoursePage() {
         <Typography variant="body2" color="text.secondary">
           Update course information
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => router.push("/dashboard/teacher/courses")}
-          sx={{ mt: 2 }}
-        >
-          View All Courses
-        </Button>
       </Box>
 
       <Card elevation={2}>
@@ -179,15 +153,6 @@ export default function EditCoursePage() {
                 rows={4}
                 placeholder="Provide a brief description of the course..."
                 {...register("description")}
-              />
-
-              {/* Teacher ID (optional) */}
-              <TextField
-                label="Teacher ID (Optional)"
-                fullWidth
-                placeholder="Assign a teacher to this course"
-                helperText="Leave empty if not assigning a specific teacher"
-                {...register("teacher_id")}
               />
 
               {/* Error Message */}

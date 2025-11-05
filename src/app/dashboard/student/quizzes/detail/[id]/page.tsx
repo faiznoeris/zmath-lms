@@ -28,26 +28,10 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { fetchQuizById, fetchMyQuizResults } from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
-import { fetchQuizApi, fetchQuizResultsApi } from "@/src/services/quiz.service";
-
-// Helper to format date
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// Helper to get pass/fail status
-const getResultStatus = (score: number, passingScore?: number) => {
-  if (!passingScore) return null;
-  return score >= passingScore ? "Passed" : "Failed";
-};
+import { formatDate } from "@/src/utils/dateFormat";
+import { getResultStatus } from "@/src/utils/quizHelpers";
 
 export default function QuizDetailPage() {
   const router = useRouter();
@@ -61,14 +45,22 @@ export default function QuizDetailPage() {
     error: quizError,
   } = useQuery({
     queryKey: ["quiz", quizId],
-    queryFn: () => fetchQuizApi(quizId),
+    queryFn: async () => {
+      const result = await fetchQuizById(quizId);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!quizId,
   });
 
   // Fetch quiz results/history
   const { data: results = [], isLoading: resultsLoading } = useQuery<Result[]>({
     queryKey: ["quiz-results", quizId],
-    queryFn: () => fetchQuizResultsApi(quizId),
+    queryFn: async () => {
+      const result = await fetchMyQuizResults(quizId);
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
     enabled: !!quizId,
   });
 

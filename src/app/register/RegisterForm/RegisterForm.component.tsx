@@ -6,7 +6,7 @@ import { Alert, TextField, Button, FormControl, FormLabel, RadioGroup, FormContr
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import { registerSchema } from "@/src/schemas";
-import PasswordField from "../../components/PasswordField/PasswordField.component";
+import PasswordField from "../../../components/PasswordField/PasswordField.component";
 import { registerApi } from "../actions";
 
 import styles from "./RegisterForm.module.css";

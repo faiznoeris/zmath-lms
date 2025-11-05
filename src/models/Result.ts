@@ -1,14 +1,14 @@
 export interface Result {
-  id: number;
+  id: string;
   score: number;
   completed_at: string;
-  quiz_id: number;
+  quiz_id: string;
   user_id: string;
 }
 
 export interface ResultWithQuiz extends Result {
   quiz?: {
-    id: number;
+    id: string;
     title: string;
     passing_score?: number;
   };

@@ -66,22 +66,22 @@ export default function AdminDashboard() {
           <div className={styles.quickLinks}>
             <a href="/dashboard/teacher/courses" className={styles.card}>
               <span>🎓</span>
-              <div>Manage Courses</div>
+              <div>Create & Manage Courses</div>
             </a>
             <a href="/dashboard/teacher/lessons" className={styles.card}>
               <span>📖</span>
-              <div>Manage Lessons</div>
-            </a>
-            <a href="/dashboard/teacher/quizzes" className={styles.card}>
-              <span>📝</span>
-              <div>Manage Quizzes</div>
+              <div>Create & Manage Lessons</div>
             </a>
             <a href="/dashboard/teacher/materials" className={styles.card}>
               <span>📚</span>
-              <div>Manage Materials</div>
+              <div>Upload & Manage Materials</div>
+            </a>
+            <a href="/dashboard/teacher/quizzes" className={styles.card}>
+              <span>📝</span>
+              <div>Create & Manage Quizzes</div>
             </a>
             <a href="/dashboard/teacher/enrollments" className={styles.card}>
-              <span>👨‍🎓</span>
+              <span>👥</span>
               <div>Student Enrollments</div>
             </a>
           </div>

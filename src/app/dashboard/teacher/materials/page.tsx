@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../../utils/supabase/client";
+import { fetchMaterials, deleteMaterial } from "@/src/services/material.service";
+import { getMaterialTypeColor } from "@/src/utils/materialHelpers";
 import {
   Box,
   Typography,
@@ -25,60 +26,28 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import AddIcon from "@mui/icons-material/Add";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-
-interface Material {
-  id: number;
-  title: string;
-  type: "video" | "document" | "interactive" | "image";
-  content_url: string;
-  description?: string;
-  lesson_id?: number;
-  order_index: number;
-  created_at: string;
-}
-
-// Supabase API calls
-async function fetchMaterialsApi(): Promise<Material[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("materials")
-    .select("*")
-    .order("order_index", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data || [];
-}
-
-async function deleteMaterialApi(id: number) {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("materials")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return { success: true };
-}
+import { Material } from "@/src/models/Material";
 
 export default function MaterialsListPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: materials, isLoading, error, isError } = useQuery({
     queryKey: ["materials"],
-    queryFn: fetchMaterialsApi,
+    queryFn: async () => {
+      const result = await fetchMaterials();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteMaterialApi,
+    mutationFn: async (id: string) => {
+      const result = await deleteMaterial(id);
+      if (!result.success) throw new Error(result.error);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
       setDeleteConfirmOpen(false);
@@ -90,7 +59,7 @@ export default function MaterialsListPage() {
     router.push(`/dashboard/teacher/materials/edit/${material.id}`);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setSelectedId(id);
     setDeleteConfirmOpen(true);
   };
@@ -98,21 +67,6 @@ export default function MaterialsListPage() {
   const handleDeleteConfirm = () => {
     if (selectedId) {
       deleteMutation.mutate(selectedId);
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "video":
-        return "primary";
-      case "document":
-        return "secondary";
-      case "interactive":
-        return "success";
-      case "image":
-        return "info";
-      default:
-        return "default";
     }
   };
 
@@ -138,10 +92,33 @@ export default function MaterialsListPage() {
       renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value}
-          color={getTypeColor(params.value) as any}
+          color={getMaterialTypeColor(params.value) as any}
           size="small"
           sx={{ textTransform: "capitalize" }}
         />
+      ),
+    },
+    {
+      field: "lesson",
+      headerName: "Lesson",
+      flex: 1,
+      minWidth: 180,
+      sortable: true,
+      valueGetter: (value: any) => value?.title || "No Lesson",
+      renderCell: (params: GridRenderCellParams) => (
+        <Box
+          sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {params.row.lesson?.title || (
+            <Typography variant="body2" color="text.disabled">
+              No Lesson
+            </Typography>
+          )}
+        </Box>
       ),
     },
     {
@@ -161,14 +138,6 @@ export default function MaterialsListPage() {
           {params.value || "-"}
         </Box>
       ),
-    },
-    {
-      field: "order_index",
-      headerName: "Order",
-      width: 90,
-      sortable: true,
-      align: "center",
-      headerAlign: "center",
     },
     {
       field: "content_url",

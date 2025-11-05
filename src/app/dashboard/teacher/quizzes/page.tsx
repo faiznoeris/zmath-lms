@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../../utils/supabase/client";
+import { fetchQuizzes, deleteQuiz } from "@/src/services/quiz.service";
 import {
   Box,
   Typography,
@@ -24,78 +24,28 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import QuizIcon from "@mui/icons-material/Quiz";
-
-interface Question {
-  id: number;
-  question_text: string;
-  question_type: "multiple_choice" | "true_false" | "essay";
-  options?: string[];
-  correct_answer?: string;
-  order_index: number;
-}
-
-interface Quiz {
-  id: number;
-  title: string;
-  description?: string;
-  time_limit_minutes?: number;
-  course_id?: number;
-  created_at: string;
-  questions?: Question[];
-}
-
-// Supabase API calls
-async function fetchQuizzesApi(): Promise<Quiz[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("quizzes")
-    .select(`
-      *,
-      questions (
-        id,
-        question_text,
-        question_type,
-        options,
-        correct_answer,
-        order_index
-      )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data || [];
-}
-
-async function deleteQuizApi(id: number) {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("quizzes")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return { success: true };
-}
+import { Quiz } from "@/src/models/Quiz";
 
 export default function QuizzesListPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: quizzes, isLoading, error, isError } = useQuery({
     queryKey: ["quizzes"],
-    queryFn: fetchQuizzesApi,
+    queryFn: async () => {
+      const result = await fetchQuizzes();
+      if (!result.success) throw new Error(result.error);
+      return result.data || [];
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteQuizApi,
+    mutationFn: async (id: string) => {
+      const result = await deleteQuiz(id);
+      if (!result.success) throw new Error(result.error);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
       setDeleteConfirmOpen(false);
@@ -107,7 +57,7 @@ export default function QuizzesListPage() {
     router.push(`/dashboard/teacher/quizzes/edit/${quiz.id}`);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setSelectedId(id);
     setDeleteConfirmOpen(true);
   };
@@ -147,6 +97,21 @@ export default function QuizzesListPage() {
           }}
         >
           {params.value || "-"}
+        </Box>
+      ),
+    },
+    {
+      field: "course",
+      headerName: "Course",
+      width: 180,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ height: "100%", display: "flex", alignItems: "center" }}>
+          {params.row.course ? (
+            <Chip label={params.row.course.title} color="primary" size="small" />
+          ) : (
+            <Chip label="No Course" color="default" size="small" />
+          )}
         </Box>
       ),
     },

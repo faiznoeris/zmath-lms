@@ -12,15 +12,19 @@ import {
   Alert,
   Chip,
   Stack,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import {
-  fetchPendingTeachersAction,
-  approveTeacherAction,
-  rejectTeacherAction,
-} from "./actions";
+  fetchPendingTeachers,
+  approveTeacher,
+  rejectTeacher,
+} from "@/src/services/user.service";
 
 interface PendingTeacher {
   id: string;
@@ -40,7 +44,7 @@ export default function TeacherApprovalsPage() {
 
   const fetchTeachers = async () => {
     try {
-      const result = await fetchPendingTeachersAction();
+      const result = await fetchPendingTeachers();
       if (result.success && result.data) {
         setTeachers(result.data);
       } else {
@@ -79,7 +83,7 @@ export default function TeacherApprovalsPage() {
     setSuccess(null);
 
     try {
-      const result = await approveTeacherAction(userId);
+      const result = await approveTeacher(userId);
       if (result.success) {
         setSuccess("Teacher approved successfully!");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));
@@ -99,7 +103,7 @@ export default function TeacherApprovalsPage() {
     setSuccess(null);
 
     try {
-      const result = await rejectTeacherAction(userId);
+      const result = await rejectTeacher(userId);
       if (result.success) {
         setSuccess("Teacher registration rejected");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));
@@ -192,6 +196,23 @@ export default function TeacherApprovalsPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, margin: "0 auto", padding: 3 }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 3 }}
+      >
+        <Link
+          underline="hover"
+          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+          color="inherit"
+          onClick={() => router.push("/dashboard")}
+        >
+          <AdminPanelSettingsIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          Dashboard
+        </Link>
+        <Typography color="text.primary">Teacher Approvals</Typography>
+      </Breadcrumbs>
+
       <Typography variant="h4" gutterBottom>
         Teacher Registration Approvals
       </Typography>

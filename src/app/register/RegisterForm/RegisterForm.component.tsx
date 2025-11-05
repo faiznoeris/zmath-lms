@@ -1,8 +1,8 @@
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, TextField, Button } from "@mui/material";
+import { Alert, TextField, Button, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormHelperText } from "@mui/material";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import { registerSchema } from "@/src/schemas";
@@ -16,6 +16,7 @@ export interface RegisterFormInputs {
   email: string;
   password: string;
   confirmPassword: string;
+  role: "student" | "teacher";
 }
 
 const RegisterForm = () => {
@@ -24,15 +25,30 @@ const RegisterForm = () => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormInputs>({
     resolver: yupResolver(registerSchema),
+    defaultValues: {
+      role: "student",
+    },
   });
 
   const mutation = useMutation({
     mutationFn: registerApi,
-    onSuccess: () => {
-      router.push("/");
+    onSuccess: (data) => {
+      // If teacher needs approval, show message and redirect to login
+      if (data.needsApproval) {
+        // The success message will be shown in the UI
+        return;
+      }
+      
+      // Redirect based on role after successful registration
+      if (data.role === "teacher" || data.role === "admin") {
+        router.push("/dashboard/teacher");
+      } else {
+        router.push("/dashboard");
+      }
     },
   });
 
@@ -68,6 +84,33 @@ const RegisterForm = () => {
         helperText={errors.confirmPassword?.message}
         {...register("confirmPassword")}
       />
+      <FormControl component="fieldset" error={!!errors.role}>
+        <FormLabel component="legend">Register as</FormLabel>
+        <Controller
+          name="role"
+          control={control}
+          render={({ field }) => (
+            <RadioGroup {...field} row>
+              <FormControlLabel
+                value="student"
+                control={<Radio />}
+                label="Student"
+              />
+              <FormControlLabel
+                value="teacher"
+                control={<Radio />}
+                label="Teacher"
+              />
+            </RadioGroup>
+          )}
+        />
+        {errors.role && <FormHelperText>{errors.role.message}</FormHelperText>}
+      </FormControl>
+      {mutation.isSuccess && mutation.data?.needsApproval && (
+        <Alert severity="info">
+          Registration successful! Your teacher account is pending approval. You will be notified once an admin approves your registration.
+        </Alert>
+      )}
       {mutation.isError && mutation.error instanceof Error && (
         <Alert severity="error">{mutation.error.message}</Alert>
       )}

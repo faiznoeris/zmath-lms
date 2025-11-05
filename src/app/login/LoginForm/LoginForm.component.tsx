@@ -29,8 +29,14 @@ const LoginForm = () => {
 
   const mutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: () => {
-      router.push("/");
+    onSuccess: data => {
+      if (data.role === "admin") {
+        router.push("/dashboard/admin");
+      } else if (data.role === "teacher") {
+        router.push("/dashboard/teacher");
+      } else if (data.role === "student") {
+        router.push("/dashboard/student");
+      }
     },
   });
 

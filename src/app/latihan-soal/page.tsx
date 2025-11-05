@@ -283,7 +283,7 @@ function LatihanSoalContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.map((result, index) => (
+                    {results.map((result) => (
                       <tr key={result.id}>
                         <td>{formatDate(result.submitted_at)}</td>
                         <td>{result.quiz?.title || "Unknown Quiz"}</td>

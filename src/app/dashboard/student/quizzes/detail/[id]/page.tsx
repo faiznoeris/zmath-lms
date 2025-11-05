@@ -28,42 +28,8 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { createClient } from "@/src/utils/supabase/client";
-import { Quiz } from "@/src/models/Quiz";
 import { Result } from "@/src/models/Result";
-
-const supabase = createClient();
-
-// Fetch quiz details
-const fetchQuizApi = async (id: string): Promise<Quiz> => {
-  const { data, error } = await supabase
-    .from("quizzes")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Fetch quiz results/history for current user
-const fetchQuizResultsApi = async (quizId: string): Promise<Result[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-
-  const { data, error } = await supabase
-    .from("results")
-    .select("*")
-    .eq("quiz_id", parseInt(quizId))
-    .eq("user_id", user.id)
-    .order("completed_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-};
+import { fetchQuizApi, fetchQuizResultsApi } from "@/src/services/quiz.service";
 
 // Helper to format date
 const formatDate = (dateString: string) => {
@@ -89,7 +55,11 @@ export default function QuizDetailPage() {
   const quizId = params.id as string;
 
   // Fetch quiz details
-  const { data: quiz, isLoading: quizLoading, error: quizError } = useQuery({
+  const {
+    data: quiz,
+    isLoading: quizLoading,
+    error: quizError,
+  } = useQuery({
     queryKey: ["quiz", quizId],
     queryFn: () => fetchQuizApi(quizId),
     enabled: !!quizId,
@@ -104,15 +74,13 @@ export default function QuizDetailPage() {
 
   const isLoading = quizLoading || resultsLoading;
   const hasAttempts = results.length > 0;
-  const bestScore = hasAttempts ? Math.max(...results.map((r) => r.score)) : null;
+  const bestScore = hasAttempts ? Math.max(...results.map(r => r.score)) : null;
   const latestAttempt = hasAttempts ? results[0] : null;
 
   if (quizError) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
-        <Alert severity="error">
-          Error loading quiz: {quizError.message}
-        </Alert>
+        <Alert severity="error">Error loading quiz: {quizError.message}</Alert>
       </Box>
     );
   }
@@ -144,18 +112,29 @@ export default function QuizDetailPage() {
         <Skeleton variant="rectangular" height={200} sx={{ mb: 4 }} />
       ) : (
         <Card elevation={2} sx={{ mb: 4, p: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3 }}
+          >
             <QuizIcon sx={{ fontSize: 48, color: "warning.main" }} />
             <Box sx={{ flex: 1 }}>
-              <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+              <Typography
+                variant="h4"
+                component="h1"
+                fontWeight={600}
+                gutterBottom
+              >
                 {quiz?.title}
               </Typography>
               {quiz?.description && (
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
                   {quiz.description}
                 </Typography>
               )}
-              
+
               {/* Quiz Info */}
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                 {quiz?.time_limit_minutes && (
@@ -166,14 +145,15 @@ export default function QuizDetailPage() {
                     variant="outlined"
                   />
                 )}
-                {quiz?.passing_score !== null && quiz?.passing_score !== undefined && (
-                  <Chip
-                    icon={<GradeIcon />}
-                    label={`Passing Score: ${quiz.passing_score}%`}
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
+                {quiz?.passing_score !== null &&
+                  quiz?.passing_score !== undefined && (
+                    <Chip
+                      icon={<GradeIcon />}
+                      label={`Passing Score: ${quiz.passing_score}%`}
+                      color="success"
+                      variant="outlined"
+                    />
+                  )}
                 {quiz?.max_attempts && (
                   <Chip
                     label={`Max Attempts: ${quiz.max_attempts}`}
@@ -182,11 +162,7 @@ export default function QuizDetailPage() {
                   />
                 )}
                 {quiz?.is_graded && (
-                  <Chip
-                    label="Graded"
-                    color="warning"
-                    size="small"
-                  />
+                  <Chip label="Graded" color="warning" size="small" />
                 )}
               </Box>
             </Box>
@@ -222,8 +198,13 @@ export default function QuizDetailPage() {
 
           {/* Statistics */}
           {hasAttempts && (
-            <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "center" }}>
-              <Card variant="outlined" sx={{ p: 2, minWidth: 150, textAlign: "center" }}>
+            <Box
+              sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "center" }}
+            >
+              <Card
+                variant="outlined"
+                sx={{ p: 2, minWidth: 150, textAlign: "center" }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Total Attempts
                 </Typography>
@@ -231,7 +212,10 @@ export default function QuizDetailPage() {
                   {results.length}
                 </Typography>
               </Card>
-              <Card variant="outlined" sx={{ p: 2, minWidth: 150, textAlign: "center" }}>
+              <Card
+                variant="outlined"
+                sx={{ p: 2, minWidth: 150, textAlign: "center" }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Best Score
                 </Typography>
@@ -240,7 +224,10 @@ export default function QuizDetailPage() {
                 </Typography>
               </Card>
               {latestAttempt && (
-                <Card variant="outlined" sx={{ p: 2, minWidth: 150, textAlign: "center" }}>
+                <Card
+                  variant="outlined"
+                  sx={{ p: 2, minWidth: 150, textAlign: "center" }}
+                >
                   <Typography variant="body2" color="text.secondary">
                     Latest Score
                   </Typography>
@@ -266,8 +253,13 @@ export default function QuizDetailPage() {
 
           {isLoading ? (
             <Box>
-              {[1, 2, 3].map((n) => (
-                <Skeleton key={n} variant="rectangular" height={60} sx={{ mb: 1 }} />
+              {[1, 2, 3].map(n => (
+                <Skeleton
+                  key={n}
+                  variant="rectangular"
+                  height={60}
+                  sx={{ mb: 1 }}
+                />
               ))}
             </Box>
           ) : (
@@ -275,15 +267,26 @@ export default function QuizDetailPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Attempt #</strong></TableCell>
-                    <TableCell><strong>Score</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell><strong>Completed At</strong></TableCell>
+                    <TableCell>
+                      <strong>Attempt #</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Score</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Status</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Completed At</strong>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {results.map((result, index) => {
-                    const status = getResultStatus(result.score, quiz?.passing_score);
+                    const status = getResultStatus(
+                      result.score,
+                      quiz?.passing_score
+                    );
                     return (
                       <TableRow key={result.id} hover>
                         <TableCell>{results.length - index}</TableCell>
@@ -294,8 +297,8 @@ export default function QuizDetailPage() {
                               status === "Passed"
                                 ? "success.main"
                                 : status === "Failed"
-                                ? "error.main"
-                                : "text.primary"
+                                  ? "error.main"
+                                  : "text.primary"
                             }
                           >
                             {result.score}%
@@ -333,7 +336,8 @@ export default function QuizDetailPage() {
             No Attempts Yet
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Click &quot;Start Attempt&quot; above to take this quiz for the first time.
+            Click &quot;Start Attempt&quot; above to take this quiz for the
+            first time.
           </Typography>
         </Card>
       )}

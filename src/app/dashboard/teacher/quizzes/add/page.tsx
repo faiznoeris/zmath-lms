@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -35,8 +35,13 @@ import QuizIcon from "@mui/icons-material/Quiz";
 interface QuestionInput {
   question_text: string;
   question_type: "multiple_choice" | "true_false" | "essay";
-  options?: string[];
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  option_d?: string;
   correct_answer?: string;
+  points?: number;
+  explanation?: string;
 }
 
 interface QuizFormInputs {
@@ -75,8 +80,13 @@ async function createQuizApi(data: QuizFormInputs) {
       quiz_id: quiz.id,
       question_text: q.question_text,
       question_type: q.question_type,
-      options: q.options,
+      option_a: q.option_a,
+      option_b: q.option_b,
+      option_c: q.option_c,
+      option_d: q.option_d,
       correct_answer: q.correct_answer,
+      points: q.points || 1,
+      explanation: q.explanation,
     }));
 
     const { error: questionsError } = await supabase
@@ -93,13 +103,12 @@ async function createQuizApi(data: QuizFormInputs) {
 
 export default function AddQuizPage() {
   const router = useRouter();
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const {
     register,
     handleSubmit,
     control,
-    reset,
     watch,
+    reset,
     formState: { errors },
   } = useForm<QuizFormInputs>({
     defaultValues: {
@@ -107,12 +116,18 @@ export default function AddQuizPage() {
         {
           question_text: "",
           question_type: "multiple_choice",
-          options: ["", "", "", ""],
+          option_a: "",
+          option_b: "",
+          option_c: "",
+          option_d: "",
           correct_answer: "",
+          points: 1,
+          explanation: "",
         },
       ],
     },
   });
+  
   const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
@@ -262,8 +277,13 @@ export default function AddQuizPage() {
                   append({
                     question_text: "",
                     question_type: "multiple_choice",
-                    options: ["", "", "", ""],
+                    option_a: "",
+                    option_b: "",
+                    option_c: "",
+                    option_d: "",
                     correct_answer: "",
+                    points: 1,
+                    explanation: "",
                   })
                 }
               >
@@ -341,30 +361,192 @@ export default function AddQuizPage() {
                         )}
                       />
 
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                          Options
-                        </Typography>
-                        <Stack spacing={1}>
-                          {[0, 1, 2, 3].map((optIndex) => (
-                            <TextField
-                              key={optIndex}
-                              placeholder={`Option ${optIndex + 1}`}
-                              fullWidth
-                              size="small"
-                              {...register(`questions.${index}.options.${optIndex}`)}
-                            />
-                          ))}
-                        </Stack>
-                      </Box>
-
+                      {/* Points Field */}
                       <TextField
-                        label="Correct Answer"
+                        label="Points"
                         fullWidth
                         size="small"
-                        placeholder="Enter the correct answer"
-                        {...register(`questions.${index}.correct_answer`)}
+                        type="number"
+                        placeholder="e.g., 1"
+                        {...register(`questions.${index}.points`, { 
+                          valueAsNumber: true,
+                          min: 1
+                        })}
+                        helperText="Point value for this question (default: 1)"
                       />
+
+                      {/* Conditional rendering based on question type */}
+                      {watch(`questions.${index}.question_type`) === "multiple_choice" && (
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                            Options
+                          </Typography>
+                          <Stack spacing={1}>
+                            {/* Option A */}
+                            <Box>
+                              <TextField
+                                placeholder="Option A"
+                                fullWidth
+                                size="small"
+                                multiline
+                                {...register(`questions.${index}.option_a`)}
+                                helperText="Use $...$ for math formulas"
+                              />
+                              {watch(`questions.${index}.option_a`) && (
+                                <Box sx={{ mt: 0.5, ml: 1 }}>
+                                  <MathPreview 
+                                    content={watch(`questions.${index}.option_a`) || ""} 
+                                    title="Option A Preview"
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+
+                            {/* Option B */}
+                            <Box>
+                              <TextField
+                                placeholder="Option B"
+                                fullWidth
+                                size="small"
+                                multiline
+                                {...register(`questions.${index}.option_b`)}
+                                helperText="Use $...$ for math formulas"
+                              />
+                              {watch(`questions.${index}.option_b`) && (
+                                <Box sx={{ mt: 0.5, ml: 1 }}>
+                                  <MathPreview 
+                                    content={watch(`questions.${index}.option_b`) || ""} 
+                                    title="Option B Preview"
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+
+                            {/* Option C */}
+                            <Box>
+                              <TextField
+                                placeholder="Option C"
+                                fullWidth
+                                size="small"
+                                multiline
+                                {...register(`questions.${index}.option_c`)}
+                                helperText="Use $...$ for math formulas"
+                              />
+                              {watch(`questions.${index}.option_c`) && (
+                                <Box sx={{ mt: 0.5, ml: 1 }}>
+                                  <MathPreview 
+                                    content={watch(`questions.${index}.option_c`) || ""} 
+                                    title="Option C Preview"
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+
+                            {/* Option D */}
+                            <Box>
+                              <TextField
+                                placeholder="Option D"
+                                fullWidth
+                                size="small"
+                                multiline
+                                {...register(`questions.${index}.option_d`)}
+                                helperText="Use $...$ for math formulas"
+                              />
+                              {watch(`questions.${index}.option_d`) && (
+                                <Box sx={{ mt: 0.5, ml: 1 }}>
+                                  <MathPreview 
+                                    content={watch(`questions.${index}.option_d`) || ""} 
+                                    title="Option D Preview"
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {watch(`questions.${index}.question_type`) === "true_false" && (
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                            Options (Auto-generated)
+                          </Typography>
+                          <Stack spacing={1}>
+                            <TextField
+                              value="True"
+                              fullWidth
+                              size="small"
+                              disabled
+                              helperText="Default option 1"
+                            />
+                            <TextField
+                              value="False"
+                              fullWidth
+                              size="small"
+                              disabled
+                              helperText="Default option 2"
+                            />
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {watch(`questions.${index}.question_type`) === "essay" && (
+                        <Alert severity="info" sx={{ mt: 1 }}>
+                          Essay questions require students to upload a scanned file of their answer. 
+                          Points will be assigned manually during grading.
+                        </Alert>
+                      )}
+
+                      {/* Correct Answer - Hidden for Essay type */}
+                      {watch(`questions.${index}.question_type`) !== "essay" && (
+                        <Box>
+                          <TextField
+                            label="Correct Answer"
+                            fullWidth
+                            size="small"
+                            placeholder={
+                              watch(`questions.${index}.question_type`) === "true_false"
+                                ? "Enter 'True' or 'False'"
+                                : "Enter the correct answer"
+                            }
+                            {...register(`questions.${index}.correct_answer`)}
+                            helperText={
+                              watch(`questions.${index}.question_type`) === "true_false"
+                                ? "Type exactly 'True' or 'False'"
+                                : "Enter the correct answer text. Use $...$ for math formulas"
+                            }
+                          />
+                          {watch(`questions.${index}.correct_answer`) && (
+                            <Box sx={{ mt: 1 }}>
+                              <MathPreview 
+                                content={watch(`questions.${index}.correct_answer`) || ""} 
+                                title="Correct Answer Preview"
+                              />
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+
+                      {/* Explanation Field */}
+                      <Box>
+                        <TextField
+                          label="Explanation (Optional)"
+                          fullWidth
+                          size="small"
+                          multiline
+                          rows={2}
+                          placeholder="Explain why this is the correct answer..."
+                          {...register(`questions.${index}.explanation`)}
+                          helperText="This explanation will be shown to students after they submit their answer. Use $...$ for math formulas"
+                        />
+                        {watch(`questions.${index}.explanation`) && (
+                          <Box sx={{ mt: 1 }}>
+                            <MathPreview 
+                              content={watch(`questions.${index}.explanation`) || ""} 
+                              title="Explanation Preview"
+                            />
+                          </Box>
+                        )}
+                      </Box>
                     </Stack>
                   </CardContent>
                 </Card>

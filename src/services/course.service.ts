@@ -1,7 +1,6 @@
 // Handles course business logic
-"use server";
 
-import { createClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/client";
 import { Course } from "@/src/models/Course";
 
 /**
@@ -9,7 +8,7 @@ import { Course } from "@/src/models/Course";
  */
 export async function fetchCourses(): Promise<{ success: boolean; data?: Course[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("courses")
       .select("*")
@@ -31,7 +30,7 @@ export async function fetchCourses(): Promise<{ success: boolean; data?: Course[
  */
 export async function fetchCourseById(id: string): Promise<{ success: boolean; data?: Course; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("courses")
       .select("*")
@@ -54,7 +53,7 @@ export async function fetchCourseById(id: string): Promise<{ success: boolean; d
  */
 export async function createCourse(course: Omit<Course, "id" | "created_at">): Promise<{ success: boolean; data?: Course; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -87,7 +86,7 @@ export async function createCourse(course: Omit<Course, "id" | "created_at">): P
  */
 export async function updateCourse(id: string, course: Partial<Omit<Course, "id" | "created_at">>): Promise<{ success: boolean; data?: Course; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("courses")
       .update(course)
@@ -111,7 +110,7 @@ export async function updateCourse(id: string, course: Partial<Omit<Course, "id"
  */
 export async function deleteCourse(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase.from("courses").delete().eq("id", id);
 
     if (error) {

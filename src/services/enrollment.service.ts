@@ -1,6 +1,6 @@
-"use server";
 
-import { createClient } from "@/src/utils/supabase/server";
+
+import { createClient } from "@/src/utils/supabase/client";
 import { createAdminClient } from "@/src/utils/supabase/admin";
 import { 
   Enrollment, 
@@ -51,7 +51,7 @@ export async function fetchStudents(): Promise<{ success: boolean; data?: AuthUs
  */
 export async function fetchEnrollments(): Promise<{ success: boolean; data?: EnrollmentWithDetails[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
@@ -78,7 +78,7 @@ export async function createEnrollment(
   input: CreateEnrollmentInput
 ): Promise<{ success: boolean; data?: Enrollment; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("enrollments")
       .insert([input])
@@ -101,7 +101,7 @@ export async function createEnrollment(
  */
 export async function deleteEnrollment(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase
       .from("enrollments")
       .delete()
@@ -125,7 +125,7 @@ export async function fetchStudentEnrollments(
   userId: string
 ): Promise<{ success: boolean; data?: EnrollmentWithDetails[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
@@ -151,7 +151,7 @@ export async function fetchStudentEnrollments(
  */
 export async function fetchMyEnrollments(): Promise<{ success: boolean; data?: EnrollmentWithDetails[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {

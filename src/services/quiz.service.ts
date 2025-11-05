@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/client";
 import { Quiz } from "@/src/models/Quiz";
 import { Question } from "@/src/models/Question";
 import { Result } from "@/src/models/Result";
@@ -21,7 +19,7 @@ export interface QuizWithQuestions extends Quiz {
  */
 export async function fetchQuizzes(): Promise<{ success: boolean; data?: QuizWithCourse[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select(`
@@ -46,7 +44,7 @@ export async function fetchQuizzes(): Promise<{ success: boolean; data?: QuizWit
  */
 export async function fetchQuizById(id: string): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select("*")
@@ -69,7 +67,7 @@ export async function fetchQuizById(id: string): Promise<{ success: boolean; dat
  */
 export async function fetchQuizWithQuestions(id: string): Promise<{ success: boolean; data?: QuizWithQuestions; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     
     // Fetch quiz
     const { data: quiz, error: quizError } = await supabase
@@ -105,7 +103,7 @@ export async function fetchQuizWithQuestions(id: string): Promise<{ success: boo
  */
 export async function createQuiz(quiz: Omit<Quiz, "id" | "created_at">): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .insert(quiz)
@@ -128,7 +126,7 @@ export async function createQuiz(quiz: Omit<Quiz, "id" | "created_at">): Promise
  */
 export async function updateQuiz(id: string, quiz: Partial<Omit<Quiz, "id" | "created_at">>): Promise<{ success: boolean; data?: Quiz; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .update(quiz)
@@ -152,7 +150,7 @@ export async function updateQuiz(id: string, quiz: Partial<Omit<Quiz, "id" | "cr
  */
 export async function deleteQuiz(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     
     // Delete questions first (cascade should handle this, but being explicit)
     await supabase.from("questions").delete().eq("quiz_id", id);
@@ -176,7 +174,7 @@ export async function deleteQuiz(id: string): Promise<{ success: boolean; error?
  */
 export async function fetchQuizzesByCourse(courseId: string): Promise<{ success: boolean; data?: Quiz[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("quizzes")
       .select("*")
@@ -199,7 +197,7 @@ export async function fetchQuizzesByCourse(courseId: string): Promise<{ success:
  */
 export async function createQuestions(questions: Omit<Question, "id">[]): Promise<{ success: boolean; data?: Question[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("questions")
       .insert(questions)
@@ -221,7 +219,7 @@ export async function createQuestions(questions: Omit<Question, "id">[]): Promis
  */
 export async function updateQuestions(quizId: string, questions: Omit<Question, "id">[]): Promise<{ success: boolean; data?: Question[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     
     // Delete existing questions
     await supabase.from("questions").delete().eq("quiz_id", quizId);
@@ -248,7 +246,7 @@ export async function updateQuestions(quizId: string, questions: Omit<Question, 
  */
 export async function fetchQuizResults(quizId: string, userId: string): Promise<{ success: boolean; data?: Result[]; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("results")
       .select("*")
@@ -273,9 +271,7 @@ export async function fetchQuizResults(quizId: string, userId: string): Promise<
  */
 export async function fetchMyQuizResults(quizId: string): Promise<{ success: boolean; data?: Result[]; error?: string }> {
   try {
-    // Import client supabase dynamically to avoid "use server" conflict
-    const { createClient: createClientBrowser } = await import("@/src/utils/supabase/client");
-    const supabase = createClientBrowser();
+    const supabase = createClient();
     
     const { data: { user } } = await supabase.auth.getUser();
     

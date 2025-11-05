@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import QuizIcon from "@mui/icons-material/Quiz";

@@ -379,3 +379,29 @@ export async function initializeQuizSubmission(
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+/**
+ * Update Quiz Attempt State
+ */
+export async function updateQuizAttemptState(
+  attemptId: string,
+  timeRemaining: number,
+  lastSyncAt: Date
+) {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("submissions")
+      .update({ time_remaining: timeRemaining, last_sync_at: lastSyncAt })
+      .eq("id", attemptId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error updating quiz attempt state:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}

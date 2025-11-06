@@ -124,3 +124,24 @@ export function loadQuizAttemptState(
     return null;
   }
 }
+
+/**
+ * Removes the saved state of a quiz attempt from localStorage.
+ * This should be called when a quiz is completed or abandoned.
+ * @param attemptId The unique identifier for the quiz submission.
+ */
+export function clearQuizAttemptState(attemptId: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const storageKey = getStorageKey(attemptId);
+    localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.error(
+      "Failed to clear quiz attempt state from localStorage:",
+      error
+    );
+  }
+}

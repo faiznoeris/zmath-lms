@@ -334,3 +334,48 @@ export async function fetchMyQuizResults(
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+/**
+ * Initialize Quiz Submission
+ */
+export async function initializeQuizSubmission(
+  quizId: string,
+  started_at: Date,
+  time_remaining: number,
+  last_sync_at: Date
+): Promise<{ success: boolean; data?: string; error?: string }> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const { data, error } = await supabase
+      .from("submissions")
+      .insert([
+        {
+          user_id: user?.id,
+          quiz_id: quizId,
+          started_at,
+          time_remaining,
+          last_sync_at,
+        },
+      ])
+      .select("id");
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const { id: attemptId } = data[0];
+    return { success: true, data: attemptId };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}

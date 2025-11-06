@@ -28,7 +28,11 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { fetchQuizById, fetchMyQuizResults } from "@/src/services/quiz.service";
+import {
+  fetchQuizById,
+  fetchMyQuizResults,
+  initializeQuizSubmission,
+} from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
 import { formatDate } from "@/src/utils/dateFormat";
 import { getResultStatus } from "@/src/utils/quizHelpers";
@@ -79,8 +83,30 @@ export default function QuizDetailPage() {
     );
   }
 
-  const handleStartAttempt = () => {
-    router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+  const handleStartAttempt = async () => {
+    if (!quiz || typeof quiz.time_limit_minutes !== "number") {
+      console.error("Quiz details not loaded yet");
+      return;
+    }
+
+    const startTime = new Date();
+    const timeLimitInSeconds = quiz.time_limit_minutes * 60;
+
+    const initializeQuiz = await initializeQuizSubmission(
+      quizId,
+      startTime,
+      timeLimitInSeconds,
+      startTime
+    );
+
+    if (initializeQuiz.success) {
+      router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+    } else {
+      console.error(
+        "Failed to initialize quiz submission:",
+        initializeQuiz.error
+      );
+    }
   };
 
   return (

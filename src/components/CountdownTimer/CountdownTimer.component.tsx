@@ -28,6 +28,7 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
 
     const timeRemaining = Math.floor(countdown / 1000);
 
+    // Send attempt state update to supabase every 30 seconds
     if (
       timeRemaining >= 0 &&
       timeRemaining % SYNC_INTERVAL_SECONDS === 0 &&

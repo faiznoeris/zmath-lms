@@ -3,9 +3,10 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { useParams } from "next/navigation";
+import { useQuizStore } from "@/src/stores";
 import { useQuery } from "@tanstack/react-query";
-import { QuizHeader, QuizSidebar } from "@/src/app/components";
-import { fetchQuizQuestionApi } from "@/src/services/quiz.service";
+import { QuizHeader, QuizSidebar } from "@/src/components";
+import { fetchQuizWithQuestions } from "@/src/services/quiz.service";
 
 export default function QuizLayout({
   children,
@@ -13,22 +14,33 @@ export default function QuizLayout({
   children: React.ReactElement;
 }) {
   const { id: questionsId } = useParams();
+  const { setQuiz } = useQuizStore();
 
   // Fetch quiz question
   const {
-    data: questions,
+    data: questionsData,
     isLoading: questionsLoading,
     error: questionsError,
   } = useQuery({
     queryKey: ["questions", questionsId],
-    queryFn: () => {
+    queryFn: async () => {
       if (typeof questionsId !== "string") {
         return Promise.reject(new Error("Invalid ID"));
       }
-      return fetchQuizQuestionApi(questionsId);
+      const result = await fetchQuizWithQuestions(questionsId);
+      if (!result.success) throw new Error(result.error);
+
+      return result.data;
     },
     enabled: !!questionsId,
   });
+
+  React.useEffect(() => {
+    if (!!questionsData) {
+      setQuiz(questionsData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionsData]);
 
   return (
     <Box

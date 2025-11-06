@@ -18,6 +18,17 @@ export default function ClientProviders({
   React.useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
+        // Check if user is a teacher waiting for approval
+        const role = session?.user?.user_metadata?.role;
+        const isApproved = session?.user?.user_metadata?.is_approved;
+        
+        // Don't set user as logged in if they're an unapproved teacher
+        if (role === "teacher" && isApproved === false) {
+          setUser(null);
+          setIsLoggedIn(false);
+          return;
+        }
+        
         setUser(session?.user ?? null);
         setIsLoggedIn(true);
       } else if (event === "SIGNED_OUT") {

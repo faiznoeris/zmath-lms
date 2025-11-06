@@ -105,8 +105,10 @@ export default function MaterialDetailPage() {
         );
 
       case "document":
+        const urlLower = material.content_url.toLowerCase();
+        
         // Check if it's a PDF
-        if (material.content_url.toLowerCase().endsWith(".pdf")) {
+        if (urlLower.endsWith(".pdf")) {
           return (
             <Box
               sx={{
@@ -128,6 +130,38 @@ export default function MaterialDetailPage() {
             </Box>
           );
         }
+        
+        // Check if it's a viewable document (DOC, DOCX, PPT, PPTX)
+        if (
+          urlLower.endsWith(".doc") ||
+          urlLower.endsWith(".docx") ||
+          urlLower.endsWith(".ppt") ||
+          urlLower.endsWith(".pptx")
+        ) {
+          // Use Google Docs Viewer for Office documents
+          const encodedUrl = encodeURIComponent(material.content_url);
+          return (
+            <Box
+              sx={{
+                width: "100%",
+                height: "800px",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <iframe
+                src={`https://docs.google.com/viewer?url=${encodedUrl}&embedded=true`}
+                title={material.title}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                }}
+              />
+            </Box>
+          );
+        }
+        
         // For other documents, provide download link
         return (
           <Paper sx={{ p: 3, textAlign: "center" }}>

@@ -112,16 +112,10 @@ export default function TeacherApprovalsPage() {
 
   const columns: GridColDef[] = [
     {
-      field: "username",
-      headerName: "Username",
-      flex: 1,
-      minWidth: 150,
-    },
-    {
       field: "full_name",
       headerName: "Full Name",
-      flex: 1,
-      minWidth: 180,
+      flex: 1.5,
+      minWidth: 200,
     },
     {
       field: "email",

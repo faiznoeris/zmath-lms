@@ -37,9 +37,9 @@ const RegisterForm = () => {
   const mutation = useMutation({
     mutationFn: registerApi,
     onSuccess: (data) => {
-      // If teacher needs approval, show message and redirect to login
+      // If teacher needs approval, redirect to login with message
       if (data.needsApproval) {
-        // The success message will be shown in the UI
+        router.push("/login?message=pending_approval");
         return;
       }
       
@@ -106,11 +106,6 @@ const RegisterForm = () => {
         />
         {errors.role && <FormHelperText>{errors.role.message}</FormHelperText>}
       </FormControl>
-      {mutation.isSuccess && mutation.data?.needsApproval && (
-        <Alert severity="info">
-          Registration successful! Your teacher account is pending approval. You will be notified once an admin approves your registration.
-        </Alert>
-      )}
       {mutation.isError && mutation.error instanceof Error && (
         <Alert severity="error">{mutation.error.message}</Alert>
       )}

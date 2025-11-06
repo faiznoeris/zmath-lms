@@ -19,11 +19,14 @@ export const loginApi = async (data: LoginFormInputs) => {
     const role = authData.user.user_metadata?.role as "student" | "teacher" | "admin" | undefined;
     const isApproved = authData.user.user_metadata?.is_approved;
 
-    if (!role) throw new Error("User role not found");
+    if (!role) {
+      await supabase.auth.signOut();
+      throw new Error("User role not found");
+    }
 
-    // Check if teacher is approved
+    // Check if teacher is approved - sign out immediately if not approved
     if (role === "teacher" && isApproved === false) {
-      // Sign out the user
+      // Sign out the user immediately and wait for it to complete
       await supabase.auth.signOut();
       throw new Error("Your teacher account is pending approval. Please wait for admin approval.");
     }
@@ -34,5 +37,6 @@ export const loginApi = async (data: LoginFormInputs) => {
     };
   }
 
+  await supabase.auth.signOut();
   throw new Error("Login failed");
 };

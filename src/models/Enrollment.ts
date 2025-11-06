@@ -13,8 +13,8 @@ export interface CreateEnrollmentInput {
 export interface EnrollmentWithDetails extends Enrollment {
   user?: {
     id: string;
-    username: string;
-    full_name?: string;
+    email: string;
+    full_name: string;
   };
   course?: {
     id: string;

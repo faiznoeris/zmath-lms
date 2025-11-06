@@ -8,8 +8,7 @@ export interface AuthUser {
   id: string;
   email?: string;
   user_metadata: {
-    full_name?: string;
-    username?: string;
+    display_name?: string;
     role?: string;
   };
 }
@@ -127,12 +126,8 @@ export async function fetchEnrollmentsWithDetailsAction(): Promise<{
             user: studentUser
               ? {
                   id: studentUser.id,
-                  email: studentUser.email,
-                  username:
-                    studentUser.user_metadata?.username ||
-                    studentUser.email ||
-                    "Unknown",
-                  full_name: studentUser.user_metadata?.full_name,
+                  email: studentUser.email || "Unknown",
+                  full_name: studentUser.user_metadata?.display_name || "Unknown",
                 }
               : undefined,
           };

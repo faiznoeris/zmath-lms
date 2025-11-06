@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, Card, CardContent } from "@mui/material";
+import { Box, Card, CardContent, Skeleton } from "@mui/material";
 import { useQuizStore } from "@/src/stores";
 import { MathQuestionDisplay, QuizBottomNav } from "@/src/components";
 
@@ -17,10 +17,14 @@ export default function QuizAttemptPage() {
     <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
       <Card>
         <CardContent>
-          <MathQuestionDisplay
-            question={question?.question_text}
-            questionNumber={currentQuestionIndex + 1}
-          />
+          {!!question ? (
+            <MathQuestionDisplay
+              question={question?.question_text}
+              questionNumber={currentQuestionIndex + 1}
+            />
+          ) : (
+            <Skeleton />
+          )}
           {/* You can render answer options here */}
         </CardContent>
       </Card>

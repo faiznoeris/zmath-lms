@@ -16,19 +16,15 @@ export default function QuizLayout({
   const { id: questionsId } = useParams();
   const { setQuiz } = useQuizStore();
 
-  // Fetch quiz question
-  const {
-    data: questionsData,
-    isLoading: questionsLoading,
-    error: questionsError,
-  } = useQuery({
+  // Fetch quiz with question
+  const { data: quizQuestionsData, error: quizQuestionsError } = useQuery({
     queryKey: ["questions", questionsId],
     queryFn: async () => {
       if (typeof questionsId !== "string") {
         return Promise.reject(new Error("Invalid ID"));
       }
       const result = await fetchQuizWithQuestions(questionsId);
-      if (!result.success) throw new Error(result.error);
+      if (quizQuestionsError) throw new Error(result.error);
 
       return result.data;
     },
@@ -36,11 +32,11 @@ export default function QuizLayout({
   });
 
   React.useEffect(() => {
-    if (!!questionsData) {
-      setQuiz(questionsData);
+    if (!!quizQuestionsData) {
+      setQuiz(quizQuestionsData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionsData]);
+  }, [quizQuestionsData]);
 
   return (
     <Box

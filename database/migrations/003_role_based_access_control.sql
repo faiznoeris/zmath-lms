@@ -18,8 +18,10 @@ DROP POLICY IF EXISTS "Authenticated users can create courses" ON courses;
 DROP POLICY IF EXISTS "Course creators can update their own courses" ON courses;
 DROP POLICY IF EXISTS "Course creators can delete their own courses" ON courses;
 DROP POLICY IF EXISTS "Teachers and Admins can view all courses" ON courses;
+DROP POLICY IF EXISTS "Teachers and Admins can create courses" ON courses;
 DROP POLICY IF EXISTS "Teachers and Admins can update courses" ON courses;
 DROP POLICY IF EXISTS "Teachers and Admins can delete courses" ON courses;
+DROP POLICY IF EXISTS "Students can view all courses" ON courses;
 
 -- Drop ALL existing enrollment policies
 DROP POLICY IF EXISTS "Users can view their own enrollments" ON enrollments;
@@ -29,6 +31,10 @@ DROP POLICY IF EXISTS "Course creators can enroll students" ON enrollments;
 DROP POLICY IF EXISTS "Users can unenroll from courses" ON enrollments;
 DROP POLICY IF EXISTS "Course creators can unenroll students" ON enrollments;
 DROP POLICY IF EXISTS "Teachers and Admins can view all enrollments" ON enrollments;
+DROP POLICY IF EXISTS "Teachers and Admins can create enrollments" ON enrollments;
+DROP POLICY IF EXISTS "Teachers and Admins can update enrollments" ON enrollments;
+DROP POLICY IF EXISTS "Teachers and Admins can delete enrollments" ON enrollments;
+DROP POLICY IF EXISTS "Students can view their own enrollments" ON enrollments;
 DROP POLICY IF EXISTS "Students can unenroll from courses" ON enrollments;
 
 -- Drop ALL existing lessons policies
@@ -38,8 +44,10 @@ DROP POLICY IF EXISTS "Course creators can create lessons" ON lessons;
 DROP POLICY IF EXISTS "Course creators can update their course lessons" ON lessons;
 DROP POLICY IF EXISTS "Course creators can delete their course lessons" ON lessons;
 DROP POLICY IF EXISTS "Teachers and Admins can view all lessons" ON lessons;
+DROP POLICY IF EXISTS "Teachers and Admins can create lessons" ON lessons;
 DROP POLICY IF EXISTS "Teachers and Admins can update lessons" ON lessons;
 DROP POLICY IF EXISTS "Teachers and Admins can delete lessons" ON lessons;
+DROP POLICY IF EXISTS "Students can view all lessons" ON lessons;
 
 -- Drop ALL existing material policies
 DROP POLICY IF EXISTS "Anyone can view materials" ON materials;
@@ -48,8 +56,10 @@ DROP POLICY IF EXISTS "Authenticated users can create materials" ON materials;
 DROP POLICY IF EXISTS "Authenticated users can update materials" ON materials;
 DROP POLICY IF EXISTS "Authenticated users can delete materials" ON materials;
 DROP POLICY IF EXISTS "Teachers and Admins can view all materials" ON materials;
+DROP POLICY IF EXISTS "Teachers and Admins can create materials" ON materials;
 DROP POLICY IF EXISTS "Teachers and Admins can update materials" ON materials;
 DROP POLICY IF EXISTS "Teachers and Admins can delete materials" ON materials;
+DROP POLICY IF EXISTS "Students can view all materials" ON materials;
 
 -- Drop ALL existing quiz policies
 DROP POLICY IF EXISTS "Anyone can view quizzes" ON quizzes;
@@ -58,8 +68,10 @@ DROP POLICY IF EXISTS "Authenticated users can create quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Authenticated users can update quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Authenticated users can delete quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Teachers and Admins can view all quizzes" ON quizzes;
+DROP POLICY IF EXISTS "Teachers and Admins can create quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Teachers and Admins can update quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Teachers and Admins can delete quizzes" ON quizzes;
+DROP POLICY IF EXISTS "Students can view all quizzes" ON quizzes;
 
 -- Drop ALL existing question policies
 DROP POLICY IF EXISTS "Anyone can view questions" ON questions;
@@ -68,8 +80,10 @@ DROP POLICY IF EXISTS "Authenticated users can create questions" ON questions;
 DROP POLICY IF EXISTS "Authenticated users can update questions" ON questions;
 DROP POLICY IF EXISTS "Authenticated users can delete questions" ON questions;
 DROP POLICY IF EXISTS "Teachers and Admins can view all questions" ON questions;
+DROP POLICY IF EXISTS "Teachers and Admins can create questions" ON questions;
 DROP POLICY IF EXISTS "Teachers and Admins can update questions" ON questions;
 DROP POLICY IF EXISTS "Teachers and Admins can delete questions" ON questions;
+DROP POLICY IF EXISTS "Students can view all questions" ON questions;
 
 -- Drop ALL existing submission policies
 DROP POLICY IF EXISTS "Users can view their own submissions" ON submissions;
@@ -77,7 +91,9 @@ DROP POLICY IF EXISTS "Admins have full access to submissions" ON submissions;
 DROP POLICY IF EXISTS "Users can create submissions" ON submissions;
 DROP POLICY IF EXISTS "Course creators can view submissions for their quizzes" ON submissions;
 DROP POLICY IF EXISTS "Teachers and Admins can view all submissions" ON submissions;
+DROP POLICY IF EXISTS "Teachers and Admins can create submissions" ON submissions;
 DROP POLICY IF EXISTS "Students can create submissions" ON submissions;
+DROP POLICY IF EXISTS "Students can view their own submissions" ON submissions;
 DROP POLICY IF EXISTS "Students can update their own submissions" ON submissions;
 DROP POLICY IF EXISTS "Teachers and Admins can update submissions" ON submissions;
 
@@ -87,7 +103,9 @@ DROP POLICY IF EXISTS "Admins have full access to results" ON results;
 DROP POLICY IF EXISTS "System can insert results" ON results;
 DROP POLICY IF EXISTS "Course creators can view results for their quizzes" ON results;
 DROP POLICY IF EXISTS "Teachers and Admins can view all results" ON results;
+DROP POLICY IF EXISTS "Teachers and Admins can create results" ON results;
 DROP POLICY IF EXISTS "Students can insert results" ON results;
+DROP POLICY IF EXISTS "Students can view their own results" ON results;
 DROP POLICY IF EXISTS "Students can update their own results" ON results;
 DROP POLICY IF EXISTS "Teachers and Admins can update results" ON results;
 
@@ -111,6 +129,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE POLICY "Teachers and Admins can view all courses"
 ON courses FOR SELECT USING (is_admin_or_teacher());
 
+-- Teachers and Admins can create courses
+CREATE POLICY "Teachers and Admins can create courses"
+ON courses FOR INSERT WITH CHECK (is_admin_or_teacher());
+
 -- Teachers and Admins can update courses
 CREATE POLICY "Teachers and Admins can update courses"
 ON courses FOR UPDATE USING (
@@ -123,6 +145,12 @@ ON courses FOR DELETE USING (
   is_admin_or_teacher() OR auth.uid() = user_id
 );
 
+-- Students can view all courses
+CREATE POLICY "Students can view all courses"
+ON courses FOR SELECT USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
+
 -- ===============================
 -- ENROLLMENTS POLICIES
 -- ===============================
@@ -130,6 +158,25 @@ ON courses FOR DELETE USING (
 -- Teachers and Admins can view all enrollments
 CREATE POLICY "Teachers and Admins can view all enrollments"
 ON enrollments FOR SELECT USING (is_admin_or_teacher());
+
+-- Teachers and Admins can create enrollments
+CREATE POLICY "Teachers and Admins can create enrollments"
+ON enrollments FOR INSERT WITH CHECK (is_admin_or_teacher());
+
+-- Teachers and Admins can update enrollments
+CREATE POLICY "Teachers and Admins can update enrollments"
+ON enrollments FOR UPDATE USING (is_admin_or_teacher());
+
+-- Teachers and Admins can delete enrollments
+CREATE POLICY "Teachers and Admins can delete enrollments"
+ON enrollments FOR DELETE USING (is_admin_or_teacher());
+
+-- Students can view their own enrollments
+CREATE POLICY "Students can view their own enrollments"
+ON enrollments FOR SELECT USING (
+  auth.uid() = user_id AND 
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- Students can unenroll themselves
 CREATE POLICY "Students can unenroll from courses"
@@ -146,6 +193,10 @@ ON enrollments FOR DELETE USING (
 CREATE POLICY "Teachers and Admins can view all lessons"
 ON lessons FOR SELECT USING (is_admin_or_teacher());
 
+-- Teachers and Admins can create lessons
+CREATE POLICY "Teachers and Admins can create lessons"
+ON lessons FOR INSERT WITH CHECK (is_admin_or_teacher());
+
 -- Teachers and Admins can update lessons
 CREATE POLICY "Teachers and Admins can update lessons"
 ON lessons FOR UPDATE USING (is_admin_or_teacher());
@@ -153,6 +204,12 @@ ON lessons FOR UPDATE USING (is_admin_or_teacher());
 -- Teachers and Admins can delete lessons
 CREATE POLICY "Teachers and Admins can delete lessons"
 ON lessons FOR DELETE USING (is_admin_or_teacher());
+
+-- Students can view all lessons
+CREATE POLICY "Students can view all lessons"
+ON lessons FOR SELECT USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- ===============================
 -- MATERIALS POLICIES
@@ -162,6 +219,10 @@ ON lessons FOR DELETE USING (is_admin_or_teacher());
 CREATE POLICY "Teachers and Admins can view all materials"
 ON materials FOR SELECT USING (is_admin_or_teacher());
 
+-- Teachers and Admins can create materials
+CREATE POLICY "Teachers and Admins can create materials"
+ON materials FOR INSERT WITH CHECK (is_admin_or_teacher());
+
 -- Teachers and Admins can update materials
 CREATE POLICY "Teachers and Admins can update materials"
 ON materials FOR UPDATE USING (is_admin_or_teacher());
@@ -169,6 +230,12 @@ ON materials FOR UPDATE USING (is_admin_or_teacher());
 -- Teachers and Admins can delete materials
 CREATE POLICY "Teachers and Admins can delete materials"
 ON materials FOR DELETE USING (is_admin_or_teacher());
+
+-- Students can view all materials
+CREATE POLICY "Students can view all materials"
+ON materials FOR SELECT USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- ===============================
 -- QUIZZES POLICIES
@@ -178,6 +245,10 @@ ON materials FOR DELETE USING (is_admin_or_teacher());
 CREATE POLICY "Teachers and Admins can view all quizzes"
 ON quizzes FOR SELECT USING (is_admin_or_teacher());
 
+-- Teachers and Admins can create quizzes
+CREATE POLICY "Teachers and Admins can create quizzes"
+ON quizzes FOR INSERT WITH CHECK (is_admin_or_teacher());
+
 -- Teachers and Admins can update quizzes
 CREATE POLICY "Teachers and Admins can update quizzes"
 ON quizzes FOR UPDATE USING (is_admin_or_teacher());
@@ -185,6 +256,12 @@ ON quizzes FOR UPDATE USING (is_admin_or_teacher());
 -- Teachers and Admins can delete quizzes
 CREATE POLICY "Teachers and Admins can delete quizzes"
 ON quizzes FOR DELETE USING (is_admin_or_teacher());
+
+-- Students can view all quizzes
+CREATE POLICY "Students can view all quizzes"
+ON quizzes FOR SELECT USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- ===============================
 -- QUESTIONS POLICIES
@@ -194,6 +271,10 @@ ON quizzes FOR DELETE USING (is_admin_or_teacher());
 CREATE POLICY "Teachers and Admins can view all questions"
 ON questions FOR SELECT USING (is_admin_or_teacher());
 
+-- Teachers and Admins can create questions
+CREATE POLICY "Teachers and Admins can create questions"
+ON questions FOR INSERT WITH CHECK (is_admin_or_teacher());
+
 -- Teachers and Admins can update questions
 CREATE POLICY "Teachers and Admins can update questions"
 ON questions FOR UPDATE USING (is_admin_or_teacher());
@@ -202,6 +283,12 @@ ON questions FOR UPDATE USING (is_admin_or_teacher());
 CREATE POLICY "Teachers and Admins can delete questions"
 ON questions FOR DELETE USING (is_admin_or_teacher());
 
+-- Students can view all questions
+CREATE POLICY "Students can view all questions"
+ON questions FOR SELECT USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
+
 -- ===============================
 -- SUBMISSIONS POLICIES
 -- ===============================
@@ -209,6 +296,17 @@ ON questions FOR DELETE USING (is_admin_or_teacher());
 -- Teachers and Admins can view all submissions
 CREATE POLICY "Teachers and Admins can view all submissions"
 ON submissions FOR SELECT USING (is_admin_or_teacher());
+
+-- Teachers and Admins can create submissions
+CREATE POLICY "Teachers and Admins can create submissions"
+ON submissions FOR INSERT WITH CHECK (is_admin_or_teacher());
+
+-- Students can view their own submissions
+CREATE POLICY "Students can view their own submissions"
+ON submissions FOR SELECT USING (
+  auth.uid() = user_id AND
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- Students can create their own submissions
 CREATE POLICY "Students can create submissions"
@@ -235,6 +333,17 @@ ON submissions FOR UPDATE USING (is_admin_or_teacher());
 -- Teachers and Admins can view all results
 CREATE POLICY "Teachers and Admins can view all results"
 ON results FOR SELECT USING (is_admin_or_teacher());
+
+-- Teachers and Admins can create results
+CREATE POLICY "Teachers and Admins can create results"
+ON results FOR INSERT WITH CHECK (is_admin_or_teacher());
+
+-- Students can view their own results
+CREATE POLICY "Students can view their own results"
+ON results FOR SELECT USING (
+  auth.uid() = user_id AND
+  (auth.jwt() -> 'user_metadata' ->> 'role') = 'student'
+);
 
 -- Students can insert their own results
 CREATE POLICY "Students can insert results"

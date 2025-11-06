@@ -4,15 +4,13 @@ import { createAdminClient } from "@/src/utils/supabase/admin";
 
 interface UserMetadata {
   role?: string;
-  username?: string;
-  full_name?: string;
+  display_name?: string;
   is_approved?: boolean;
 }
 
 export interface PendingTeacher {
   id: string;
   email: string;
-  username: string;
   full_name: string;
   created_at: string;
 }
@@ -54,8 +52,7 @@ export async function fetchPendingTeachersAction(): Promise<{
         return {
           id: user.id,
           email: user.email || "",
-          username: metadata?.username || "",
-          full_name: metadata?.full_name || "",
+          full_name: metadata?.display_name || "N/A",
           created_at: user.created_at,
         };
       });

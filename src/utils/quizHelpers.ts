@@ -48,3 +48,79 @@ export const formatCountdownTime = (milliseconds: number) => {
 
   return `${paddedMinutes}:${paddedSeconds}`;
 };
+
+/**
+ * Defines the structure of the quiz attempt state stored in localStorage.
+ */
+export interface QuizAttemptState {
+  attemptId: string;
+  timeRemaining: number; // Time remaining in milliseconds
+  timestamp: number; // The UNIX timestamp (Date.now()) when the state was saved
+}
+
+/**
+ * Generates a unique key for storing quiz attempt state in localStorage.
+ * @param attemptId The unique identifier for the quiz submission.
+ * @returns A string to be used as a localStorage key.
+ */
+const getStorageKey = (attemptId: string): string =>
+  `quiz-attempt-${attemptId}`;
+
+/**
+ * Saves the current state of a quiz attempt to localStorage.
+ * @param attemptId The unique identifier for the quiz submission.
+ * @param timeRemaining The time remaining in the quiz, in milliseconds.
+ */
+export function saveQuizAttemptState(
+  attemptId: string,
+  timeRemaining: number
+): void {
+  // Ensure this code only runs on the client where localStorage is available
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const state: QuizAttemptState = {
+      attemptId,
+      timeRemaining,
+      timestamp: Date.now(),
+    };
+    const storageKey = getStorageKey(attemptId);
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save quiz attempt state to localStorage:", error);
+  }
+}
+
+/**
+ * Loads the saved state of a quiz attempt from localStorage.
+ * @param attemptId The unique identifier for the quiz submission.
+ * @returns The saved QuizAttemptState object, or null if not found or invalid.
+ */
+export function loadQuizAttemptState(
+  attemptId: string
+): QuizAttemptState | null {
+  // Ensure this code only runs on the client
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const storageKey = getStorageKey(attemptId);
+    const savedStateJSON = localStorage.getItem(storageKey);
+
+    if (!savedStateJSON) {
+      return null;
+    }
+
+    const savedState = JSON.parse(savedStateJSON);
+    return savedState;
+  } catch (error) {
+    console.error(
+      "Failed to load quiz attempt state from localStorage:",
+      error
+    );
+    return null;
+  }
+}

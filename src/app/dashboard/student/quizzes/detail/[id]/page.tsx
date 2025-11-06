@@ -36,10 +36,12 @@ import {
 import { Result } from "@/src/models/Result";
 import { formatDate } from "@/src/utils/dateFormat";
 import { getResultStatus } from "@/src/utils/quizHelpers";
+import { useQuizStore } from "@/src/stores";
 
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { setAttemptId } = useQuizStore();
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -99,12 +101,13 @@ export default function QuizDetailPage() {
       startTime
     );
 
-    if (initializeQuiz.success) {
+    if (initializeQuiz.success && typeof initializeQuiz.data === "string") {
+      setAttemptId(initializeQuiz.data);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(
         "Failed to initialize quiz submission:",
-        initializeQuiz.error
+        initializeQuiz.error || "No attempt ID returned"
       );
     }
   };

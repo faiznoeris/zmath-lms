@@ -16,7 +16,11 @@ export interface LoginFormInputs {
   password: string;
 }
 
-const LoginForm = () => {
+interface LoginFormProps {
+  message?: string | null;
+}
+
+const LoginForm = ({ message }: LoginFormProps) => {
   const router = useRouter();
 
   const {
@@ -48,6 +52,11 @@ const LoginForm = () => {
   return (
     <form className={styles.registerForm} onSubmit={handleSubmit(onSubmit)}>
       <h2 className={styles.title}>Selamat Datang Kembali!</h2>
+      {message === "pending_approval" && (
+        <Alert severity="info">
+          Registration successful! Your teacher account is pending admin approval.
+        </Alert>
+      )}
       <TextField
         error={!!errors.email}
         label="Email"

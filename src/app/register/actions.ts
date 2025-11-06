@@ -26,8 +26,11 @@ export const registerApi = async (data: RegisterFormInputs) => {
 
   if (signUpError) throw new Error(signUpError.message);
 
-  // If the user is a teacher (not approved), don't auto-login
+  // If the user is a teacher (not approved), sign them out and don't auto-login
   if (role === "teacher") {
+    // Sign out the user since they need approval
+    await supabase.auth.signOut();
+    
     return {
       userId: null,
       role: role,

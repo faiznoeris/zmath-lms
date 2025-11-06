@@ -21,18 +21,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import {
-  fetchPendingTeachers,
-  approveTeacher,
-  rejectTeacher,
-} from "@/src/services/user.service";
-
-interface PendingTeacher {
-  id: string;
-  email: string;
-  username: string;
-  full_name: string;
-  created_at: string;
-}
+  fetchPendingTeachersAction,
+  approveTeacherAction,
+  rejectTeacherAction,
+  PendingTeacher,
+} from "./actions";
 
 export default function TeacherApprovalsPage() {
   const router = useRouter();
@@ -44,7 +37,7 @@ export default function TeacherApprovalsPage() {
 
   const fetchTeachers = async () => {
     try {
-      const result = await fetchPendingTeachers();
+      const result = await fetchPendingTeachersAction();
       if (result.success && result.data) {
         setTeachers(result.data);
       } else {
@@ -83,7 +76,7 @@ export default function TeacherApprovalsPage() {
     setSuccess(null);
 
     try {
-      const result = await approveTeacher(userId);
+      const result = await approveTeacherAction(userId);
       if (result.success) {
         setSuccess("Teacher approved successfully!");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));
@@ -103,7 +96,7 @@ export default function TeacherApprovalsPage() {
     setSuccess(null);
 
     try {
-      const result = await rejectTeacher(userId);
+      const result = await rejectTeacherAction(userId);
       if (result.success) {
         setSuccess("Teacher registration rejected");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));

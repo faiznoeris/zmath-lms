@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUserRole } from "@/src/utils/auth";
 import styles from "../dashboard.module.css";
 
@@ -17,8 +18,8 @@ export default function AdminDashboard() {
         return;
       }
       
-      // Only allow teachers and admins
-      if (role === 'student') {
+      // Only allow teachers
+      if (role !== 'teacher') {
         router.push('/dashboard');
         return;
       }
@@ -49,26 +50,30 @@ export default function AdminDashboard() {
         <section className={styles.section}>
           <h2>Teacher Actions</h2>
           <div className={styles.quickLinks}>
-            <a href="/dashboard/teacher/courses" className={styles.card}>
+            <Link href="/dashboard/teacher/courses" className={styles.card}>
               <span>🎓</span>
               <div>Create & Manage Courses</div>
-            </a>
-            <a href="/dashboard/teacher/lessons" className={styles.card}>
+            </Link>
+            <Link href="/dashboard/teacher/lessons" className={styles.card}>
               <span>📖</span>
               <div>Create & Manage Lessons</div>
-            </a>
-            <a href="/dashboard/teacher/materials" className={styles.card}>
+            </Link>
+            <Link href="/dashboard/teacher/materials" className={styles.card}>
               <span>📚</span>
               <div>Upload & Manage Materials</div>
-            </a>
-            <a href="/dashboard/teacher/quizzes" className={styles.card}>
+            </Link>
+            <Link href="/dashboard/teacher/quizzes" className={styles.card}>
               <span>📝</span>
               <div>Create & Manage Quizzes</div>
-            </a>
-            <a href="/dashboard/teacher/enrollments" className={styles.card}>
+            </Link>
+            <Link href="/dashboard/teacher/submissions" className={styles.card}>
+              <span>✍️</span>
+              <div>Review Submissions</div>
+            </Link>
+            <Link href="/dashboard/teacher/enrollments" className={styles.card}>
               <span>👥</span>
               <div>Student Enrollments</div>
-            </a>
+            </Link>
           </div>
         </section>
       </main>

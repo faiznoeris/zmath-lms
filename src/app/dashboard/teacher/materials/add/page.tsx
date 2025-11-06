@@ -17,12 +17,10 @@ import {
   CircularProgress,
   FormControl,
   InputLabel,
-  Breadcrumbs,
-  Link,
   FormHelperText,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Material } from "@/src/models/Material";
 import { detectMaterialType } from "@/src/utils/materialHelpers";
 import { formatYouTubeUrl } from "@/src/utils/youtube";
@@ -163,31 +161,13 @@ export default function AdminMaterialsPage() {
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: 3 }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs 
-        separator={<NavigateNextIcon fontSize="small" />} 
-        sx={{ mb: 3 }}
-        aria-label="breadcrumb"
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher/materials"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Materials
-        </Link>
-        <Typography color="text.primary" sx={{ display: "flex", alignItems: "center" }}>
-          Add
-        </Typography>
-      </Breadcrumbs>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Materials", href: "/dashboard/teacher/materials" },
+          { label: "Add" },
+        ]}
+      />
 
       <Box sx={{ mb: 4, textAlign: "center" }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>

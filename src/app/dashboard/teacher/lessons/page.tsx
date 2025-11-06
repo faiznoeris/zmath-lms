@@ -7,8 +7,6 @@ import {
   Box,
   Typography,
   Button,
-  Breadcrumbs,
-  Link,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -19,11 +17,11 @@ import {
   Skeleton,
   IconButton,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 export default function LessonsPage() {
@@ -161,22 +159,11 @@ export default function LessonsPage() {
     <Box sx={{ maxWidth: 1400, mx: "auto", p: 3 }}>
       {/* Breadcrumbs */}
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        sx={{ mb: 3 }}
-        aria-label="breadcrumb"
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Typography color="text.primary" sx={{ display: "flex", alignItems: "center" }}>
-          Lessons
-        </Typography>
-      </Breadcrumbs>
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Lessons" },
+        ]}
+      />
 
       {/* Header */}
       <Box

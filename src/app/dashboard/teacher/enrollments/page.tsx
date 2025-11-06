@@ -90,8 +90,8 @@ export default function EnrollmentsPage() {
         user: student
           ? {
               id: student.id,
-              username: student.user_metadata.username || student.email || "Unknown",
-              full_name: student.user_metadata.full_name,
+              email: student.email || "Unknown",
+              full_name: student.user_metadata.display_name || "Unknown",
             }
           : undefined,
       };
@@ -132,8 +132,8 @@ export default function EnrollmentsPage() {
     const grouped = new Map<string, {
       student: {
         id: string;
-        username: string;
-        full_name?: string;
+        email: string;
+        full_name: string;
       };
       enrollments: EnrollmentWithDetails[];
     }>();
@@ -211,24 +211,18 @@ export default function EnrollmentsPage() {
 
   const columns: GridColDef[] = [
     {
-      field: "username",
-      headerName: "Username",
-      width: 150,
-      valueGetter: (value, row) => row.student.username,
-    },
-    {
       field: "full_name",
       headerName: "Full Name",
-      flex: 1,
-      minWidth: 180,
-      valueGetter: (value, row) => row.student.full_name || "-",
+      flex: 1.5,
+      minWidth: 200,
+      valueGetter: (value, row) => row.student.full_name,
     },
     {
       field: "email",
       headerName: "Email",
-      flex: 1,
-      minWidth: 200,
-      valueGetter: (value, row) => row.student.username + "@zmath.com",
+      flex: 1.5,
+      minWidth: 220,
+      valueGetter: (value, row) => row.student.email,
     },
     {
       field: "courses",
@@ -371,7 +365,7 @@ export default function EnrollmentsPage() {
               >
                 {students.map((student) => (
                   <MenuItem key={student.id} value={student.id}>
-                    {student.user_metadata.full_name || student.user_metadata.username || student.email} ({student.email})
+                    {student.user_metadata.display_name || student.email} ({student.email})
                   </MenuItem>
                 ))}
               </Select>

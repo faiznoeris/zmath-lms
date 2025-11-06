@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/src/stores";
 
@@ -8,7 +8,7 @@ import LoginForm from "./LoginForm/LoginForm.component";
 
 import styles from "./login.module.css";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn } = useAuthStore();
@@ -29,5 +29,13 @@ export default function LoginPage() {
     <div className={styles.loginContainer}>
       <LoginForm message={message} />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className={styles.loginContainer}>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

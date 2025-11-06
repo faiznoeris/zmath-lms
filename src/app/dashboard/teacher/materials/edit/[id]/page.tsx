@@ -231,7 +231,7 @@ export default function EditMaterialPage() {
         <Link
           underline="hover"
           color="inherit"
-          href="/dashboard/teacher"
+          href="/dashboard"
           sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
         >
           Dashboard

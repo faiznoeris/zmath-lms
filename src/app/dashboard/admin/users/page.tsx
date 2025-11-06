@@ -19,17 +19,9 @@ import {
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import { fetchAllUsers } from "@/src/services/user.service";
+import { fetchAllUsersAction, FormattedUser } from "./actions";
 
-interface UserData {
-  id: string;
-  email: string;
-  username: string;
-  full_name: string;
-  role: string;
-  is_approved: boolean | null;
-  created_at: string;
-}
+type UserData = FormattedUser;
 
 export default function UsersPage() {
   const router = useRouter();
@@ -54,7 +46,7 @@ export default function UsersPage() {
       }
 
       try {
-        const result = await fetchAllUsers();
+        const result = await fetchAllUsersAction();
         if (result.success && result.data) {
           setUsers(result.data);
           setFilteredUsers(result.data);

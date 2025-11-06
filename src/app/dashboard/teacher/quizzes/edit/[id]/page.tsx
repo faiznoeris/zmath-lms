@@ -20,17 +20,15 @@ import {
   CardContent,
   Alert,
   CircularProgress,
-  Breadcrumbs,
-  Link,
   IconButton,
   Skeleton,
   FormHelperText,
   Stack,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import QuizIcon from "@mui/icons-material/Quiz";
 
 interface QuestionInput {
@@ -205,29 +203,13 @@ export default function EditQuizPage() {
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: { xs: 2, md: 3 } }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs 
-        separator={<NavigateNextIcon fontSize="small" />} 
-        sx={{ mb: 3 }}
-        aria-label="breadcrumb"
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher/quizzes"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Quizzes
-        </Link>
-        <Typography color="text.primary">Edit</Typography>
-      </Breadcrumbs>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Quizzes", href: "/dashboard/teacher/quizzes" },
+          { label: "Edit" },
+        ]}
+      />
 
       {/* Header */}
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>

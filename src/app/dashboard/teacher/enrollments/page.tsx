@@ -5,8 +5,6 @@ import {
   Box,
   Typography,
   Button,
-  Breadcrumbs,
-  Link,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,18 +21,17 @@ import {
   OutlinedInput,
   SelectChangeEvent,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import {
   fetchEnrollments,
   createEnrollment,
   deleteEnrollment,
-  fetchStudents,
-  AuthUser,
 } from "../../../../services/enrollment.service";
+import { fetchStudentsAction, AuthUser } from "./actions";
 import { fetchCourses } from "../../../../services/course.service";
 import { EnrollmentWithDetails } from "../../../../models/Enrollment";
 import { CreateEnrollmentInput } from "@/src/models/Enrollment";
@@ -64,7 +61,7 @@ export default function EnrollmentsPage() {
   const { data: students = [] } = useQuery<AuthUser[]>({
     queryKey: ["students"],
     queryFn: async () => {
-      const result = await fetchStudents();
+      const result = await fetchStudentsAction();
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch students");
       }
@@ -275,19 +272,11 @@ export default function EnrollmentsPage() {
     <Box sx={{ maxWidth: 1400, mx: "auto", p: 3 }}>
       {/* Breadcrumbs */}
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        sx={{ mb: 3 }}
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Typography color="text.primary">Student Enrollments</Typography>
-      </Breadcrumbs>
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Student Enrollments" },
+        ]}
+      />
 
       {/* Header */}
       <Box

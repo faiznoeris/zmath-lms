@@ -14,16 +14,14 @@ import {
   CardContent,
   Alert,
   CircularProgress,
-  Breadcrumbs,
-  Link,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import SaveIcon from "@mui/icons-material/Save";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { CreateLessonInput } from "../../../../../models/Lesson";
 
 export default function AddLessonPage() {
@@ -62,30 +60,12 @@ export default function AddLessonPage() {
     <Box sx={{ maxWidth: 800, mx: "auto", p: 3 }}>
       {/* Breadcrumbs */}
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        sx={{ mb: 3 }}
-        aria-label="breadcrumb"
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher/lessons"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Lessons
-        </Link>
-        <Typography color="text.primary" sx={{ display: "flex", alignItems: "center" }}>
-          Add
-        </Typography>
-      </Breadcrumbs>
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Lessons", href: "/dashboard/teacher/lessons" },
+          { label: "Add" },
+        ]}
+      />
 
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: "center" }}>

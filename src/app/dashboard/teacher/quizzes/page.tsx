@@ -15,14 +15,12 @@ import {
   DialogActions,
   Alert,
   CircularProgress,
-  Breadcrumbs,
-  Link,
 } from "@mui/material";
+import { Breadcrumbs } from "@/src/components";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import QuizIcon from "@mui/icons-material/Quiz";
 import { Quiz } from "@/src/models/Quiz";
 
@@ -224,23 +222,12 @@ export default function QuizzesListPage() {
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", p: 3 }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs 
-        separator={<NavigateNextIcon fontSize="small" />} 
-        sx={{ mb: 3 }}
-        aria-label="breadcrumb"
-      >
-        <Link
-          underline="hover"
-          color="inherit"
-          href="/dashboard/teacher"
-          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        >
-          Dashboard
-        </Link>
-        <Typography color="text.primary" sx={{ display: "flex", alignItems: "center" }}>
-          Quizzes
-        </Typography>
-      </Breadcrumbs>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Quizzes" },
+        ]}
+      />
 
       {/* Header */}
       <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>

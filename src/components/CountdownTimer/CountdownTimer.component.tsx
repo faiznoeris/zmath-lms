@@ -1,5 +1,7 @@
 import React from "react";
+import { Box, Typography } from "@mui/material";
 import { useCountdownTimer } from "use-countdown-timer";
+import { formatCountdownTime } from "@/src/utils/quizHelpers";
 
 interface CountdownTimerParams {
   timeLimitInSeconds: number;
@@ -12,9 +14,15 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
   });
 
   return (
-    <div>
-      <div>{countdown}</div>
-    </div>
+    <Box>
+      <Typography
+        variant="h6"
+        component="div"
+        sx={{ minWidth: "70px", textAlign: "center" }}
+      >
+        {formatCountdownTime(countdown)}
+      </Typography>
+    </Box>
   );
 };
 

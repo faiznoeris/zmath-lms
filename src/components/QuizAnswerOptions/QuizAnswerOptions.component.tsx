@@ -6,12 +6,24 @@ import {
   Radio,
   Skeleton,
 } from "@mui/material";
+import { updateUserAnswerState } from "@/src/services/quiz.service";
 
 interface QuizAnswerOptionsProps {
+  attemptId: string;
+  questionId: string;
   options: (string | undefined)[];
 }
 
-const QuizAnswerOptions = ({ options }: QuizAnswerOptionsProps) => {
+const QuizAnswerOptions = ({
+  attemptId,
+  questionId,
+  options,
+}: QuizAnswerOptionsProps) => {
+  const handleUserAnswer = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedAnswer = event.target.value;
+    updateUserAnswerState(attemptId, questionId, selectedAnswer);
+  };
+
   return (
     <FormControl>
       <RadioGroup
@@ -26,6 +38,7 @@ const QuizAnswerOptions = ({ options }: QuizAnswerOptionsProps) => {
               value={option}
               control={<Radio />}
               label={option}
+              onChange={handleUserAnswer}
             />
           ) : (
             // If the option is undefined, render a Skeleton

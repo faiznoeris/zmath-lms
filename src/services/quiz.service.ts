@@ -339,11 +339,13 @@ export async function fetchMyQuizResults(
  * Initialize Quiz Submission
  */
 export async function initializeQuizSubmission(
+  id: string,
   quizId: string,
+  questionId: string,
   started_at: Date,
   time_remaining: number,
   last_sync_at: Date
-): Promise<{ success: boolean; data?: string; error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createClient();
 
@@ -355,25 +357,23 @@ export async function initializeQuizSubmission(
       return { success: false, error: "User not authenticated" };
     }
 
-    const { data, error } = await supabase
-      .from("submissions")
-      .insert([
-        {
-          user_id: user?.id,
-          quiz_id: quizId,
-          started_at,
-          time_remaining,
-          last_sync_at,
-        },
-      ])
-      .select("id");
+    const { data, error } = await supabase.from("submissions").insert([
+      {
+        id: id,
+        user_id: user?.id,
+        quiz_id: quizId,
+        question_id: questionId,
+        started_at,
+        time_remaining,
+        last_sync_at,
+      },
+    ]);
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    const { id: attemptId } = data[0];
-    return { success: true, data: attemptId };
+    return { success: true };
   } catch (error) {
     console.error(error);
     return { success: false, error: "An unexpected error occurred" };
@@ -400,6 +400,38 @@ export async function updateQuizAttemptState(
     }
 
     return { success: true, data };
+  } catch (error) {
+    console.error("Error updating quiz attempt state:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+export async function updateUserAnswerState(
+  attemptId: string,
+  questionId: string,
+  userAnswer: string
+  // timeRemaining: number,
+  // lastSyncAt: Date
+) {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("submissions")
+      .upsert(
+        {
+          // id: attemptId,
+          question_id: questionId,
+          user_id: user?.id,
+          selected_answer: userAnswer,
+        },
+        { onConflict: "id, question_id" }
+      )
+      .select();
   } catch (error) {
     console.error("Error updating quiz attempt state:", error);
     return { success: false, error: "An unexpected error occurred" };

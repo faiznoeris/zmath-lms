@@ -8,21 +8,19 @@ import {
   QuizBottomNav,
   QuizAnswerOptions,
   ModalComponent,
+  FileUpload,
 } from "@/src/components";
 
 export default function QuizAttemptPage() {
-  const { quiz, currentQuestionIndex } = useQuizStore();
+  const { quiz, currentQuestionIndex, attemptId } = useQuizStore();
   const question = quiz?.questions?.[currentQuestionIndex];
   const questionType = question?.question_type;
-  const answerOptions =
-    question && questionType === "multiple_choice"
-      ? [
-          question.option_a,
-          question.option_b,
-          question.option_c,
-          question.option_d,
-        ]
-      : null;
+  const answerOptions = [
+    question?.option_a,
+    question?.option_b,
+    question?.option_c,
+    question?.option_d,
+  ];
   const [isModalOpen, setModalOpen] = React.useState(false);
 
   const handleModal = () => {
@@ -67,10 +65,14 @@ export default function QuizAttemptPage() {
             question={question?.question_text}
             questionNumber={currentQuestionIndex + 1}
           />
-          {answerOptions ? (
-            <QuizAnswerOptions options={answerOptions} />
+          {questionType === "multiple_choice" ? (
+            <QuizAnswerOptions
+              attemptId={attemptId}
+              questionId={question.id}
+              options={answerOptions}
+            />
           ) : (
-            "upload essay answer"
+            <FileUpload items="Upload jawaban anda" acceptedFile="image/*" />
           )}
         </CardContent>
       </Card>

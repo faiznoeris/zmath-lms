@@ -15,11 +15,10 @@ export const useQuizStore = create<IQuizState>()(
   devtools(set => ({
     quiz: null,
     attemptId: null,
-    currentQuestionIndex: 1,
+    currentQuestionIndex: 0,
     setQuiz: quizData =>
       set({
         quiz: quizData,
-        currentQuestionIndex: 0,
       }),
     setAttemptId: id => set({ attemptId: id }),
     setCurrentQuestionIndex: index => set({ currentQuestionIndex: index }),

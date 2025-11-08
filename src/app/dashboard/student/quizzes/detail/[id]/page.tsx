@@ -28,8 +28,9 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { v4 as uuidv4 } from "uuid";
 import {
-  fetchQuizById,
+  fetchQuizWithQuestions,
   fetchMyQuizResults,
   initializeQuizSubmission,
 } from "@/src/services/quiz.service";
@@ -41,7 +42,7 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setAttemptId } = useQuizStore();
+  const { setQuiz, setAttemptId } = useQuizStore();
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -52,12 +53,20 @@ export default function QuizDetailPage() {
   } = useQuery({
     queryKey: ["quiz", quizId],
     queryFn: async () => {
-      const result = await fetchQuizById(quizId);
+      const result = await fetchQuizWithQuestions(quizId);
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
     enabled: !!quizId,
   });
+
+  // Store quiz data to zustand after fetching
+  React.useEffect(() => {
+    if (!!quiz) {
+      setQuiz(quiz);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz]);
 
   // Fetch quiz results/history
   const { data: results = [], isLoading: resultsLoading } = useQuery<Result[]>({
@@ -91,18 +100,22 @@ export default function QuizDetailPage() {
       return;
     }
 
+    const id = uuidv4();
+    const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
 
     const initializeQuiz = await initializeQuizSubmission(
+      id,
       quizId,
+      questionId,
       startTime,
       timeLimitInSeconds,
       startTime
     );
 
-    if (initializeQuiz.success && typeof initializeQuiz.data === "string") {
-      setAttemptId(initializeQuiz.data);
+    if (initializeQuiz.success) {
+      setAttemptId(id);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(

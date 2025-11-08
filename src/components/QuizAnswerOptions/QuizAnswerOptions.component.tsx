@@ -66,11 +66,9 @@ const QuizAnswerOptions = ({
           return option !== undefined ? (
             <FormControlLabel
               key={index}
-              // The value submitted on change is now the letter (e.g., 'A')
               value={letterValue}
               control={<Radio />}
-              // The label displayed to the user is still the full option text
-              label={option}
+              label={`${letterValue}. ${option}`}
             />
           ) : (
             <Skeleton key={index} variant="text" width="60%" height={40} />

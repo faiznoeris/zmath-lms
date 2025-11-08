@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { updateUserAnswerState } from "@/src/services/quiz.service";
 import { useQuizStore } from "@/src/stores";
+import { loadQuizAttemptState } from "@/src/utils/quizHelpers";
 
 interface QuizAnswerOptionsProps {
   attemptId: string;
@@ -25,7 +26,7 @@ const QuizAnswerOptions = ({
   quizId,
   options,
 }: QuizAnswerOptionsProps) => {
-  const { userAnswers, setUserAnswer } = useQuizStore();
+  const { userAnswers, setUserAnswer, sessionId } = useQuizStore();
   const selectedValue = userAnswers[questionId] || "";
 
   const handleUserAnswer = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,7 +37,17 @@ const QuizAnswerOptions = ({
 
     // 2. Send the update to the database
     if (attemptId) {
-      updateUserAnswerState(attemptId, questionId, quizId, selectedAnswer);
+      const latestQuizAttemptState = loadQuizAttemptState(sessionId);
+      const timeRemaining = latestQuizAttemptState?.timeRemaining;
+      if (timeRemaining !== undefined) {
+        updateUserAnswerState(
+          attemptId,
+          questionId,
+          quizId,
+          timeRemaining,
+          selectedAnswer
+        );
+      }
     }
   };
 

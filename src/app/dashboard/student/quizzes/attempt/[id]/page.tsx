@@ -10,9 +10,10 @@ import {
   ModalComponent,
   FileUpload,
 } from "@/src/components";
+import { loadQuizAttemptState } from "@/src/utils/quizHelpers";
 
 export default function QuizAttemptPage() {
-  const { quiz, currentQuestionIndex, attemptId } = useQuizStore();
+  const { quiz, currentQuestionIndex, sessionId } = useQuizStore();
   const question = quiz?.questions?.[currentQuestionIndex];
   const questionType = question?.question_type;
   const answerOptions = [
@@ -67,7 +68,7 @@ export default function QuizAttemptPage() {
           />
           {questionType === "multiple_choice" ? (
             <QuizAnswerOptions
-              attemptId={attemptId}
+              attemptId={sessionId}
               quizId={quiz.id}
               questionId={question.id}
               options={answerOptions}

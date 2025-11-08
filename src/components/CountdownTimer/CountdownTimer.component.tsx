@@ -15,7 +15,7 @@ interface CountdownTimerParams {
 }
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
-  const { quiz, currentQuestionIndex } = useQuizStore();
+  const { quiz, currentQuestionIndex, sessionId } = useQuizStore();
   const { countdown } = useCountdownTimer({
     timer: 1000 * timeLimitInSeconds,
     autostart: true,
@@ -46,7 +46,7 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
       );
     }
 
-    saveQuizAttemptState(quiz.id, timeRemaining);
+    saveQuizAttemptState(sessionId, timeRemaining);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown]);
 

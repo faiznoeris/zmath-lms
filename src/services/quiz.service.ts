@@ -440,6 +440,7 @@ export async function updateUserAnswerState(
   attemptId: string, // Kept for backward compatibility but not used
   questionId: string,
   quizId: string,
+  timeRemaining: number,
   userAnswer: string
 ) {
   try {
@@ -460,6 +461,7 @@ export async function updateUserAnswerState(
           user_id: user.id,
           question_id: questionId,
           quiz_id: quizId,
+          time_remaining: timeRemaining,
           selected_answer: userAnswer,
         },
         { onConflict: "user_id,question_id" }

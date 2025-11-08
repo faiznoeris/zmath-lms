@@ -41,7 +41,7 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setQuiz, setAttemptId } = useQuizStore();
+  const { setQuiz, setSessionId } = useQuizStore();
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -111,7 +111,7 @@ export default function QuizDetailPage() {
     );
 
     if (initializeQuiz.success && initializeQuiz.data?.id) {
-      setAttemptId(initializeQuiz.data.id);
+      setSessionId(initializeQuiz.data.id);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(

@@ -253,9 +253,9 @@ export default function QuizDetailPage() {
                 <Typography variant="body2" color="text.secondary">
                   Best Score
                 </Typography>
-                <Typography 
-                  variant="h4" 
-                  fontWeight={600} 
+                <Typography
+                  variant="h4"
+                  fontWeight={600}
                   color={bestScorePassed ? "success.main" : "error.main"}
                 >
                   {bestScore?.toFixed(2)}%

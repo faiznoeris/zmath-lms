@@ -10,7 +10,6 @@ import {
   ModalComponent,
   FileUpload,
 } from "@/src/components";
-import { loadQuizAttemptState } from "@/src/utils/quizHelpers";
 
 export default function QuizAttemptPage() {
   const { quiz, currentQuestionIndex, sessionId } = useQuizStore();

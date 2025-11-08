@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../../utils/supabase/client";
 import { fetchCourses } from "@/src/services/course.service";
 import { MathPreview } from "@/src/components";
+import { createPasteHandler } from "@/src/utils/imageUpload";
 import {
   Box,
   Typography,
@@ -23,6 +24,7 @@ import {
   IconButton,
   FormHelperText,
   Stack,
+  Snackbar,
 } from "@mui/material";
 import { Breadcrumbs } from "@/src/components";
 import AddIcon from "@mui/icons-material/Add";
@@ -32,7 +34,7 @@ import QuizIcon from "@mui/icons-material/Quiz";
 
 interface QuestionInput {
   question_text: string;
-  question_type: "multiple_choice" | "true_false" | "essay";
+  question_type: "multiple_choice" | "essay";
   option_a?: string;
   option_b?: string;
   option_c?: string;
@@ -101,6 +103,9 @@ async function createQuizApi(data: QuizFormInputs) {
 
 export default function AddQuizPage() {
   const router = useRouter();
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUploadError, setShowUploadError] = useState(false);
+  
   const {
     register,
     handleSubmit,
@@ -158,9 +163,9 @@ export default function AddQuizPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Quizzes", href: "/dashboard/teacher/quizzes" },
-          { label: "Add" },
+          
+          { label: "Kuis", href: "/dashboard/teacher/quizzes" },
+          { label: "Tambah" },
         ]}
       />
 
@@ -169,10 +174,10 @@ export default function AddQuizPage() {
         <QuizIcon sx={{ fontSize: 40, color: "primary.main" }} />
         <Box>
           <Typography variant="h4" component="h1" fontWeight={600}>
-            Create New Quiz
+            Buat Kuis Baru
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Fill in the details below
+            Isi detail di bawah ini
           </Typography>
         </Box>
       </Stack>
@@ -182,24 +187,24 @@ export default function AddQuizPage() {
         <Card elevation={0} sx={{ mb: 3, border: 1, borderColor: "divider" }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mb: 3 }}>
-              Basic Information
+              Informasi Dasar
             </Typography>
 
             <Stack spacing={3}>
               <TextField
-                label="Quiz Title"
+                label="Judul Kuis"
                 fullWidth
                 error={!!errors.title}
                 helperText={errors.title?.message}
-                {...register("title", { required: "Title is required" })}
+                {...register("title", { required: "Judul wajib diisi" })}
               />
 
               <TextField
-                label="Description"
+                label="Deskripsi"
                 fullWidth
                 multiline
                 rows={3}
-                placeholder="Describe what this quiz covers..."
+                placeholder="Jelaskan apa yang dicakup dalam kuis ini..."
                 {...register("description")}
               />
 
@@ -209,9 +214,9 @@ export default function AddQuizPage() {
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth>
-                      <InputLabel>Course</InputLabel>
+                      <InputLabel>Kursus</InputLabel>
                       <Select
-                        label="Course"
+                        label="Kursus"
                         value={field.value ?? ""}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -219,7 +224,7 @@ export default function AddQuizPage() {
                         }}
                       >
                         <MenuItem value="">
-                          <em>No Course</em>
+                          <em>Tanpa Kursus</em>
                         </MenuItem>
                         {courses.map((course) => (
                           <MenuItem key={course.id} value={course.id}>
@@ -227,16 +232,16 @@ export default function AddQuizPage() {
                           </MenuItem>
                         ))}
                       </Select>
-                      <FormHelperText>Optional</FormHelperText>
+                      <FormHelperText>Opsional</FormHelperText>
                     </FormControl>
                   )}
                 />
 
                 <TextField
-                  label="Time Limit (minutes)"
+                  label="Batas Waktu (menit)"
                   fullWidth
                   type="number"
-                  placeholder="e.g., 30"
+                  placeholder="contoh: 30"
                   {...register("time_limit_minutes", { valueAsNumber: true })}
                 />
               </Stack>
@@ -249,7 +254,7 @@ export default function AddQuizPage() {
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
               <Typography variant="h6" fontWeight={600}>
-                Questions ({fields.length})
+                Pertanyaan ({fields.length})
               </Typography>
               <Button
                 variant="outlined"
@@ -269,7 +274,7 @@ export default function AddQuizPage() {
                   })
                 }
               >
-                Add Question
+                Tambah Pertanyaan
               </Button>
             </Stack>
 
@@ -286,7 +291,7 @@ export default function AddQuizPage() {
                   <CardContent sx={{ p: 2 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                       <Typography variant="subtitle2" fontWeight={600} color="primary">
-                        Question {index + 1}
+                        Pertanyaan {index + 1}
                       </Typography>
                       <IconButton
                         size="small"
@@ -300,20 +305,34 @@ export default function AddQuizPage() {
 
                     <Stack spacing={2}>
                       <Box>
-                        <TextField
-                          label="Question"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          size="small"
-                          {...register(`questions.${index}.question_text`, {
-                            required: "Question is required",
-                          })}
-                          error={!!errors.questions?.[index]?.question_text}
-                          helperText={
-                            errors.questions?.[index]?.question_text?.message ||
-                            "Use $...$ for inline math (e.g., $x^2$) and $$...$$ for block equations"
-                          }
+                        <Controller
+                          name={`questions.${index}.question_text`}
+                          control={control}
+                          rules={{ required: "Pertanyaan wajib diisi" }}
+                          render={({ field }) => (
+                            <TextField
+                              {...field}
+                              label="Pertanyaan"
+                              fullWidth
+                              multiline
+                              rows={3}
+                              size="small"
+                              error={!!errors.questions?.[index]?.question_text}
+                              helperText={
+                                errors.questions?.[index]?.question_text?.message ||
+                                "Tempel gambar untuk mengunggah."
+                              }
+                              onPaste={createPasteHandler(
+                                "questions/question",
+                                field.value || "",
+                                field.onChange,
+                                (error) => {
+                                  setUploadError(error);
+                                  setShowUploadError(true);
+                                }
+                              )}
+                            />
+                          )}
                         />
                         
                         {/* Math Preview */}
@@ -321,7 +340,7 @@ export default function AddQuizPage() {
                           <Box sx={{ mt: 1 }}>
                             <MathPreview 
                               content={watch(`questions.${index}.question_text`) || ""} 
-                              title="Question Preview"
+                              title="Pratinjau Pertanyaan"
                             />
                           </Box>
                         )}
@@ -333,11 +352,10 @@ export default function AddQuizPage() {
                         defaultValue="multiple_choice"
                         render={({ field }) => (
                           <FormControl fullWidth size="small">
-                            <InputLabel>Type</InputLabel>
-                            <Select {...field} label="Type">
-                              <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
-                              <MenuItem value="true_false">True/False</MenuItem>
-                              <MenuItem value="essay">Essay</MenuItem>
+                            <InputLabel>Tipe</InputLabel>
+                            <Select {...field} label="Tipe">
+                              <MenuItem value="multiple_choice">Pilihan Ganda</MenuItem>
+                              <MenuItem value="essay">Esai</MenuItem>
                             </Select>
                           </FormControl>
                         )}
@@ -345,40 +363,60 @@ export default function AddQuizPage() {
 
                       {/* Points Field */}
                       <TextField
-                        label="Points"
+                        label="Poin"
                         fullWidth
                         size="small"
                         type="number"
-                        placeholder="e.g., 1"
+                        placeholder="contoh: 1"
+                        disabled={watch(`questions.${index}.question_type`) === "essay"}
                         {...register(`questions.${index}.points`, { 
                           valueAsNumber: true,
                           min: 1
                         })}
-                        helperText="Point value for this question (default: 1)"
+                        helperText={
+                          watch(`questions.${index}.question_type`) === "essay"
+                            ? "Poin untuk esai akan diberikan saat penilaian manual"
+                            : "Nilai poin untuk pertanyaan ini (default: 1)"
+                        }
                       />
 
                       {/* Conditional rendering based on question type */}
                       {watch(`questions.${index}.question_type`) === "multiple_choice" && (
                         <Box>
                           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                            Options
+                            Pilihan
                           </Typography>
                           <Stack spacing={1}>
                             {/* Option A */}
                             <Box>
-                              <TextField
-                                placeholder="Option A"
-                                fullWidth
-                                size="small"
-                                multiline
-                                {...register(`questions.${index}.option_a`)}
-                                helperText="Use $...$ for math formulas"
+                              <Controller
+                                name={`questions.${index}.option_a`}
+                                control={control}
+                                render={({ field }) => (
+                                  <TextField
+                                    {...field}
+                                    placeholder="Pilihan A"
+                                    fullWidth
+                                    size="small"
+                                    multiline
+                                    helperText=""
+                                    onPaste={createPasteHandler(
+                                      "questions/option",
+                                      field.value || "",
+                                      field.onChange,
+                                      (error) => {
+                                        setUploadError(error);
+                                        setShowUploadError(true);
+                                      }
+                                    )}
+                                  />
+                                )}
                               />
                               {watch(`questions.${index}.option_a`) && (
                                 <Box sx={{ mt: 0.5, ml: 1 }}>
                                   <MathPreview 
                                     content={watch(`questions.${index}.option_a`) || ""} 
-                                    title="Option A Preview"
+                                    title="Pratinjau Pilihan A"
                                   />
                                 </Box>
                               )}
@@ -386,19 +424,34 @@ export default function AddQuizPage() {
 
                             {/* Option B */}
                             <Box>
-                              <TextField
-                                placeholder="Option B"
-                                fullWidth
-                                size="small"
-                                multiline
-                                {...register(`questions.${index}.option_b`)}
-                                helperText="Use $...$ for math formulas"
+                              <Controller
+                                name={`questions.${index}.option_b`}
+                                control={control}
+                                render={({ field }) => (
+                                  <TextField
+                                    {...field}
+                                    placeholder="Pilihan B"
+                                    fullWidth
+                                    size="small"
+                                    multiline
+                                    helperText=""
+                                    onPaste={createPasteHandler(
+                                      "questions/option",
+                                      field.value || "",
+                                      field.onChange,
+                                      (error) => {
+                                        setUploadError(error);
+                                        setShowUploadError(true);
+                                      }
+                                    )}
+                                  />
+                                )}
                               />
                               {watch(`questions.${index}.option_b`) && (
                                 <Box sx={{ mt: 0.5, ml: 1 }}>
                                   <MathPreview 
                                     content={watch(`questions.${index}.option_b`) || ""} 
-                                    title="Option B Preview"
+                                    title="Pratinjau Pilihan B"
                                   />
                                 </Box>
                               )}
@@ -406,19 +459,34 @@ export default function AddQuizPage() {
 
                             {/* Option C */}
                             <Box>
-                              <TextField
-                                placeholder="Option C"
-                                fullWidth
-                                size="small"
-                                multiline
-                                {...register(`questions.${index}.option_c`)}
-                                helperText="Use $...$ for math formulas"
+                              <Controller
+                                name={`questions.${index}.option_c`}
+                                control={control}
+                                render={({ field }) => (
+                                  <TextField
+                                    {...field}
+                                    placeholder="Pilihan C"
+                                    fullWidth
+                                    size="small"
+                                    multiline
+                                    helperText=""
+                                    onPaste={createPasteHandler(
+                                      "questions/option",
+                                      field.value || "",
+                                      field.onChange,
+                                      (error) => {
+                                        setUploadError(error);
+                                        setShowUploadError(true);
+                                      }
+                                    )}
+                                  />
+                                )}
                               />
                               {watch(`questions.${index}.option_c`) && (
                                 <Box sx={{ mt: 0.5, ml: 1 }}>
                                   <MathPreview 
                                     content={watch(`questions.${index}.option_c`) || ""} 
-                                    title="Option C Preview"
+                                    title="Pratinjau Pilihan C"
                                   />
                                 </Box>
                               )}
@@ -426,19 +494,34 @@ export default function AddQuizPage() {
 
                             {/* Option D */}
                             <Box>
-                              <TextField
-                                placeholder="Option D"
-                                fullWidth
-                                size="small"
-                                multiline
-                                {...register(`questions.${index}.option_d`)}
-                                helperText="Use $...$ for math formulas"
+                              <Controller
+                                name={`questions.${index}.option_d`}
+                                control={control}
+                                render={({ field }) => (
+                                  <TextField
+                                    {...field}
+                                    placeholder="Pilihan D"
+                                    fullWidth
+                                    size="small"
+                                    multiline
+                                    helperText=""
+                                    onPaste={createPasteHandler(
+                                      "questions/option",
+                                      field.value || "",
+                                      field.onChange,
+                                      (error) => {
+                                        setUploadError(error);
+                                        setShowUploadError(true);
+                                      }
+                                    )}
+                                  />
+                                )}
                               />
                               {watch(`questions.${index}.option_d`) && (
                                 <Box sx={{ mt: 0.5, ml: 1 }}>
                                   <MathPreview 
                                     content={watch(`questions.${index}.option_d`) || ""} 
-                                    title="Option D Preview"
+                                    title="Pratinjau Pilihan D"
                                   />
                                 </Box>
                               )}
@@ -447,88 +530,58 @@ export default function AddQuizPage() {
                         </Box>
                       )}
 
-                      {watch(`questions.${index}.question_type`) === "true_false" && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                            Options (Auto-generated)
-                          </Typography>
-                          <Stack spacing={1}>
-                            <TextField
-                              value="True"
-                              fullWidth
-                              size="small"
-                              disabled
-                              helperText="Default option 1"
-                            />
-                            <TextField
-                              value="False"
-                              fullWidth
-                              size="small"
-                              disabled
-                              helperText="Default option 2"
-                            />
-                          </Stack>
-                        </Box>
-                      )}
-
                       {watch(`questions.${index}.question_type`) === "essay" && (
                         <Alert severity="info" sx={{ mt: 1 }}>
-                          Essay questions require students to upload a scanned file of their answer. 
-                          Points will be assigned manually during grading.
+                          Pertanyaan esai mengharuskan siswa untuk mengunggah berkas scan dari jawaban mereka. 
+                          Poin akan diberikan secara manual saat penilaian.
                         </Alert>
                       )}
 
                       {/* Correct Answer - Hidden for Essay type */}
                       {watch(`questions.${index}.question_type`) !== "essay" && (
+                        <Controller
+                          name={`questions.${index}.correct_answer`}
+                          control={control}
+                          render={({ field }) => (
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Jawaban Benar</InputLabel>
+                              <Select {...field} label="Jawaban Benar">
+                                <MenuItem value="A">A</MenuItem>
+                                <MenuItem value="B">B</MenuItem>
+                                <MenuItem value="C">C</MenuItem>
+                                <MenuItem value="D">D</MenuItem>
+                              </Select>
+                              <FormHelperText>
+                                Pilih opsi yang merupakan jawaban benar
+                              </FormHelperText>
+                            </FormControl>
+                          )}
+                        />
+                      )}
+
+                      {/* Explanation Field - Hidden for Essay type */}
+                      {watch(`questions.${index}.question_type`) !== "essay" && (
                         <Box>
                           <TextField
-                            label="Correct Answer"
+                            label="Penjelasan (Opsional)"
                             fullWidth
                             size="small"
-                            placeholder={
-                              watch(`questions.${index}.question_type`) === "true_false"
-                                ? "Enter 'True' or 'False'"
-                                : "Enter the correct answer"
-                            }
-                            {...register(`questions.${index}.correct_answer`)}
-                            helperText={
-                              watch(`questions.${index}.question_type`) === "true_false"
-                                ? "Type exactly 'True' or 'False'"
-                                : "Enter the correct answer text. Use $...$ for math formulas"
-                            }
+                            multiline
+                            rows={2}
+                            placeholder="Jelaskan mengapa ini adalah jawaban yang benar..."
+                            {...register(`questions.${index}.explanation`)}
+                            helperText="Penjelasan ini akan ditampilkan kepada siswa setelah mereka mengirimkan jawaban. "
                           />
-                          {watch(`questions.${index}.correct_answer`) && (
+                          {watch(`questions.${index}.explanation`) && (
                             <Box sx={{ mt: 1 }}>
                               <MathPreview 
-                                content={watch(`questions.${index}.correct_answer`) || ""} 
-                                title="Correct Answer Preview"
+                                content={watch(`questions.${index}.explanation`) || ""} 
+                                title="Pratinjau Penjelasan"
                               />
                             </Box>
                           )}
                         </Box>
                       )}
-
-                      {/* Explanation Field */}
-                      <Box>
-                        <TextField
-                          label="Explanation (Optional)"
-                          fullWidth
-                          size="small"
-                          multiline
-                          rows={2}
-                          placeholder="Explain why this is the correct answer..."
-                          {...register(`questions.${index}.explanation`)}
-                          helperText="This explanation will be shown to students after they submit their answer. Use $...$ for math formulas"
-                        />
-                        {watch(`questions.${index}.explanation`) && (
-                          <Box sx={{ mt: 1 }}>
-                            <MathPreview 
-                              content={watch(`questions.${index}.explanation`) || ""} 
-                              title="Explanation Preview"
-                            />
-                          </Box>
-                        )}
-                      </Box>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -540,7 +593,7 @@ export default function AddQuizPage() {
         {/* Error Message */}
         {mutation.isError && (
           <Alert severity="error" sx={{ mb: 3 }}>
-            {mutation.error instanceof Error ? mutation.error.message : "Creation failed"}
+            {mutation.error instanceof Error ? mutation.error.message : "Gagal membuat"}
           </Alert>
         )}
 
@@ -554,7 +607,7 @@ export default function AddQuizPage() {
             startIcon={mutation.isPending ? <CircularProgress size={20} /> : <SaveIcon />}
             fullWidth
           >
-            {mutation.isPending ? "Creating..." : "Create Quiz"}
+            {mutation.isPending ? "Membuat..." : "Buat Kuis"}
           </Button>
           <Button
             variant="outlined"
@@ -562,10 +615,26 @@ export default function AddQuizPage() {
             onClick={() => router.push("/dashboard/teacher/quizzes")}
             disabled={mutation.isPending}
           >
-            Cancel
+            Batal
           </Button>
         </Stack>
       </form>
+
+      {/* Upload Error Snackbar */}
+      <Snackbar
+        open={showUploadError}
+        autoHideDuration={6000}
+        onClose={() => setShowUploadError(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setShowUploadError(false)} 
+          severity="error" 
+          sx={{ width: "100%" }}
+        >
+          {uploadError || "Gagal mengunggah gambar"}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

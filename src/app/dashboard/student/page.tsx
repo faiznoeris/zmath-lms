@@ -36,7 +36,7 @@ export default function StudentDashboard() {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
         <Alert severity="error">
-          Error loading courses: {error.message}
+          Kesalahan memuat kursus: {error.message}
         </Alert>
       </Box>
     );
@@ -49,11 +49,11 @@ export default function StudentDashboard() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
           <SchoolIcon sx={{ fontSize: 40, color: "primary.main" }} />
           <Typography variant="h3" component="h1" fontWeight={600}>
-            My Courses
+            Kursus Saya
           </Typography>
         </Box>
         <Typography variant="body1" color="text.secondary">
-          Courses you are enrolled in
+          Kursus yang Anda ikuti
         </Typography>
       </Box>
 
@@ -84,12 +84,12 @@ export default function StudentDashboard() {
         >
           <MenuBookIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            No Courses Yet
+            Belum Ada Kursus
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            You are not enrolled in any courses yet. Contact your teacher to get started.
+            Anda belum terdaftar di kursus apapun. Hubungi guru Anda untuk memulai.
           </Typography>
-                </Box>
+        </Box>
       ) : (
         <Box
           sx={{
@@ -135,7 +135,7 @@ export default function StudentDashboard() {
                       sx={{ fontSize: 32, color: "primary.main", mr: 1 }}
                     />
                     <Typography variant="h6" component="h2" fontWeight={600}>
-                      {enrollment.course?.title || "Untitled Course"}
+                      {enrollment.course?.title || "Kursus Tanpa Judul"}
                     </Typography>
                   </Box>
                   <Typography
@@ -143,10 +143,10 @@ export default function StudentDashboard() {
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    {enrollment.course?.description || "No description available"}
+                    {enrollment.course?.description || "Tidak ada deskripsi"}
                   </Typography>
                   <Chip
-                    label="Enrolled"
+                    label="Terdaftar"
                     color="success"
                     size="small"
                     sx={{ mt: 1 }}

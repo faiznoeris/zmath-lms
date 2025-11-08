@@ -54,7 +54,7 @@ const LoginForm = ({ message }: LoginFormProps) => {
       <h2 className={styles.title}>Selamat Datang Kembali!</h2>
       {message === "pending_approval" && (
         <Alert severity="info">
-          Registration successful! Your teacher account is pending admin approval.
+          Pendaftaran berhasil! Akun guru Anda sedang menunggu persetujuan admin.
         </Alert>
       )}
       <TextField
@@ -65,7 +65,7 @@ const LoginForm = ({ message }: LoginFormProps) => {
       />
       <PasswordField
         error={!!errors.password}
-        label="Password"
+        label="Kata Sandi"
         helperText={errors.password?.message}
         {...register("password")}
       />
@@ -79,7 +79,7 @@ const LoginForm = ({ message }: LoginFormProps) => {
           variant="contained"
           type="submit"
         >
-          Login
+          Masuk
         </Button>
         <Button onClick={() => router.push("/register")}>
           <span className="mr-1">Belum memiliki akun?</span>

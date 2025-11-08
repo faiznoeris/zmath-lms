@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-import { Header } from "../components";
+import { Header, LoadingBar } from "../components";
 import MuiThemeProvider from "../components/MuiThemeProvider";
 import ClientProviders from "../components/ClientProviders";
 
@@ -34,6 +34,7 @@ export default function RootLayout({
       <body className={plusJakartaSans.className}>
         <ClientProviders>
           <MuiThemeProvider>
+            <LoadingBar />
             <Header />
             <main>{children}</main>
           </MuiThemeProvider>

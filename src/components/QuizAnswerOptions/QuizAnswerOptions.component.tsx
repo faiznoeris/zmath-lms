@@ -12,12 +12,17 @@ import { useQuizStore } from "@/src/stores";
 interface QuizAnswerOptionsProps {
   attemptId: string;
   questionId: string;
+  quizId: string;
   options: (string | undefined)[];
 }
+
+// Helper array to map an index to a letter
+const optionLetters = ["A", "B", "C", "D"];
 
 const QuizAnswerOptions = ({
   attemptId,
   questionId,
+  quizId,
   options,
 }: QuizAnswerOptionsProps) => {
   const { userAnswers, setUserAnswer } = useQuizStore();
@@ -31,7 +36,7 @@ const QuizAnswerOptions = ({
 
     // 2. Send the update to the database
     if (attemptId) {
-      updateUserAnswerState(attemptId, questionId, selectedAnswer);
+      updateUserAnswerState(attemptId, questionId, quizId, selectedAnswer);
     }
   };
 
@@ -40,22 +45,26 @@ const QuizAnswerOptions = ({
       <RadioGroup
         aria-labelledby="demo-radio-buttons-group-label"
         name="radio-buttons-group"
+        value={selectedValue}
+        onChange={handleUserAnswer}
       >
-        {options.map((option, index) =>
-          // Check if the option is defined
-          option !== undefined ? (
+        {options.map((option, index) => {
+          // Get the corresponding letter for the current option's index
+          const letterValue = optionLetters[index];
+
+          return option !== undefined ? (
             <FormControlLabel
               key={index}
-              value={option}
+              // The value submitted on change is now the letter (e.g., 'A')
+              value={letterValue}
               control={<Radio />}
+              // The label displayed to the user is still the full option text
               label={option}
-              onChange={handleUserAnswer}
             />
           ) : (
-            // If the option is undefined, render a Skeleton
             <Skeleton key={index} variant="text" width="60%" height={40} />
-          )
-        )}
+          );
+        })}
       </RadioGroup>
     </FormControl>
   );

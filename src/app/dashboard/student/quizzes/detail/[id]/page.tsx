@@ -106,13 +106,12 @@ export default function QuizDetailPage() {
     const initializeQuiz = await initializeQuizSubmission(
       quizId,
       questionId,
-      startTime,
       timeLimitInSeconds,
       startTime
     );
 
     if (initializeQuiz.success && initializeQuiz.data?.id) {
-        setAttemptId(initializeQuiz.data.id);
+      setAttemptId(initializeQuiz.data.id);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(

@@ -22,6 +22,7 @@ export const useQuizStore = create<IQuizState>()(
     setQuiz: quizData =>
       set({
         quiz: quizData,
+        userAnswers: {},
         currentQuestionIndex: 0,
       }),
     setAttemptId: id => set({ attemptId: id }),

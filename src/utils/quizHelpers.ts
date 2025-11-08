@@ -53,7 +53,7 @@ export const formatCountdownTime = (milliseconds: number) => {
  * Defines the structure of the quiz attempt state stored in localStorage.
  */
 export interface QuizAttemptState {
-  attemptId: string;
+  sessionId: string;
   timeRemaining: number; // Time remaining in milliseconds
   timestamp: number; // The UNIX timestamp (Date.now()) when the state was saved
 }
@@ -63,16 +63,16 @@ export interface QuizAttemptState {
  * @param attemptId The unique identifier for the quiz submission.
  * @returns A string to be used as a localStorage key.
  */
-const getStorageKey = (attemptId: string): string =>
-  `quiz-attempt-${attemptId}`;
+const getStorageKey = (sessionId: string): string =>
+  `quiz-session-${sessionId}`;
 
 /**
  * Saves the current state of a quiz attempt to localStorage.
- * @param attemptId The unique identifier for the quiz submission.
+ * @param sessionId The unique identifier for the quiz submission.
  * @param timeRemaining The time remaining in the quiz, in milliseconds.
  */
 export function saveQuizAttemptState(
-  attemptId: string,
+  sessionId: string,
   timeRemaining: number
 ): void {
   // Ensure this code only runs on the client where localStorage is available
@@ -82,11 +82,11 @@ export function saveQuizAttemptState(
 
   try {
     const state: QuizAttemptState = {
-      attemptId,
+      sessionId,
       timeRemaining,
       timestamp: Date.now(),
     };
-    const storageKey = getStorageKey(attemptId);
+    const storageKey = getStorageKey(sessionId);
     localStorage.setItem(storageKey, JSON.stringify(state));
   } catch (error) {
     console.error("Failed to save quiz attempt state to localStorage:", error);
@@ -95,11 +95,11 @@ export function saveQuizAttemptState(
 
 /**
  * Loads the saved state of a quiz attempt from localStorage.
- * @param attemptId The unique identifier for the quiz submission.
+ * @param sessionId The unique identifier for the quiz submission.
  * @returns The saved QuizAttemptState object, or null if not found or invalid.
  */
 export function loadQuizAttemptState(
-  attemptId: string
+  sessionId: string
 ): QuizAttemptState | null {
   // Ensure this code only runs on the client
   if (typeof window === "undefined") {
@@ -107,7 +107,7 @@ export function loadQuizAttemptState(
   }
 
   try {
-    const storageKey = getStorageKey(attemptId);
+    const storageKey = getStorageKey(sessionId);
     const savedStateJSON = localStorage.getItem(storageKey);
 
     if (!savedStateJSON) {
@@ -128,15 +128,15 @@ export function loadQuizAttemptState(
 /**
  * Removes the saved state of a quiz attempt from localStorage.
  * This should be called when a quiz is completed or abandoned.
- * @param attemptId The unique identifier for the quiz submission.
+ * @param sessionId The unique identifier for the quiz submission.
  */
-export function clearQuizAttemptState(attemptId: string): void {
+export function clearQuizAttemptState(sessionId: string): void {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    const storageKey = getStorageKey(attemptId);
+    const storageKey = getStorageKey(sessionId);
     localStorage.removeItem(storageKey);
   } catch (error) {
     console.error(

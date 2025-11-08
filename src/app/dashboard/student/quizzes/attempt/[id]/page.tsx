@@ -13,7 +13,7 @@ import {
 } from "@/src/components";
 
 export default function QuizAttemptPage() {
-  const { quiz, currentQuestionIndex, attemptId } = useQuizStore();
+  const { quiz, currentQuestionIndex, sessionId } = useQuizStore();
   const { user } = useAuthStore();
   const question = quiz?.questions?.[currentQuestionIndex];
   const questionType = question?.question_type;
@@ -71,14 +71,14 @@ export default function QuizAttemptPage() {
             />
             {questionType === "multiple_choice" ? (
               <QuizAnswerOptions
-                attemptId={attemptId}
+                attemptId={sessionId}
                 quizId={quiz.id}
                 questionId={question.id}
                 options={answerOptions}
               />
             ) : (
               <QuizAnswerFileUpload
-                attemptId={attemptId}
+                attemptId={sessionId}
                 quizId={quiz.id}
                 userId={user?.id || ""}
                 questionId={question.id}
@@ -87,8 +87,8 @@ export default function QuizAttemptPage() {
           </CardContent>
         </Card>
       </Box>
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           flexShrink: 0,
           maxWidth: 1200,
           mx: "auto",

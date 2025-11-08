@@ -43,7 +43,7 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setQuiz, setAttemptId, setUserAnswer, setTimeRemaining } = useQuizStore();
+  const { setQuiz, setSessionId, setUserAnswer, setTimeRemaining } = useQuizStore();
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -150,7 +150,7 @@ export default function QuizDetailPage() {
     );
 
     if (initializeQuiz.success && initializeQuiz.data?.id) {
-      setAttemptId(initializeQuiz.data.id);
+      setSessionId(initializeQuiz.data.id);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(
@@ -290,9 +290,9 @@ export default function QuizDetailPage() {
                 <Typography variant="body2" color="text.secondary">
                   Best Score
                 </Typography>
-                <Typography 
-                  variant="h4" 
-                  fontWeight={600} 
+                <Typography
+                  variant="h4"
+                  fontWeight={600}
                   color={bestScorePassed ? "success.main" : "error.main"}
                 >
                   {bestScore?.toFixed(2)}%

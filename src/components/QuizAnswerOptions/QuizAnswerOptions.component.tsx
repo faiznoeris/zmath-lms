@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { updateUserAnswerState } from "@/src/services/quiz.service";
 import { useQuizStore } from "@/src/stores";
+import { loadQuizAttemptState } from "@/src/utils/quizHelpers";
 import MathPreview from "../MathPreview";
 
 interface QuizAnswerOptionsProps {
@@ -27,7 +28,7 @@ const QuizAnswerOptions = ({
   quizId,
   options,
 }: QuizAnswerOptionsProps) => {
-  const { userAnswers, setUserAnswer } = useQuizStore();
+  const { userAnswers, setUserAnswer, sessionId } = useQuizStore();
   const selectedValue = userAnswers[questionId] || "";
 
   const handleUserAnswer = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +39,17 @@ const QuizAnswerOptions = ({
 
     // 2. Send the update to the database
     if (attemptId) {
-      updateUserAnswerState(attemptId, questionId, quizId, selectedAnswer);
+      const latestQuizAttemptState = loadQuizAttemptState(sessionId);
+      const timeRemaining = latestQuizAttemptState?.timeRemaining;
+      if (timeRemaining !== undefined) {
+        updateUserAnswerState(
+          attemptId,
+          questionId,
+          quizId,
+          timeRemaining,
+          selectedAnswer
+        );
+      }
     }
   };
 
@@ -57,7 +68,6 @@ const QuizAnswerOptions = ({
           return option !== undefined ? (
             <FormControlLabel
               key={index}
-              // The value submitted on change is now the letter (e.g., 'A')
               value={letterValue}
               control={<Radio />}
               // The label displayed to the user is still the full option text

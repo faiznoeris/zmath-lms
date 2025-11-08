@@ -95,7 +95,9 @@ export async function fetchQuizWithQuestions(
     // Fetch questions
     const { data: questions, error: questionsError } = await supabase
       .from("questions")
-      .select("*")
+      .select(
+        "id,quiz_id,question_text,question_type,created_at,updated_at,option_a,option_b,option_c,option_d,points,explanation"
+      )
       .eq("quiz_id", id)
       .order("id", { ascending: true });
 
@@ -495,15 +497,24 @@ export async function initializeQuizSubmission(
 }
 
 /**
- * Update Quiz Attempt State
- * Updates time remaining for a specific question submission
+ * Represents the state of a single question's submission to be saved.
+ * All properties are optional except question_id, allowing for flexible updates.
+ */
+export interface SubmissionState {
+  quiz_id: string;
+  question_id: string;
+  selected_answer?: string;
+  time_remaining?: number;
+}
+
+/**
+ * Update Quiz Attempt State (Bulk Operation)
+ * Creates or updates multiple submission records in a single database call.
+ * This is the preferred method for syncing state for multiple questions.
  */
 export async function updateQuizAttemptState(
-  quizId: string,
-  questionId: string,
-  timeRemaining: number,
-  lastSyncAt: Date
-) {
+  states: SubmissionState[]
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createClient();
 
@@ -515,30 +526,33 @@ export async function updateQuizAttemptState(
       return { success: false, error: "User not authenticated" };
     }
 
-    // Use upsert to create if doesn't exist or update if it does
-    const { data, error } = await supabase
-      .from("submissions")
-      .upsert(
-        {
-          user_id: user.id,
-          quiz_id: quizId,
-          question_id: questionId,
-          time_remaining: timeRemaining,
-          last_sync_at: lastSyncAt,
-        },
-        { onConflict: "user_id,question_id" }
-      )
-      .select()
-      .single();
+    // 1. Map the incoming states to the full row structure for the database.
+    const rowsToUpsert = states.map(state => ({
+      user_id: user.id,
+      quiz_id: state.quiz_id,
+      question_id: state.question_id,
+      selected_answer: state.selected_answer,
+      time_remaining: state.time_remaining,
+      last_sync_at: new Date().toISOString(),
+    }));
+
+    // 2. Call upsert with the array of objects.
+    // We don't use .select() here as we don't need the returned data for a sync.
+    const { error } = await supabase.from("submissions").upsert(rowsToUpsert, {
+      onConflict: "user_id,question_id", // Ensure this matches your unique constraint
+    });
 
     if (error) {
+      console.error("Error in bulk update submissions:", error.message);
       return { success: false, error: error.message };
     }
 
-    return { success: true, data };
+    return { success: true };
   } catch (error) {
-    console.error("Error updating quiz attempt state:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    console.error("Exception in updateQuizAttemptState:", message);
+    return { success: false, error: message };
   }
 }
 
@@ -550,6 +564,7 @@ export async function updateUserAnswerState(
   attemptId: string, // Kept for backward compatibility but not used
   questionId: string,
   quizId: string,
+  timeRemaining: number,
   userAnswer: string
 ) {
   try {
@@ -570,6 +585,7 @@ export async function updateUserAnswerState(
           user_id: user.id,
           question_id: questionId,
           quiz_id: quizId,
+          time_remaining: timeRemaining,
           selected_answer: userAnswer,
         },
         { onConflict: "user_id,question_id" }

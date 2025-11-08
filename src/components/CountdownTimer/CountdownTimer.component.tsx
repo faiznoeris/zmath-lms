@@ -15,7 +15,7 @@ interface CountdownTimerParams {
 }
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
-  const { attemptId } = useQuizStore();
+  const { quiz, currentQuestionIndex } = useQuizStore();
   const { countdown } = useCountdownTimer({
     timer: 1000 * timeLimitInSeconds,
     autostart: true,
@@ -24,9 +24,12 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
   const lastSyncedSecond = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    if (!attemptId) return;
+    if (!quiz) return;
 
     const timeRemaining = Math.floor(countdown / 1000);
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+
+    if (!currentQuestion) return;
 
     // Send attempt state update to supabase every 30 seconds
     if (
@@ -35,10 +38,15 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
       lastSyncedSecond.current !== timeRemaining
     ) {
       lastSyncedSecond.current = timeRemaining;
-      updateQuizAttemptState(attemptId, timeRemaining, new Date());
+      updateQuizAttemptState(
+        quiz.id,
+        currentQuestion.id,
+        timeRemaining,
+        new Date()
+      );
     }
 
-    saveQuizAttemptState(attemptId, timeRemaining);
+    saveQuizAttemptState(quiz.id, timeRemaining);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown]);
 

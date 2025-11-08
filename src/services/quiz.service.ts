@@ -337,15 +337,15 @@ export async function fetchMyQuizResults(
 
 /**
  * Initialize Quiz Submission
+ * Creates or updates a submission record for a specific question
  */
 export async function initializeQuizSubmission(
-  id: string,
   quizId: string,
   questionId: string,
   started_at: Date,
   time_remaining: number,
   last_sync_at: Date
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; data?: { id: string }; error?: string }> {
   try {
     const supabase = createClient();
 
@@ -357,23 +357,28 @@ export async function initializeQuizSubmission(
       return { success: false, error: "User not authenticated" };
     }
 
-    const { data, error } = await supabase.from("submissions").insert([
-      {
-        id: id,
-        user_id: user?.id,
-        quiz_id: quizId,
-        question_id: questionId,
-        started_at,
-        time_remaining,
-        last_sync_at,
-      },
-    ]);
+    // Use upsert instead of insert to handle existing submissions
+    const { data, error } = await supabase
+      .from("submissions")
+      .upsert(
+        {
+          user_id: user.id,
+          quiz_id: quizId,
+          question_id: questionId,
+          started_at,
+          time_remaining,
+          last_sync_at,
+        },
+        { onConflict: "user_id,question_id" }
+      )
+      .select()
+      .single();
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    return { success: true };
+    return { success: true, data };
   } catch (error) {
     console.error(error);
     return { success: false, error: "An unexpected error occurred" };
@@ -382,18 +387,40 @@ export async function initializeQuizSubmission(
 
 /**
  * Update Quiz Attempt State
+ * Updates time remaining for a specific question submission
  */
 export async function updateQuizAttemptState(
-  attemptId: string,
+  quizId: string,
+  questionId: string,
   timeRemaining: number,
   lastSyncAt: Date
 ) {
   try {
     const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Use upsert to create if doesn't exist or update if it does
     const { data, error } = await supabase
       .from("submissions")
-      .update({ time_remaining: timeRemaining, last_sync_at: lastSyncAt })
-      .eq("id", attemptId);
+      .upsert(
+        {
+          user_id: user.id,
+          quiz_id: quizId,
+          question_id: questionId,
+          time_remaining: timeRemaining,
+          last_sync_at: lastSyncAt,
+        },
+        { onConflict: "user_id,question_id" }
+      )
+      .select()
+      .single();
 
     if (error) {
       return { success: false, error: error.message };
@@ -406,12 +433,14 @@ export async function updateQuizAttemptState(
   }
 }
 
+/**
+ * Update User Answer State
+ * Updates the selected answer for a specific question
+ */
 export async function updateUserAnswerState(
-  attemptId: string,
+  attemptId: string, // Kept for backward compatibility but not used
   questionId: string,
   userAnswer: string
-  // timeRemaining: number,
-  // lastSyncAt: Date
 ) {
   try {
     const supabase = createClient();
@@ -420,20 +449,30 @@ export async function updateUserAnswerState(
       data: { user },
     } = await supabase.auth.getUser();
 
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const { data, error } = await supabase
       .from("submissions")
       .upsert(
         {
-          // id: attemptId,
+          user_id: user.id,
           question_id: questionId,
-          user_id: user?.id,
           selected_answer: userAnswer,
         },
-        { onConflict: "id, question_id" }
+        { onConflict: "user_id,question_id" }
       )
-      .select();
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
   } catch (error) {
-    console.error("Error updating quiz attempt state:", error);
+    console.error("Error updating user answer state:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

@@ -94,7 +94,9 @@ export async function fetchQuizWithQuestions(
     // Fetch questions
     const { data: questions, error: questionsError } = await supabase
       .from("questions")
-      .select("*")
+      .select(
+        "id,quiz_id,question_text,question_type,created_at,updated_at,option_a,option_b,option_c,option_d,points,explanation"
+      )
       .eq("quiz_id", id)
       .order("id", { ascending: true });
 

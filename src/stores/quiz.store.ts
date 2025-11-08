@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { QuizWithQuestions } from "../types";
 
 interface IQuizState {
@@ -14,25 +14,31 @@ interface IQuizState {
 }
 
 export const useQuizStore = create<IQuizState>()(
-  devtools(set => ({
-    quiz: null,
-    sessionId: null,
-    userAnswers: {},
-    currentQuestionIndex: 0,
-    setQuiz: quizData =>
-      set({
-        quiz: quizData,
-        userAnswers: {},
-        currentQuestionIndex: 0,
-      }),
-    setSessionId: id => set({ sessionId: id }),
-    setUserAnswer: (questionId, answer) =>
-      set(state => ({
-        userAnswers: {
-          ...state.userAnswers,
-          [questionId]: answer,
-        },
-      })),
-    setCurrentQuestionIndex: index => set({ currentQuestionIndex: index }),
-  }))
+  persist(
+    devtools(set => ({
+      quiz: null,
+      sessionId: null,
+      userAnswers: {},
+      currentQuestionIndex: 0,
+      setQuiz: quizData =>
+        set({
+          quiz: quizData,
+          userAnswers: {},
+          currentQuestionIndex: 0,
+        }),
+      setSessionId: id => set({ sessionId: id }),
+      setUserAnswer: (questionId, answer) =>
+        set(state => ({
+          userAnswers: {
+            ...state.userAnswers,
+            [questionId]: answer,
+          },
+        })),
+      setCurrentQuestionIndex: index => set({ currentQuestionIndex: index }),
+    })),
+    {
+      name: "quiz-data",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
 );

@@ -25,11 +25,7 @@ export default function QuizAttemptPage() {
       : null;
   const [isModalOpen, setModalOpen] = React.useState(false);
 
-  const handleCloseModal = () => {
-    setModalOpen(prev => !prev);
-  };
-
-  const handleOpenModal = () => {
+  const handleModal = () => {
     setModalOpen(prev => !prev);
   };
 
@@ -78,13 +74,13 @@ export default function QuizAttemptPage() {
           )}
         </CardContent>
       </Card>
-      <QuizBottomNav onOpenModal={handleOpenModal} />
+      <QuizBottomNav onOpenModal={handleModal} />
       <ModalComponent
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        onClose={handleModal}
         title="Apakah anda yakin ingin mengakhiri kuis ini?"
       >
-        <Button onClick={handleCloseModal} variant="outlined">
+        <Button onClick={handleModal} variant="outlined">
           Review kembali
         </Button>
         <Button onClick={handleEndQuiz} variant="contained">

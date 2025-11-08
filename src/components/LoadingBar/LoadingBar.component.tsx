@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { LinearProgress, Box, Fade, Backdrop, CircularProgress } from "@mui/material";
 
-export function LoadingBar() {
+function LoadingBarContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -96,5 +96,13 @@ export function LoadingBar() {
         <CircularProgress color="inherit" />
       </Backdrop>
     </>
+  );
+}
+
+export function LoadingBar() {
+  return (
+    <Suspense fallback={null}>
+      <LoadingBarContent />
+    </Suspense>
   );
 }

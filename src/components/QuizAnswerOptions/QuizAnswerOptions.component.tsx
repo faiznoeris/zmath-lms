@@ -40,6 +40,8 @@ const QuizAnswerOptions = ({
       <RadioGroup
         aria-labelledby="demo-radio-buttons-group-label"
         name="radio-buttons-group"
+        value={selectedValue}
+        onChange={handleUserAnswer}
       >
         {options.map((option, index) =>
           // Check if the option is defined
@@ -49,7 +51,6 @@ const QuizAnswerOptions = ({
               value={option}
               control={<Radio />}
               label={option}
-              onChange={handleUserAnswer}
             />
           ) : (
             // If the option is undefined, render a Skeleton

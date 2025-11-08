@@ -7,7 +7,7 @@ import { QuizHeader, QuizSidebar } from "@/src/components";
 export default function QuizLayout({
   children,
 }: {
-  children: React.ReactElement;
+  children: React.ReactNode;
 }) {
   return (
     <Box

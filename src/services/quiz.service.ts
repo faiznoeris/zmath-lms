@@ -31,7 +31,8 @@ export async function fetchQuizzes(): Promise<{
         *,
         course:courses!quizzes_course_id_fkey(id, title),
         questions(id)
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -342,7 +343,6 @@ export async function fetchMyQuizResults(
 export async function initializeQuizSubmission(
   quizId: string,
   questionId: string,
-  started_at: Date,
   time_remaining: number,
   last_sync_at: Date
 ): Promise<{ success: boolean; data?: { id: string }; error?: string }> {
@@ -365,7 +365,6 @@ export async function initializeQuizSubmission(
           user_id: user.id,
           quiz_id: quizId,
           question_id: questionId,
-          started_at,
           time_remaining,
           last_sync_at,
         },
@@ -440,6 +439,7 @@ export async function updateQuizAttemptState(
 export async function updateUserAnswerState(
   attemptId: string, // Kept for backward compatibility but not used
   questionId: string,
+  quizId: string,
   userAnswer: string
 ) {
   try {
@@ -459,6 +459,7 @@ export async function updateUserAnswerState(
         {
           user_id: user.id,
           question_id: questionId,
+          quiz_id: quizId,
           selected_answer: userAnswer,
         },
         { onConflict: "user_id,question_id" }

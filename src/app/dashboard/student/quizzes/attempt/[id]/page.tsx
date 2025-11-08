@@ -68,6 +68,7 @@ export default function QuizAttemptPage() {
           {questionType === "multiple_choice" ? (
             <QuizAnswerOptions
               attemptId={attemptId}
+              quizId={quiz.id}
               questionId={question.id}
               options={answerOptions}
             />

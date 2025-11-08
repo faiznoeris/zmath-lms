@@ -15,7 +15,7 @@ interface CountdownTimerParams {
 }
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
-  const { quiz, currentQuestionIndex, sessionId } = useQuizStore();
+  const { quiz, sessionId, userAnswers } = useQuizStore();
   const { countdown } = useCountdownTimer({
     timer: 1000 * timeLimitInSeconds,
     autostart: true,
@@ -24,31 +24,44 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
   const lastSyncedSecond = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    if (!quiz) return;
+    // Guard clause: Don't do anything if the quiz data isn't loaded yet.
+    if (!quiz || !quiz.questions) return;
 
-    const timeRemaining = Math.floor(countdown / 1000);
-    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const timeRemainingInSeconds = Math.floor(countdown / 1000);
 
-    if (!currentQuestion) return;
-
-    // Send attempt state update to supabase every 30 seconds
+    // Send bulk update to Supabase every 30 seconds
     if (
-      timeRemaining >= 0 &&
-      timeRemaining % SYNC_INTERVAL_SECONDS === 0 &&
-      lastSyncedSecond.current !== timeRemaining
+      timeRemainingInSeconds >= 0 &&
+      timeRemainingInSeconds % SYNC_INTERVAL_SECONDS === 0 &&
+      lastSyncedSecond.current !== timeRemainingInSeconds
     ) {
-      lastSyncedSecond.current = timeRemaining;
-      updateQuizAttemptState(
-        quiz.id,
-        currentQuestion.id,
-        timeRemaining,
-        new Date()
-      );
+      lastSyncedSecond.current = timeRemainingInSeconds;
+
+      // 2. Create an array of state objects, now including the answer.
+      const statesToUpdate = quiz.questions.map(question => {
+        // Find the answer for the current question in the userAnswers map
+        const selectedAnswer = userAnswers[question.id];
+
+        return {
+          quiz_id: quiz.id,
+          question_id: question.id,
+          time_remaining: timeRemainingInSeconds,
+          // Include the selected answer if it exists.
+          // If it's undefined, it will be handled correctly by the upsert.
+          selected_answer: selectedAnswer,
+        };
+      });
+
+      // 3. Call the service function with the enriched array.
+      updateQuizAttemptState(statesToUpdate);
     }
 
-    saveQuizAttemptState(sessionId, timeRemaining);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countdown]);
+    // This part saves the timer to local storage, it can remain as is.
+    if (sessionId) {
+      saveQuizAttemptState(sessionId, timeRemainingInSeconds);
+    }
+    // 4. Add userAnswers to the dependency array
+  }, [countdown, quiz, sessionId, userAnswers]);
 
   return (
     <Box>

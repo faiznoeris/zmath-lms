@@ -20,7 +20,16 @@ export default function QuizLayout({
       <QuizHeader />
       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <QuizSidebar />
-        <Box component="main" sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+        <Box 
+          component="main" 
+          sx={{ 
+            flex: 1, 
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            p: 3
+          }}
+        >
           {children}
         </Box>
       </Box>

@@ -15,9 +15,10 @@ interface CountdownTimerParams {
 }
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
+  const startTimerInMs = 1000 * timeLimitInSeconds;
   const { quiz, currentQuestionIndex } = useQuizStore();
   const { countdown } = useCountdownTimer({
-    timer: 1000 * timeLimitInSeconds,
+    timer: startTimerInMs,
     autostart: true,
   });
 
@@ -50,12 +51,31 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown]);
 
+  const getDangerStyles = () => {
+    if (countdown <= startTimerInMs * 0.25) {
+      return {
+        color: "black",
+        background: "orange",
+        borderRadius: 2,
+      };
+    }
+    if (countdown <= startTimerInMs * 0.15) {
+      return {
+        color: "black",
+        background: "red",
+        borderRadius: 2,
+        fontWeight: "bold",
+      };
+    }
+    return {};
+  };
+
   return (
     <Box>
       <Typography
         variant="h6"
         component="div"
-        sx={{ minWidth: "70px", textAlign: "center" }}
+        sx={{ minWidth: "70px", textAlign: "center", ...getDangerStyles() }}
       >
         {formatCountdownTime(countdown)}
       </Typography>

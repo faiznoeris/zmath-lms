@@ -32,6 +32,8 @@ import {
   fetchQuizWithQuestions,
   fetchMyQuizResults,
   initializeQuizSubmission,
+  checkOngoingAttempt,
+  fetchOngoingSubmissions,
 } from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
 import { formatDate } from "@/src/utils/dateFormat";
@@ -41,7 +43,7 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setQuiz, setAttemptId } = useQuizStore();
+  const { setQuiz, setAttemptId, setUserAnswer, setTimeRemaining } = useQuizStore();
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -101,6 +103,41 @@ export default function QuizDetailPage() {
       return;
     }
 
+    // Check for ongoing attempt first
+    const ongoingAttemptCheck = await checkOngoingAttempt(quizId);
+
+    console.log("ongoingAttemptCheck", ongoingAttemptCheck);
+    
+    if (ongoingAttemptCheck.success && ongoingAttemptCheck.data?.hasTimeRemaining) {
+      // Continue previous session
+      const submission = ongoingAttemptCheck.data.submission;
+      if (submission) {
+        // Fetch all existing submissions for this quiz attempt
+        const submissionsResult = await fetchOngoingSubmissions(quizId);
+
+        console.log("submissionsResult", submissionsResult);
+        
+        if (submissionsResult.success && submissionsResult.data) {
+          // Populate the store with existing answers
+          submissionsResult.data.forEach((sub) => {
+            if (sub.selected_answer) {
+              setUserAnswer(sub.question_id, sub.selected_answer);
+            }
+          });
+        }
+        
+        // Set the remaining time from the previous session
+        if (submission.time_remaining) {
+          setTimeRemaining(submission.time_remaining);
+        }
+        
+        setAttemptId(submission.id);
+        router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+        return;
+      }
+    }
+
+    // Start new attempt
     const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
@@ -345,7 +382,12 @@ export default function QuizDetailPage() {
                       quiz?.passing_score
                     );
                     return (
-                      <TableRow key={result.id} hover>
+                      <TableRow 
+                        key={result.id} 
+                        hover
+                        onClick={() => router.push(`/dashboard/student/quizzes/result/${result.id}`)}
+                        sx={{ cursor: "pointer" }}
+                      >
                         <TableCell>{results.length - index}</TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">

@@ -5,9 +5,11 @@ import {
   FormControlLabel,
   Radio,
   Skeleton,
+  Box,
 } from "@mui/material";
 import { updateUserAnswerState } from "@/src/services/quiz.service";
 import { useQuizStore } from "@/src/stores";
+import MathPreview from "../MathPreview";
 
 interface QuizAnswerOptionsProps {
   attemptId: string;
@@ -59,7 +61,7 @@ const QuizAnswerOptions = ({
               value={letterValue}
               control={<Radio />}
               // The label displayed to the user is still the full option text
-              label={option}
+              label={<Box flexDirection="row" display="flex" alignItems="center" gap={1.5}>{`${letterValue}. `} <MathPreview content={option} onlyPreview /></Box>}
             />
           ) : (
             <Skeleton key={index} variant="text" width="60%" height={40} />

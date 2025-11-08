@@ -2,6 +2,7 @@ import { createClient } from "@/src/utils/supabase/client";
 import { Quiz } from "@/src/models/Quiz";
 import { Question } from "@/src/models/Question";
 import { Result } from "@/src/models/Result";
+import { Submission } from "@/src/models/Submission";
 
 export interface QuizWithCourse extends Quiz {
   course: {
@@ -332,6 +333,115 @@ export async function fetchMyQuizResults(
     return { success: true, data: data || [] };
   } catch (error) {
     console.error("Error fetching my quiz results:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+/**
+ * Check for ongoing quiz attempt
+ * Returns existing submission if there's time remaining
+ */
+export async function checkOngoingAttempt(
+  quizId: string
+): Promise<{ 
+  success: boolean; 
+  data?: { 
+    submission: Submission | null; 
+    hasTimeRemaining: boolean;
+  }; 
+  error?: string;
+}> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Find any submission for this quiz that has time remaining and is not submitted
+    const { data: submissions, error } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("quiz_id", quizId)
+      .is("submitted_at", null)
+      .order("last_sync_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    if (!submissions || submissions.length === 0) {
+      return { 
+        success: true, 
+        data: { 
+          submission: null, 
+          hasTimeRemaining: false 
+        } 
+      };
+    }
+
+    const submission = submissions[0];
+    const hasTimeRemaining = submission.time_remaining && submission.time_remaining > 0;
+
+    return { 
+      success: true, 
+      data: { 
+        submission: hasTimeRemaining ? submission : null, 
+        hasTimeRemaining 
+      } 
+    };
+  } catch (error) {
+    console.error("Error checking ongoing attempt:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+/**
+ * Fetch all submissions for an ongoing quiz attempt
+ * Returns all unsubmitted answers for the current user and quiz
+ */
+export async function fetchOngoingSubmissions(
+  quizId: string
+): Promise<{ 
+  success: boolean; 
+  data?: Submission[]; 
+  error?: string;
+}> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Fetch all submissions for this quiz that are not yet submitted
+    const { data: submissions, error } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("quiz_id", quizId)
+      .is("submitted_at", null);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { 
+      success: true, 
+      data: submissions || [] 
+    };
+  } catch (error) {
+    console.error("Error fetching ongoing submissions:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

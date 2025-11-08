@@ -12,3 +12,4 @@ export { default as CountdownTimer } from "./CountdownTimer";
 export { default as QuizAnswerOptions } from "./QuizAnswerOptions";
 export { default as ModalComponent } from "./Modal";
 export { default as FileUpload } from "./FileUpload";
+export { QuizAnswerFileUpload } from "./QuizAnswerFileUpload";

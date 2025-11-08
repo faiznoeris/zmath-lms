@@ -15,9 +15,10 @@ interface CountdownTimerParams {
 }
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
-  const { quiz, sessionId, userAnswers } = useQuizStore();
+  const startTimerInMs = 1000 * timeLimitInSeconds;
+  const { quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining } = useQuizStore();
   const { countdown } = useCountdownTimer({
-    timer: 1000 * timeLimitInSeconds,
+    timer: startTimerInMs,
     autostart: true,
   });
 
@@ -28,6 +29,17 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
     if (!quiz || !quiz.questions) return;
 
     const timeRemainingInSeconds = Math.floor(countdown / 1000);
+
+    // Update the store with current time remaining (for localStorage persistence)
+    setTimeRemaining(timeRemainingInSeconds);
+
+    // Check if timer has reached 0
+    if (timeRemainingInSeconds <= 0) {
+      // Timer expired, clear the store
+      resetQuizState();
+      // You might want to auto-submit or redirect here
+      return;
+    }
 
     // Send bulk update to Supabase every 30 seconds
     if (
@@ -61,14 +73,33 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
       saveQuizAttemptState(sessionId, timeRemainingInSeconds);
     }
     // 4. Add userAnswers to the dependency array
-  }, [countdown, quiz, sessionId, userAnswers]);
+  }, [countdown, quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining]);
+
+  const getDangerStyles = () => {
+    if (countdown <= startTimerInMs * 0.25) {
+      return {
+        color: "black",
+        background: "orange",
+        borderRadius: 2,
+      };
+    }
+    if (countdown <= startTimerInMs * 0.15) {
+      return {
+        color: "black",
+        background: "red",
+        borderRadius: 2,
+        fontWeight: "bold",
+      };
+    }
+    return {};
+  };
 
   return (
     <Box>
       <Typography
         variant="h6"
         component="div"
-        sx={{ minWidth: "70px", textAlign: "center" }}
+        sx={{ minWidth: "70px", textAlign: "center", ...getDangerStyles() }}
       >
         {formatCountdownTime(countdown)}
       </Typography>

@@ -3,12 +3,13 @@
 import React from "react";
 import { Box, Button, Card, CardContent, Skeleton } from "@mui/material";
 import { useQuizStore } from "@/src/stores";
+import { useAuthStore } from "@/src/stores";
 import {
   MathQuestionDisplay,
   QuizBottomNav,
   QuizAnswerOptions,
   ModalComponent,
-  FileUpload,
+  QuizAnswerFileUpload,
 } from "@/src/components";
 import {
   updateQuizAttemptState,
@@ -18,6 +19,7 @@ import { loadQuizAttemptState } from "@/src/utils/quizHelpers";
 
 export default function QuizAttemptPage() {
   const { quiz, currentQuestionIndex, sessionId, userAnswers } = useQuizStore();
+  const { user } = useAuthStore();
   const question = quiz?.questions?.[currentQuestionIndex];
   const questionType = question?.question_type;
   const answerOptions = [
@@ -86,36 +88,55 @@ export default function QuizAttemptPage() {
   }
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        maxWidth: 1200,
-        mx: "auto",
-        p: 3,
-      }}
-    >
-      <Card>
-        <CardContent>
-          <MathQuestionDisplay
-            question={question?.question_text}
-            questionNumber={currentQuestionIndex + 1}
-          />
-          {questionType === "multiple_choice" ? (
-            <QuizAnswerOptions
-              attemptId={sessionId}
-              quizId={quiz.id}
-              questionId={question.id}
-              options={answerOptions}
+    <>
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          maxWidth: 1200,
+          minWidth: 300,
+          mx: "auto",
+          p: 3,
+          pb: 0,
+          width: "100%",
+        }}
+      >
+        <Card sx={{ minHeight: 400 }}>
+          <CardContent>
+            <MathQuestionDisplay
+              question={question?.question_text}
+              questionNumber={currentQuestionIndex + 1}
             />
-          ) : (
-            <FileUpload items="Upload jawaban anda" acceptedFile="image/*" />
-          )}
-        </CardContent>
-      </Card>
-      <QuizBottomNav onOpenModal={handleModal} />
+            {questionType === "multiple_choice" ? (
+              <QuizAnswerOptions
+                attemptId={sessionId}
+                quizId={quiz.id}
+                questionId={question.id}
+                options={answerOptions}
+              />
+            ) : (
+              <QuizAnswerFileUpload
+                attemptId={sessionId}
+                quizId={quiz.id}
+                userId={user?.id || ""}
+                questionId={question.id}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+      <Box
+        sx={{
+          flexShrink: 0,
+          maxWidth: 1200,
+          mx: "auto",
+          width: "100%",
+          p: 3,
+          pt: 2,
+        }}
+      >
+        <QuizBottomNav onOpenModal={handleModal} />
+      </Box>
       <ModalComponent
         isOpen={isModalOpen}
         onClose={handleModal}
@@ -128,6 +149,6 @@ export default function QuizAttemptPage() {
           Akhiri kuis
         </Button>
       </ModalComponent>
-    </Box>
+    </>
   );
 }

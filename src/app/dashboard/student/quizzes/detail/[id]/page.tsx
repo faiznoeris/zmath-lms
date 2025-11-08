@@ -32,6 +32,8 @@ import {
   fetchQuizWithQuestions,
   fetchMyQuizResults,
   initializeQuizSubmission,
+  checkOngoingAttempt,
+  fetchOngoingSubmissions,
 } from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
 import { formatDate } from "@/src/utils/dateFormat";
@@ -41,7 +43,17 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setQuiz, setSessionId } = useQuizStore();
+  const quizStore = useQuizStore();
+  const { 
+    setQuiz, 
+    setSessionId, 
+    setUserAnswer, 
+    setTimeRemaining, 
+    resetQuizState,
+    sessionId: storedSessionId,
+    userAnswers: storedUserAnswers,
+    timeRemaining: storedTimeRemaining,
+  } = quizStore;
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -95,15 +107,56 @@ export default function QuizDetailPage() {
     );
   }
 
-  const handleStartAttempt = async () => {
+    const handleStartAttempt = async () => {
     if (!quiz || typeof quiz.time_limit_minutes !== "number") {
       console.error("Quiz details not loaded yet");
       return;
     }
 
+    // Priority 1: Check if there's an ongoing session in the store (localStorage)
+    if (storedSessionId && storedTimeRemaining && storedTimeRemaining > 0) {
+      // Session data already in store, just navigate
+      router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+      return;
+    }
+
+    // Priority 2: Check database for ongoing attempt
+    const ongoingAttemptCheck = await checkOngoingAttempt(quizId);
+    
+    if (ongoingAttemptCheck.success && ongoingAttemptCheck.data?.hasTimeRemaining) {
+      // Continue previous session from database
+      const submission = ongoingAttemptCheck.data.submission;
+      if (submission) {
+        // Fetch all existing submissions for this quiz attempt
+        const submissionsResult = await fetchOngoingSubmissions(quizId);
+        
+        if (submissionsResult.success && submissionsResult.data) {
+          // Populate the store with existing answers
+          submissionsResult.data.forEach((sub) => {
+            if (sub.selected_answer) {
+              setUserAnswer(sub.question_id, sub.selected_answer);
+            }
+          });
+        }
+        
+        // Set the remaining time from the database session
+        // This will be used ONCE when the timer initializes
+        if (submission.time_remaining) {
+          setTimeRemaining(submission.time_remaining);
+        }
+        
+        setSessionId(submission.id);
+        router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+        return;
+      }
+    }
+    // Start new attempt
     const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
+
+    // Reset quiz state for fresh start
+    resetQuizState();
 
     const initializeQuiz = await initializeQuizSubmission(
       quizId,
@@ -345,7 +398,12 @@ export default function QuizDetailPage() {
                       quiz?.passing_score
                     );
                     return (
-                      <TableRow key={result.id} hover>
+                      <TableRow 
+                        key={result.id} 
+                        hover
+                        onClick={() => router.push(`/dashboard/student/quizzes/result/${result.id}`)}
+                        sx={{ cursor: "pointer" }}
+                      >
                         <TableCell>{results.length - index}</TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">

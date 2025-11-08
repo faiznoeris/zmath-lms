@@ -49,7 +49,7 @@ const UserMenu = () => {
 
   return (
     <Box>
-      <Tooltip title="Open Menu">
+      <Tooltip title="Buka Menu">
         <IconButton onClick={handleOpenUserMenu}>
           <Avatar {...stringAvatar(user?.user_metadata?.display_name)} />
         </IconButton>
@@ -65,14 +65,14 @@ const UserMenu = () => {
             <ListItemIcon>
               <Home />
             </ListItemIcon>
-            <Typography>Dashboard</Typography>
+            <Typography>Dasbor</Typography>
           </MenuItem>
         )}
         <MenuItem onClick={handleLogoutBtn}>
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
-          <Typography>Logout</Typography>
+          <Typography>Keluar</Typography>
         </MenuItem>
       </Menu>
     </Box>

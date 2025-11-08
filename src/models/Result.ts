@@ -6,6 +6,7 @@ export interface Result {
   completed_at: string;
   quiz_id: string;
   user_id: string;
+  answer_file_url?: string; // URL to uploaded answer file (e.g., scanned essay)
 }
 
 export interface ResultWithQuiz extends Result {

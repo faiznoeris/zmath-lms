@@ -77,14 +77,14 @@ export default function MaterialsListPage() {
     },
     {
       field: "title",
-      headerName: "Title",
+      headerName: "Judul",
       flex: 1,
       minWidth: 200,
       sortable: true,
     },
     {
       field: "type",
-      headerName: "Type",
+      headerName: "Tipe",
       width: 130,
       sortable: true,
       renderCell: (params: GridRenderCellParams) => (
@@ -98,11 +98,11 @@ export default function MaterialsListPage() {
     },
     {
       field: "lesson",
-      headerName: "Lesson",
+      headerName: "Pelajaran",
       flex: 1,
       minWidth: 180,
       sortable: true,
-      valueGetter: (value: any) => value?.title || "No Lesson",
+      valueGetter: (value: any) => value?.title || "Tanpa Pelajaran",
       renderCell: (params: GridRenderCellParams) => (
         <Box
           sx={{
@@ -113,7 +113,7 @@ export default function MaterialsListPage() {
         >
           {params.row.lesson?.title || (
             <Typography variant="body2" color="text.disabled">
-              No Lesson
+              Tanpa Pelajaran
             </Typography>
           )}
         </Box>
@@ -121,7 +121,7 @@ export default function MaterialsListPage() {
     },
     {
       field: "description",
-      headerName: "Description",
+      headerName: "Deskripsi",
       flex: 1,
       minWidth: 200,
       sortable: false,
@@ -139,7 +139,7 @@ export default function MaterialsListPage() {
     },
     {
       field: "content_url",
-      headerName: "File",
+      headerName: "Berkas",
       width: 80,
       sortable: false,
       align: "center",
@@ -149,7 +149,7 @@ export default function MaterialsListPage() {
           size="small"
           color="primary"
           onClick={() => window.open(params.value, "_blank")}
-          title="Open file"
+          title="Buka berkas"
         >
           <OpenInNewIcon fontSize="small" />
         </IconButton>
@@ -157,7 +157,7 @@ export default function MaterialsListPage() {
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Aksi",
       width: 120,
       sortable: false,
       align: "center",
@@ -175,7 +175,7 @@ export default function MaterialsListPage() {
             size="small"
             color="primary"
             onClick={() => handleEdit(params.row)}
-            title="Edit"
+            title="Ubah"
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -183,7 +183,7 @@ export default function MaterialsListPage() {
             size="small"
             color="error"
             onClick={() => handleDeleteClick(params.row.id)}
-            title="Delete"
+            title="Hapus"
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -211,11 +211,11 @@ export default function MaterialsListPage() {
               size="small"
               onClick={() => queryClient.invalidateQueries({ queryKey: ["materials"] })}
             >
-              Retry
+              Coba Lagi
             </Button>
           }
         >
-          Error loading materials: {error instanceof Error ? error.message : "Unknown error"}
+          Kesalahan memuat materi: {error instanceof Error ? error.message : "Kesalahan tidak diketahui"}
         </Alert>
       </Box>
     );
@@ -226,8 +226,8 @@ export default function MaterialsListPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Materials" },
+          
+          { label: "Materi" },
         ]}
       />
 
@@ -235,10 +235,10 @@ export default function MaterialsListPage() {
       <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-            Materials
+            Materi
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage your learning materials
+            Kelola materi pembelajaran Anda
           </Typography>
         </Box>
         <Button
@@ -246,7 +246,7 @@ export default function MaterialsListPage() {
           startIcon={<AddIcon />}
           onClick={() => window.location.href = "/dashboard/teacher/materials/add"}
         >
-          Add Material
+          Tambah Materi
         </Button>
       </Box>
 
@@ -255,6 +255,7 @@ export default function MaterialsListPage() {
         <DataGrid
           rows={materials || []}
           columns={columns}
+          loading={isLoading}
           initialState={{
             pagination: {
               paginationModel: { pageSize: 10, page: 0 },
@@ -289,20 +290,20 @@ export default function MaterialsListPage() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Delete Material</DialogTitle>
+        <DialogTitle>Hapus Materi</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this material? This action cannot be undone.
+            Apakah Anda yakin ingin menghapus materi ini? Tindakan ini tidak dapat dibatalkan.
           </Typography>
           {deleteMutation.isError && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {deleteMutation.error instanceof Error ? deleteMutation.error.message : "Delete failed"}
+              {deleteMutation.error instanceof Error ? deleteMutation.error.message : "Penghapusan gagal"}
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteMutation.isPending}>
-            Cancel
+            Batal
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -311,7 +312,7 @@ export default function MaterialsListPage() {
             disabled={deleteMutation.isPending}
             startIcon={deleteMutation.isPending ? <CircularProgress size={20} /> : null}
           >
-            Delete
+            Hapus
           </Button>
         </DialogActions>
       </Dialog>

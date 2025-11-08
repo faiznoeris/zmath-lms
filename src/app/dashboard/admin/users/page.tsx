@@ -209,6 +209,7 @@ export default function UsersPage() {
           <DataGrid
             rows={filteredUsers}
             columns={columns}
+            loading={isLoading}
             pageSizeOptions={[10, 25, 50, 100]}
             initialState={{
               pagination: {

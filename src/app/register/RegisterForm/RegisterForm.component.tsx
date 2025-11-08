@@ -59,10 +59,10 @@ const RegisterForm = () => {
 
   return (
     <form className={styles.registerForm} onSubmit={handleSubmit(onSubmit)}>
-      <h2 className={styles.title}>Register</h2>
+      <h2 className={styles.title}>Daftar</h2>
       <TextField
         error={!!errors.fullName}
-        label="Full Name"
+        label="Nama Lengkap"
         helperText={errors.fullName?.message}
         {...register("fullName")}
       />
@@ -74,18 +74,18 @@ const RegisterForm = () => {
       />
       <PasswordField
         error={!!errors.password}
-        label="Password"
+        label="Kata Sandi"
         helperText={errors.password?.message}
         {...register("password")}
       />
       <PasswordField
         error={!!errors.confirmPassword}
-        label="Confirm Password"
+        label="Konfirmasi Kata Sandi"
         helperText={errors.confirmPassword?.message}
         {...register("confirmPassword")}
       />
       <FormControl component="fieldset" error={!!errors.role}>
-        <FormLabel component="legend">Register as</FormLabel>
+        <FormLabel component="legend">Daftar sebagai</FormLabel>
         <Controller
           name="role"
           control={control}
@@ -94,12 +94,12 @@ const RegisterForm = () => {
               <FormControlLabel
                 value="student"
                 control={<Radio />}
-                label="Student"
+                label="Siswa"
               />
               <FormControlLabel
                 value="teacher"
                 control={<Radio />}
-                label="Teacher"
+                label="Guru"
               />
             </RadioGroup>
           )}
@@ -116,9 +116,9 @@ const RegisterForm = () => {
           variant="contained"
           type="submit"
         >
-          Register
+          Daftar
         </Button>
-        <Button onClick={() => router.push("/login")}>Back to Login</Button>
+        <Button onClick={() => router.push("/login")}>Kembali ke Masuk</Button>
       </div>
     </form>
   );

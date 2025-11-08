@@ -35,7 +35,7 @@ export default function AddCoursePage() {
         user_id: "", // Will be set by server action
       });
       if (!result.success) {
-        throw new Error(result.error || "Failed to create course");
+        throw new Error(result.error || "Gagal membuat kursus");
       }
     },
     onSuccess: () => {
@@ -52,19 +52,19 @@ export default function AddCoursePage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Courses", href: "/dashboard/teacher/courses" },
-          { label: "Add" },
+          
+          { label: "Kursus", href: "/dashboard/teacher/courses" },
+          { label: "Tambah" },
         ]}
       />
 
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: "center" }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
-          Create Course
+          Buat Kursus
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Add a new course to the system
+          Tambahkan kursus baru ke sistem
         </Typography>
       </Box>
 
@@ -74,27 +74,27 @@ export default function AddCoursePage() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {/* Course Title */}
               <TextField
-                label="Course Title"
+                label="Judul Kursus"
                 fullWidth
                 error={!!errors.title}
                 helperText={errors.title?.message}
-                {...register("title", { required: "Title is required" })}
+                {...register("title", { required: "Judul wajib diisi" })}
               />
 
               {/* Description */}
               <TextField
-                label="Description"
+                label="Deskripsi"
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="Provide a brief description of the course..."
+                placeholder="Berikan deskripsi singkat tentang kursus..."
                 {...register("description")}
               />
 
               {/* Error Message */}
               {mutation.isError && (
                 <Alert severity="error">
-                  {mutation.error instanceof Error ? mutation.error.message : "Creation failed"}
+                  {mutation.error instanceof Error ? mutation.error.message : "Gagal membuat"}
                 </Alert>
               )}
 
@@ -108,7 +108,7 @@ export default function AddCoursePage() {
                   startIcon={mutation.isPending ? <CircularProgress size={20} /> : <SaveIcon />}
                   fullWidth
                 >
-                  {mutation.isPending ? "Creating..." : "Create Course"}
+                  {mutation.isPending ? "Membuat..." : "Buat Kursus"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -116,7 +116,7 @@ export default function AddCoursePage() {
                   onClick={() => router.push("/dashboard/teacher/courses")}
                   disabled={mutation.isPending}
                 >
-                  Cancel
+                  Batal
                 </Button>
               </Box>
             </Box>

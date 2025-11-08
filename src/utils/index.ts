@@ -10,6 +10,10 @@ export { detectMaterialType, getMaterialTypeColor, getMaterialTypeLabel } from "
 // Quiz utilities
 export { getResultStatus, calculateScorePercentage } from "./quizHelpers";
 
+// Image upload utilities
+export { uploadImage, createPasteHandler } from "./imageUpload";
+export type { ImageUploadResult } from "./imageUpload";
+
 // Other existing utilities
 export * from "./auth";
 export * from "./stringAvatar";

@@ -212,7 +212,7 @@ export default function EnrollmentsPage() {
   const columns: GridColDef[] = [
     {
       field: "full_name",
-      headerName: "Full Name",
+      headerName: "Nama Lengkap",
       flex: 1.5,
       minWidth: 200,
       valueGetter: (value, row) => row.student.full_name,
@@ -226,7 +226,7 @@ export default function EnrollmentsPage() {
     },
     {
       field: "courses",
-      headerName: "Enrolled Courses",
+      headerName: "Kursus Terdaftar",
       flex: 2,
       minWidth: 300,
       renderCell: (params) => (
@@ -234,7 +234,7 @@ export default function EnrollmentsPage() {
           {params.row.enrollments.map((enrollment: EnrollmentWithDetails) => (
             <Chip
               key={enrollment.id}
-              label={enrollment.course?.title || "Unknown"}
+              label={enrollment.course?.title || "Tidak Diketahui"}
               size="small"
               onDelete={() => handleDeleteClick(enrollment.id)}
               deleteIcon={<DeleteIcon />}
@@ -246,7 +246,7 @@ export default function EnrollmentsPage() {
     },
     {
       field: "enrollment_count",
-      headerName: "Total Courses",
+      headerName: "Total Kursus",
       width: 130,
       headerAlign: "center",
       align: "center",
@@ -257,7 +257,7 @@ export default function EnrollmentsPage() {
   if (error) {
     return (
       <Box sx={{ maxWidth: 1400, mx: "auto", p: 3 }}>
-        <Alert severity="error">Error loading enrollments: {error.message}</Alert>
+        <Alert severity="error">Kesalahan memuat pendaftaran: {error.message}</Alert>
       </Box>
     );
   }
@@ -267,8 +267,8 @@ export default function EnrollmentsPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Student Enrollments" },
+          
+          { label: "Pendaftaran Siswa" },
         ]}
       />
 
@@ -284,7 +284,7 @@ export default function EnrollmentsPage() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <GroupAddIcon sx={{ fontSize: 32, color: "primary.main" }} />
           <Typography variant="h4" component="h1" fontWeight={600}>
-            Student Enrollments
+            Pendaftaran Siswa
           </Typography>
         </Box>
         <Button
@@ -292,19 +292,19 @@ export default function EnrollmentsPage() {
           startIcon={<AddIcon />}
           onClick={handleEnrollClick}
         >
-          Enroll Student
+          Daftarkan Siswa
         </Button>
       </Box>
 
       {/* Course Filter */}
       <Box sx={{ mb: 3 }}>
         <FormControl sx={{ minWidth: 300 }}>
-          <InputLabel>Filter by Course</InputLabel>
+          <InputLabel>Filter berdasarkan Kursus</InputLabel>
           <Select
             multiple
             value={courseFilter}
             onChange={handleCourseFilterChange}
-            input={<OutlinedInput label="Filter by Course" />}
+            input={<OutlinedInput label="Filter berdasarkan Kursus" />}
             renderValue={(selected) =>
               selected
                 .map((id) => courses.find((c) => c.id === id)?.title)
@@ -353,15 +353,15 @@ export default function EnrollmentsPage() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Enroll Student in Courses</DialogTitle>
+        <DialogTitle>Daftarkan Siswa ke Kursus</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
             <FormControl fullWidth>
-              <InputLabel>Select Student</InputLabel>
+              <InputLabel>Pilih Siswa</InputLabel>
               <Select
                 value={selectedStudent}
                 onChange={(e) => setSelectedStudent(e.target.value)}
-                label="Select Student"
+                label="Pilih Siswa"
               >
                 {students.map((student) => (
                   <MenuItem key={student.id} value={student.id}>
@@ -372,7 +372,7 @@ export default function EnrollmentsPage() {
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel>Select Courses</InputLabel>
+              <InputLabel>Pilih Kursus</InputLabel>
               <Select
                 multiple
                 value={selectedCourses}
@@ -380,7 +380,7 @@ export default function EnrollmentsPage() {
                   const value = e.target.value;
                   setSelectedCourses(typeof value === 'string' ? [] : value);
                 }}
-                input={<OutlinedInput label="Select Courses" />}
+                input={<OutlinedInput label="Pilih Kursus" />}
                 renderValue={(selected) =>
                   selected
                     .map((id) => courses.find((c) => c.id === id)?.title)
@@ -398,7 +398,7 @@ export default function EnrollmentsPage() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEnrollDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setEnrollDialogOpen(false)}>Batal</Button>
           <Button
             onClick={handleEnrollSubmit}
             variant="contained"
@@ -408,7 +408,7 @@ export default function EnrollmentsPage() {
               createMutation.isPending
             }
           >
-            {createMutation.isPending ? "Enrolling..." : "Enroll"}
+            {createMutation.isPending ? "Mendaftarkan..." : "Daftarkan"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -418,22 +418,21 @@ export default function EnrollmentsPage() {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>Confirm Unenroll</DialogTitle>
+        <DialogTitle>Konfirmasi Batal Daftar</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to remove this enrollment? The student will
-            lose access to this course.
+            Apakah Anda yakin ingin menghapus pendaftaran ini? Siswa akan kehilangan akses ke kursus ini.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Batal</Button>
           <Button
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Removing..." : "Remove"}
+            {deleteMutation.isPending ? "Menghapus..." : "Hapus"}
           </Button>
         </DialogActions>
       </Dialog>

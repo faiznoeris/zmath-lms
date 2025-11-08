@@ -41,10 +41,10 @@ export default function TeacherApprovalsPage() {
       if (result.success && result.data) {
         setTeachers(result.data);
       } else {
-        setError(result.error || "Failed to fetch pending teachers");
+        setError(result.error || "Gagal memuat guru yang menunggu persetujuan");
       }
     } catch (err) {
-      setError("An error occurred while fetching pending teachers");
+      setError("Terjadi kesalahan saat memuat guru yang menunggu persetujuan");
     } finally {
       setIsLoading(false);
     }
@@ -78,13 +78,13 @@ export default function TeacherApprovalsPage() {
     try {
       const result = await approveTeacherAction(userId);
       if (result.success) {
-        setSuccess("Teacher approved successfully!");
+        setSuccess("Guru berhasil disetujui!");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));
       } else {
-        setError(result.error || "Failed to approve teacher");
+        setError(result.error || "Gagal menyetujui guru");
       }
     } catch (err) {
-      setError("An error occurred while approving teacher");
+      setError("Terjadi kesalahan saat menyetujui guru");
     } finally {
       setProcessingId(null);
     }
@@ -98,13 +98,13 @@ export default function TeacherApprovalsPage() {
     try {
       const result = await rejectTeacherAction(userId);
       if (result.success) {
-        setSuccess("Teacher registration rejected");
+        setSuccess("Pendaftaran guru ditolak");
         setTeachers((prev) => prev.filter((t) => t.id !== userId));
       } else {
-        setError(result.error || "Failed to reject teacher");
+        setError(result.error || "Gagal menolak guru");
       }
     } catch (err) {
-      setError("An error occurred while rejecting teacher");
+      setError("Terjadi kesalahan saat menolak guru");
     } finally {
       setProcessingId(null);
     }
@@ -113,7 +113,7 @@ export default function TeacherApprovalsPage() {
   const columns: GridColDef[] = [
     {
       field: "full_name",
-      headerName: "Full Name",
+      headerName: "Nama Lengkap",
       flex: 1.5,
       minWidth: 200,
     },
@@ -125,10 +125,10 @@ export default function TeacherApprovalsPage() {
     },
     {
       field: "created_at",
-      headerName: "Registered",
+      headerName: "Terdaftar",
       width: 180,
       valueFormatter: (value) => {
-        return new Date(value).toLocaleDateString("en-US", {
+        return new Date(value).toLocaleDateString("id-ID", {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -140,7 +140,7 @@ export default function TeacherApprovalsPage() {
     {
       field: "actions",
       type: "actions",
-      headerName: "Actions",
+      headerName: "Aksi",
       width: 150,
       getActions: (params) => {
         const isProcessing = processingId === params.id;
@@ -148,7 +148,7 @@ export default function TeacherApprovalsPage() {
           <GridActionsCellItem
             key="approve"
             icon={<CheckIcon />}
-            label="Approve"
+            label="Setujui"
             disabled={isProcessing}
             onClick={() => handleApprove(params.id as string)}
             showInMenu={false}
@@ -156,7 +156,7 @@ export default function TeacherApprovalsPage() {
           <GridActionsCellItem
             key="reject"
             icon={<CloseIcon />}
-            label="Reject"
+            label="Tolak"
             disabled={isProcessing}
             onClick={() => handleReject(params.id as string)}
             showInMenu={false}
@@ -195,16 +195,16 @@ export default function TeacherApprovalsPage() {
           onClick={() => router.push("/dashboard")}
         >
           <AdminPanelSettingsIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-          Dashboard
+          Dasbor
         </Link>
-        <Typography color="text.primary">Teacher Approvals</Typography>
+        <Typography color="text.primary">Persetujuan Guru</Typography>
       </Breadcrumbs>
 
       <Typography variant="h4" gutterBottom>
-        Teacher Registration Approvals
+        Persetujuan Pendaftaran Guru
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Review and approve pending teacher registrations.
+        Tinjau dan setujui pendaftaran guru yang menunggu persetujuan.
       </Typography>
 
       {error && (
@@ -227,17 +227,17 @@ export default function TeacherApprovalsPage() {
         {teachers.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 6 }}>
             <Typography variant="h6" color="text.secondary">
-              No pending teacher registrations
+              Tidak ada pendaftaran guru yang menunggu
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              All teacher registrations have been processed.
+              Semua pendaftaran guru telah diproses.
             </Typography>
           </Box>
         ) : (
           <>
             <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
               <Chip
-                label={`${teachers.length} Pending Approval${teachers.length !== 1 ? "s" : ""}`}
+                label={`${teachers.length} Menunggu Persetujuan`}
                 color="warning"
               />
             </Stack>
@@ -246,6 +246,7 @@ export default function TeacherApprovalsPage() {
               <DataGrid
                 rows={teachers}
                 columns={columns}
+                loading={isLoading}
                 pageSizeOptions={[10, 25, 50]}
                 initialState={{
                   pagination: {

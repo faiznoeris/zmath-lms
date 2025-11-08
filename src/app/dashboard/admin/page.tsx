@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUserRole } from "@/src/utils/auth";
 import styles from "../dashboard.module.css";
+import { LoadingBar } from "@/src/components";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className={styles.dashboardContainer}>
-        <div style={{ textAlign: "center", padding: "3rem" }}>Loading...</div>
+        <LoadingBar />
       </div>
     );
   }
@@ -41,53 +42,53 @@ export default function AdminDashboard() {
   return (
     <div className={styles.dashboardContainer}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Admin Dashboard</h1>
-        <p className={styles.subtitle}>Manage all aspects of ZMath LMS.</p>
+        <h1 className={styles.title}>Dasbor Admin</h1>
+        <p className={styles.subtitle}>Kelola semua aspek ZMath LMS.</p>
       </header>
       <main className={styles.main}>
         <section className={styles.section}>
-          <h2>Admin Actions</h2>
+          <h2>Aksi Admin</h2>
           <div className={styles.quickLinks}>
             <Link href="/dashboard/admin/users" className={styles.card}>
               <span>👥</span>
-              <div>User Settings</div>
+              <div>Pengaturan Pengguna</div>
             </Link>
             <Link
               href="/dashboard/admin/teacher-approvals"
               className={styles.card}
             >
               <span>✅</span>
-              <div>Teacher Registration Approvals</div>
+              <div>Persetujuan Pendaftaran Guru</div>
             </Link>
           </div>
         </section>
 
         <section className={styles.section}>
-          <h2>Content Management</h2>
+          <h2>Manajemen Konten</h2>
           <div className={styles.quickLinks}>
             <Link href="/dashboard/teacher/courses" className={styles.card}>
               <span>🎓</span>
-              <div>Create & Manage Courses</div>
+              <div>Buat & Kelola Kursus</div>
             </Link>
             <Link href="/dashboard/teacher/lessons" className={styles.card}>
               <span>📖</span>
-              <div>Create & Manage Lessons</div>
+              <div>Buat & Kelola Pelajaran</div>
             </Link>
             <Link href="/dashboard/teacher/materials" className={styles.card}>
               <span>📚</span>
-              <div>Upload & Manage Materials</div>
+              <div>Unggah & Kelola Materi</div>
             </Link>
             <Link href="/dashboard/teacher/quizzes" className={styles.card}>
               <span>📝</span>
-              <div>Create & Manage Quizzes</div>
+              <div>Buat & Kelola Kuis</div>
             </Link>
             <Link href="/dashboard/teacher/submissions" className={styles.card}>
               <span>✍️</span>
-              <div>Review Submissions</div>
+              <div>Tinjau Pengumpulan</div>
             </Link>
             <Link href="/dashboard/teacher/enrollments" className={styles.card}>
               <span>👥</span>
-              <div>Student Enrollments</div>
+              <div>Pendaftaran Siswa</div>
             </Link>
           </div>
         </section>

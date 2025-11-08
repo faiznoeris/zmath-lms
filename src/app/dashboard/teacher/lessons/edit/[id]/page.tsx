@@ -109,7 +109,7 @@ export default function EditLessonPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
+          
           { label: "Lessons", href: "/dashboard/teacher/lessons" },
           { label: "Edit" },
         ]}

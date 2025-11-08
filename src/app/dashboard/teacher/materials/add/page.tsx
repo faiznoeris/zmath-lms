@@ -163,7 +163,7 @@ export default function AdminMaterialsPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
+          
           { label: "Materials", href: "/dashboard/teacher/materials" },
           { label: "Add" },
         ]}

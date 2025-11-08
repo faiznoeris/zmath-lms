@@ -80,30 +80,30 @@ export default function CoursesPage() {
     },
     {
       field: "title",
-      headerName: "Title",
+      headerName: "Judul",
       flex: 1,
       minWidth: 200,
     },
     {
       field: "description",
-      headerName: "Description",
+      headerName: "Deskripsi",
       flex: 1.5,
       minWidth: 300,
       renderCell: (params) => (
         <>
-          {params.value || <Typography variant="body2" color="text.secondary">No description</Typography>}
+          {params.value || <Typography variant="body2" color="text.secondary">Tidak ada deskripsi</Typography>}
         </>
       ),
     },
     {
       field: "created_at",
-      headerName: "Created At",
+      headerName: "Dibuat Pada",
       width: 180,
       renderCell: (params) => new Date(params.value).toLocaleDateString(),
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Aksi",
       width: 120,
       sortable: false,
       align: "center",
@@ -121,7 +121,7 @@ export default function CoursesPage() {
             size="small"
             color="primary"
             onClick={() => router.push(`/dashboard/teacher/courses/edit/${params.id}`)}
-            title="Edit"
+            title="Ubah"
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -129,7 +129,7 @@ export default function CoursesPage() {
             size="small"
             color="error"
             onClick={() => handleDeleteClick(params.id as string)}
-            title="Delete"
+            title="Hapus"
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -143,8 +143,8 @@ export default function CoursesPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Courses" },
+          
+          { label: "Kursus" },
         ]}
       />
 
@@ -160,10 +160,10 @@ export default function CoursesPage() {
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
             <SchoolIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 36 }} />
-            Courses Management
+            Manajemen Kursus
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage all courses in the system
+            Kelola semua kursus dalam sistem
           </Typography>
         </Box>
         <Button
@@ -172,14 +172,14 @@ export default function CoursesPage() {
           onClick={() => router.push("/dashboard/teacher/courses/add")}
           size="large"
         >
-          Add Course
+          Tambah Kursus
         </Button>
       </Box>
 
       {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          Error loading courses: {error instanceof Error ? error.message : "Unknown error"}
+          Kesalahan memuat kursus: {error instanceof Error ? error.message : "Kesalahan tidak diketahui"}
         </Alert>
       )}
 
@@ -213,15 +213,15 @@ export default function CoursesPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>Konfirmasi Hapus</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this course? This action cannot be undone.
+            Apakah Anda yakin ingin menghapus kursus ini? Tindakan ini tidak dapat dibatalkan.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteMutation.isPending}>
-            Cancel
+            Batal
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -229,7 +229,7 @@ export default function CoursesPage() {
             variant="contained"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            {deleteMutation.isPending ? "Menghapus..." : "Hapus"}
           </Button>
         </DialogActions>
       </Dialog>

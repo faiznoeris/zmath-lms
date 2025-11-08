@@ -74,13 +74,13 @@ export default function LessonsPage() {
     },
     {
       field: "title",
-      headerName: "Title",
+      headerName: "Judul",
       flex: 1,
       minWidth: 250,
     },
     {
       field: "course",
-      headerName: "Course",
+      headerName: "Kursus",
       flex: 1,
       minWidth: 200,
       renderCell: (params) => (
@@ -88,14 +88,14 @@ export default function LessonsPage() {
           {params.row.course ? (
             <Chip label={params.row.course.title} color="primary" size="small" />
           ) : (
-            <Chip label="No Course" color="default" size="small" />
+            <Chip label="Tanpa Kursus" color="default" size="small" />
           )}
         </Box>
       ),
     },
     {
       field: "content",
-      headerName: "Content",
+      headerName: "Konten",
       flex: 1.5,
       minWidth: 300,
       renderCell: (params) => (
@@ -106,7 +106,7 @@ export default function LessonsPage() {
             </Typography>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              No content
+              Tidak ada konten
             </Typography>
           )}
         </Box>
@@ -114,13 +114,13 @@ export default function LessonsPage() {
     },
     {
       field: "created_at",
-      headerName: "Created At",
+      headerName: "Dibuat Pada",
       width: 180,
       renderCell: (params) => new Date(params.value).toLocaleDateString(),
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Aksi",
       width: 120,
       sortable: false,
       align: "center",
@@ -138,7 +138,7 @@ export default function LessonsPage() {
             size="small"
             color="primary"
             onClick={() => router.push(`/dashboard/teacher/lessons/edit/${params.id}`)}
-            title="Edit"
+            title="Ubah"
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -146,7 +146,7 @@ export default function LessonsPage() {
             size="small"
             color="error"
             onClick={() => handleDeleteClick(params.id as string)}
-            title="Delete"
+            title="Hapus"
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -160,8 +160,8 @@ export default function LessonsPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Lessons" },
+          
+          { label: "Pelajaran" },
         ]}
       />
 
@@ -177,10 +177,10 @@ export default function LessonsPage() {
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
             <MenuBookIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 36 }} />
-            Lessons Management
+            Manajemen Pelajaran
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage all lessons in the system
+            Kelola semua pelajaran dalam sistem
           </Typography>
         </Box>
         <Button
@@ -189,14 +189,14 @@ export default function LessonsPage() {
           onClick={() => router.push("/dashboard/teacher/lessons/add")}
           size="large"
         >
-          Add Lesson
+          Tambah Pelajaran
         </Button>
       </Box>
 
       {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          Error loading lessons: {error instanceof Error ? error.message : "Unknown error"}
+          Kesalahan memuat pelajaran: {error instanceof Error ? error.message : "Kesalahan tidak diketahui"}
         </Alert>
       )}
 
@@ -230,15 +230,15 @@ export default function LessonsPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>Konfirmasi Hapus</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this lesson? This action cannot be undone.
+            Apakah Anda yakin ingin menghapus pelajaran ini? Tindakan ini tidak dapat dibatalkan.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteMutation.isPending}>
-            Cancel
+            Batal
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -246,7 +246,7 @@ export default function LessonsPage() {
             variant="contained"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            {deleteMutation.isPending ? "Menghapus..." : "Hapus"}
           </Button>
         </DialogActions>
       </Dialog>

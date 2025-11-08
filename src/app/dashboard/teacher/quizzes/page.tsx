@@ -75,14 +75,14 @@ export default function QuizzesListPage() {
     },
     {
       field: "title",
-      headerName: "Title",
+      headerName: "Judul",
       flex: 1,
       minWidth: 200,
       sortable: true,
     },
     {
       field: "description",
-      headerName: "Description",
+      headerName: "Deskripsi",
       flex: 1,
       minWidth: 250,
       sortable: false,
@@ -100,7 +100,7 @@ export default function QuizzesListPage() {
     },
     {
       field: "course",
-      headerName: "Course",
+      headerName: "Kursus",
       width: 180,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
@@ -108,14 +108,14 @@ export default function QuizzesListPage() {
           {params.row.course ? (
             <Chip label={params.row.course.title} color="primary" size="small" />
           ) : (
-            <Chip label="No Course" color="default" size="small" />
+            <Chip label="Tanpa Kursus" color="default" size="small" />
           )}
         </Box>
       ),
     },
     {
       field: "questions",
-      headerName: "Questions",
+      headerName: "Pertanyaan",
       width: 120,
       sortable: false,
       align: "center",
@@ -131,20 +131,20 @@ export default function QuizzesListPage() {
     },
     {
       field: "time_limit_minutes",
-      headerName: "Time Limit",
+      headerName: "Batas Waktu",
       width: 130,
       sortable: true,
       align: "center",
       headerAlign: "center",
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.value ? `${params.value} min` : "-"}
+          {params.value ? `${params.value} menit` : "-"}
         </Typography>
       ),
     },
     {
       field: "created_at",
-      headerName: "Created",
+      headerName: "Dibuat",
       width: 120,
       sortable: true,
       renderCell: (params: GridRenderCellParams) => (
@@ -155,7 +155,7 @@ export default function QuizzesListPage() {
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Aksi",
       width: 120,
       sortable: false,
       align: "center",
@@ -173,7 +173,7 @@ export default function QuizzesListPage() {
             size="small"
             color="primary"
             onClick={() => handleEdit(params.row)}
-            title="Edit"
+            title="Ubah"
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -181,7 +181,7 @@ export default function QuizzesListPage() {
             size="small"
             color="error"
             onClick={() => handleDeleteClick(params.row.id)}
-            title="Delete"
+            title="Hapus"
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -209,11 +209,11 @@ export default function QuizzesListPage() {
               size="small"
               onClick={() => queryClient.invalidateQueries({ queryKey: ["quizzes"] })}
             >
-              Retry
+              Coba Lagi
             </Button>
           }
         >
-          Error loading quizzes: {error instanceof Error ? error.message : "Unknown error"}
+          Kesalahan memuat kuis: {error instanceof Error ? error.message : "Kesalahan tidak diketahui"}
         </Alert>
       </Box>
     );
@@ -224,8 +224,8 @@ export default function QuizzesListPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Quizzes" },
+          
+          { label: "Kuis" },
         ]}
       />
 
@@ -233,10 +233,10 @@ export default function QuizzesListPage() {
       <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-            Quizzes
+            Kuis
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage your quizzes and questions
+            Kelola kuis dan pertanyaan Anda
           </Typography>
         </Box>
         <Button
@@ -244,7 +244,7 @@ export default function QuizzesListPage() {
           startIcon={<AddIcon />}
           onClick={() => router.push("/dashboard/teacher/quizzes/add")}
         >
-          Add Quiz
+          Tambah Kuis
         </Button>
       </Box>
 
@@ -253,6 +253,7 @@ export default function QuizzesListPage() {
         <DataGrid
           rows={quizzes || []}
           columns={columns}
+          loading={isLoading}
           initialState={{
             pagination: {
               paginationModel: { pageSize: 10, page: 0 },
@@ -287,20 +288,20 @@ export default function QuizzesListPage() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Delete Quiz</DialogTitle>
+        <DialogTitle>Hapus Kuis</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this quiz? This will also delete all associated questions. This action cannot be undone.
+            Apakah Anda yakin ingin menghapus kuis ini? Ini juga akan menghapus semua pertanyaan terkait. Tindakan ini tidak dapat dibatalkan.
           </Typography>
           {deleteMutation.isError && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {deleteMutation.error instanceof Error ? deleteMutation.error.message : "Delete failed"}
+              {deleteMutation.error instanceof Error ? deleteMutation.error.message : "Penghapusan gagal"}
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteMutation.isPending}>
-            Cancel
+            Batal
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -309,7 +310,7 @@ export default function QuizzesListPage() {
             disabled={deleteMutation.isPending}
             startIcon={deleteMutation.isPending ? <CircularProgress size={20} /> : null}
           >
-            Delete
+            Hapus
           </Button>
         </DialogActions>
       </Dialog>

@@ -61,19 +61,19 @@ export default function AddLessonPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Lessons", href: "/dashboard/teacher/lessons" },
-          { label: "Add" },
+          
+          { label: "Pelajaran", href: "/dashboard/teacher/lessons" },
+          { label: "Tambah" },
         ]}
       />
 
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: "center" }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
-          Create Lesson
+          Buat Pelajaran
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Add a new lesson to a course
+          Tambahkan pelajaran baru ke kursus
         </Typography>
       </Box>
 
@@ -83,25 +83,25 @@ export default function AddLessonPage() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {/* Lesson Title */}
               <TextField
-                label="Lesson Title"
+                label="Judul Pelajaran"
                 fullWidth
                 error={!!errors.title}
                 helperText={errors.title?.message}
-                {...register("title", { required: "Title is required" })}
+                {...register("title", { required: "Judul wajib diisi" })}
               />
 
               {/* Course Selection */}
               <FormControl fullWidth error={!!errors.course_id}>
-                <InputLabel>Course *</InputLabel>
+                <InputLabel>Kursus *</InputLabel>
                 <Select
-                  label="Course *"
+                  label="Kursus *"
                   defaultValue=""
                   {...register("course_id", { 
-                    required: "Course is required"
+                    required: "Kursus wajib diisi"
                   })}
                 >
                   <MenuItem value="">
-                    <em>Select a course</em>
+                    <em>Pilih kursus</em>
                   </MenuItem>
                   {courses.map((course) => (
                     <MenuItem key={course.id} value={course.id}>
@@ -113,24 +113,24 @@ export default function AddLessonPage() {
                   <FormHelperText error>{errors.course_id.message}</FormHelperText>
                 )}
                 {!errors.course_id && (
-                  <FormHelperText>Select the course this lesson belongs to</FormHelperText>
+                  <FormHelperText>Pilih kursus untuk pelajaran ini</FormHelperText>
                 )}
               </FormControl>
 
               {/* Content */}
               <TextField
-                label="Content"
+                label="Konten"
                 fullWidth
                 multiline
                 rows={8}
-                placeholder="Enter the lesson content..."
+                placeholder="Masukkan konten pelajaran..."
                 {...register("content")}
               />
 
               {/* Error Message */}
               {mutation.isError && (
                 <Alert severity="error">
-                  {mutation.error instanceof Error ? mutation.error.message : "Creation failed"}
+                  {mutation.error instanceof Error ? mutation.error.message : "Gagal membuat"}
                 </Alert>
               )}
 
@@ -144,7 +144,7 @@ export default function AddLessonPage() {
                   startIcon={mutation.isPending ? <CircularProgress size={20} /> : <SaveIcon />}
                   fullWidth
                 >
-                  {mutation.isPending ? "Creating..." : "Create Lesson"}
+                  {mutation.isPending ? "Membuat..." : "Buat Pelajaran"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -152,7 +152,7 @@ export default function AddLessonPage() {
                   onClick={() => router.push("/dashboard/teacher/lessons")}
                   disabled={mutation.isPending}
                 >
-                  Cancel
+                  Batal
                 </Button>
               </Box>
             </Box>

@@ -4,6 +4,7 @@ export * from "./Header";
 export * from "./QuizHeader";
 export * from "./QuizSidebar";
 export * from "./Breadcrumbs";
+export * from "./LoadingBar";
 export { default as MathPreview } from "./MathPreview";
 export { default as MathQuestionDisplay } from "./MathQuestionDisplay";
 export { default as QuizBottomNav } from "./QuizBottomNav";

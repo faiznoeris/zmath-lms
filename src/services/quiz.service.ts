@@ -29,7 +29,8 @@ export async function fetchQuizzes(): Promise<{
       .select(
         `
         *,
-        course:courses!quizzes_course_id_fkey(id, title)
+        course:courses!quizzes_course_id_fkey(id, title),
+        questions(id)
       `
       )
       .order("created_at", { ascending: false });

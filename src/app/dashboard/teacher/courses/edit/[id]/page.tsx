@@ -38,7 +38,7 @@ export default function EditCoursePage() {
     queryFn: async () => {
       const result = await fetchCourseById(courseId);
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch course");
+        throw new Error(result.error || "Gagal memuat kursus");
       }
       return result.data;
     },
@@ -58,7 +58,7 @@ export default function EditCoursePage() {
     mutationFn: async (data: UpdateCourseInput) => {
       const result = await updateCourse(courseId, data);
       if (!result.success) {
-        throw new Error(result.error || "Failed to update course");
+        throw new Error(result.error || "Gagal mengubah kursus");
       }
     },
     onSuccess: () => {
@@ -85,7 +85,7 @@ export default function EditCoursePage() {
     return (
       <Box sx={{ maxWidth: 800, mx: "auto", p: 3 }}>
         <Alert severity="error">
-          Error loading course: {error instanceof Error ? error.message : "Unknown error"}
+          Kesalahan memuat kursus: {error instanceof Error ? error.message : "Kesalahan tidak diketahui"}
         </Alert>
       </Box>
     );
@@ -96,19 +96,19 @@ export default function EditCoursePage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Courses", href: "/dashboard/teacher/courses" },
-          { label: "Edit" },
+          
+          { label: "Kursus", href: "/dashboard/teacher/courses" },
+          { label: "Ubah" },
         ]}
       />
 
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: "center" }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
-          Edit Course
+          Ubah Kursus
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Update course information
+          Perbarui informasi kursus
         </Typography>
       </Box>
 
@@ -118,27 +118,27 @@ export default function EditCoursePage() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {/* Course Title */}
               <TextField
-                label="Course Title"
+                label="Judul Kursus"
                 fullWidth
                 error={!!errors.title}
                 helperText={errors.title?.message}
-                {...register("title", { required: "Title is required" })}
+                {...register("title", { required: "Judul wajib diisi" })}
               />
 
               {/* Description */}
               <TextField
-                label="Description"
+                label="Deskripsi"
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="Provide a brief description of the course..."
+                placeholder="Berikan deskripsi singkat tentang kursus..."
                 {...register("description")}
               />
 
               {/* Error Message */}
               {mutation.isError && (
                 <Alert severity="error">
-                  {mutation.error instanceof Error ? mutation.error.message : "Update failed"}
+                  {mutation.error instanceof Error ? mutation.error.message : "Gagal mengubah"}
                 </Alert>
               )}
 
@@ -152,7 +152,7 @@ export default function EditCoursePage() {
                   startIcon={mutation.isPending ? <CircularProgress size={20} /> : <SaveIcon />}
                   fullWidth
                 >
-                  {mutation.isPending ? "Updating..." : "Update Course"}
+                  {mutation.isPending ? "Mengubah..." : "Ubah Kursus"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -160,7 +160,7 @@ export default function EditCoursePage() {
                   onClick={() => router.push("/dashboard/teacher/courses")}
                   disabled={mutation.isPending}
                 >
-                  Cancel
+                  Batal
                 </Button>
               </Box>
             </Box>

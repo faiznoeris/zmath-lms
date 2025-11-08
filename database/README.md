@@ -119,6 +119,30 @@ TRUNCATE TABLE submissions, results, questions, quizzes, materials, lessons, enr
 
 Then re-run the seed file.
 
+## Migrations
+
+Migrations are stored in the `migrations/` folder and should be run in order:
+
+1. `001_submissions-timer.sql` - Adds timer fields to submissions
+2. `002_manual_grading.sql` - Adds manual grading support
+3. `003_role_based_access_control.sql` - Adds RLS policies
+4. `004_add_answer_file_url_to_results.sql` - ~~Adds file upload support~~ (deprecated, see migration 006)
+5. `005_add_passing_score_to_quizzes.sql` - Adds passing score to quizzes
+6. `006_move_answer_file_url_to_submissions.sql` - Moves answer_file_url from results to submissions table
+
+### Running Migrations
+
+To apply a migration:
+
+```sql
+-- In Supabase SQL Editor or psql
+\i migrations/006_move_answer_file_url_to_submissions.sql
+```
+
+Or copy and paste the migration contents into your SQL editor.
+
+**Note**: Each migration should only be run once. The migrations are designed to be idempotent where possible.
+
 ## Troubleshooting
 
 **Error: "user_id violates foreign key constraint"**

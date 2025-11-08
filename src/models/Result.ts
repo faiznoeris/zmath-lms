@@ -3,10 +3,10 @@ export interface Result {
   score: number;
   total_points: number;
   percentage: number;
+  is_passed: boolean;
   completed_at: string;
   quiz_id: string;
   user_id: string;
-  answer_file_url?: string; // URL to uploaded answer file (e.g., scanned essay)
 }
 
 export interface ResultWithQuiz extends Result {

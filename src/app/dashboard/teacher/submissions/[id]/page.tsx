@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Card,
@@ -16,12 +17,17 @@ import {
   Paper,
   Container,
   Slider,
+  Dialog,
+  DialogContent,
+  IconButton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import RateReviewIcon from "@mui/icons-material/RateReview";
-import { getCurrentUserRole } from "@/src/utils/auth";
+import CloseIcon from "@mui/icons-material/Close";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import { useAuthStore } from "@/src/stores";
 import { Breadcrumbs } from "@/src/components";
 import {
   fetchSubmissionById,
@@ -36,59 +42,80 @@ export default function GradeSubmissionPage() {
   const router = useRouter();
   const params = useParams();
   const submissionId = params.id as string;
+  const queryClient = useQueryClient();
+  const { user, isLoggedIn } = useAuthStore();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [submission, setSubmission] = useState<SubmissionWithDetails | null>(
-    null
-  );
   const [score, setScore] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>("");
+  const [imagePreviewOpen, setImagePreviewOpen] = useState<boolean>(false);
 
-  const fetchData = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    const result = await fetchSubmissionById(submissionId);
-
-    if (result.success && result.data) {
-      setSubmission(result.data);
-      // Pre-fill with existing values if already graded
-      if (result.data.manual_score !== undefined) {
-        setScore(result.data.manual_score);
-      }
-      if (result.data.teacher_feedback) {
-        setFeedback(result.data.teacher_feedback);
-      }
-    } else {
-      setError(result.error || "Failed to fetch submission");
+  // Check user role
+  useEffect(() => {
+    if (!isLoggedIn || !user) {
+      router.push("/login");
+      return;
     }
 
-    setIsLoading(false);
-  }, [submissionId]);
+    const role = user.user_metadata?.role as "student" | "teacher" | "admin" | undefined;
 
+    // Only allow teachers and admins
+    if (role === "student") {
+      router.push("/dashboard");
+      return;
+    }
+  }, [isLoggedIn, user, router]);
+
+  // Fetch submission details using React Query
+  const {
+    data: submission,
+    isLoading,
+    error,
+  } = useQuery<SubmissionWithDetails>({
+    queryKey: ["submission", submissionId],
+    queryFn: async () => {
+      const result = await fetchSubmissionById(submissionId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch submission");
+      }
+      if (!result.data) {
+        throw new Error("Submission not found");
+      }
+      return result.data;
+    },
+  });
+
+  // Update score and feedback when submission data is loaded
   useEffect(() => {
-    const checkRoleAndFetchData = async () => {
-      const role = await getCurrentUserRole();
-
-      if (!role) {
-        router.push("/login");
-        return;
+    if (submission) {
+      if (submission.manual_score !== undefined) {
+        setScore(submission.manual_score);
       }
-
-      // Only allow teachers and admins
-      if (role === "student") {
-        router.push("/dashboard");
-        return;
+      if (submission.teacher_feedback) {
+        setFeedback(submission.teacher_feedback);
       }
+    }
+  }, [submission]);
 
-      await fetchData();
-    };
-
-    checkRoleAndFetchData();
-  }, [router, fetchData]);
+  // Grade submission mutation
+  const gradeMutation = useMutation({
+    mutationFn: async (gradeData: GradeSubmissionData) => {
+      const result = await gradeSubmission(submissionId, gradeData);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save grade");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["submission", submissionId] });
+      queryClient.invalidateQueries({ queryKey: ["grouped-pending-submissions"] });
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push("/dashboard/teacher/submissions");
+      }, 1500);
+    },
+  });
 
   const handleScoreChange = (event: Event, newValue: number | number[]) => {
     setScore(newValue as number);
@@ -102,27 +129,13 @@ export default function GradeSubmissionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-    setSuccess(false);
 
     const gradeData: GradeSubmissionData = {
       manual_score: score,
       teacher_feedback: feedback,
     };
 
-    const result = await gradeSubmission(submissionId, gradeData);
-
-    if (result.success) {
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/dashboard/teacher/submissions");
-      }, 1500);
-    } else {
-      setError(result.error || "Failed to save grade");
-    }
-
-    setIsSaving(false);
+    gradeMutation.mutate(gradeData);
   };
 
   const handleBack = () => {
@@ -147,13 +160,13 @@ export default function GradeSubmissionPage() {
   if (!submission) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">Submission not found</Alert>
+        <Alert severity="error">Submisi tidak ditemukan</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={handleBack}
           sx={{ mt: 2 }}
         >
-          Back to Submissions
+          Kembali ke Submisi
         </Button>
       </Container>
     );
@@ -166,12 +179,12 @@ export default function GradeSubmissionPage() {
       <Breadcrumbs
         items={[
           {
-            label: "Review Submissions",
+            label: "Tinjau Submisi",
             href: "/dashboard/teacher/submissions",
             icon: <AssignmentIcon fontSize="small" />,
           },
           {
-            label: "Grade Submission",
+            label: "Beri Nilai Submisi",
             icon: <RateReviewIcon fontSize="small" />,
           },
         ]}
@@ -179,22 +192,28 @@ export default function GradeSubmissionPage() {
 
       <Box sx={{ mb: 3 }}>
         <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb: 2 }}>
-          Back to Submissions
+          Kembali ke Submisi
         </Button>
         <Typography variant="h4" component="h1" gutterBottom>
-          Grade Submission
+          Beri Nilai Submisi
         </Typography>
       </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          {error.message}
         </Alert>
       )}
 
-      {success && (
+      {gradeMutation.isSuccess && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Grade saved successfully! Redirecting...
+          Nilai berhasil disimpan! Mengalihkan...
+        </Alert>
+      )}
+
+      {gradeMutation.isError && gradeMutation.error instanceof Error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {gradeMutation.error.message}
         </Alert>
       )}
 
@@ -204,11 +223,11 @@ export default function GradeSubmissionPage() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Quiz Information
+                Informasi Kuis
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Quiz
+                  Kuis
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {submission.quiz?.title}
@@ -216,7 +235,7 @@ export default function GradeSubmissionPage() {
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Course
+                  Kursus
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {submission.course?.title}
@@ -224,7 +243,7 @@ export default function GradeSubmissionPage() {
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Student
+                  Siswa
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {submission.student?.full_name || submission.student?.email}
@@ -237,7 +256,7 @@ export default function GradeSubmissionPage() {
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Submitted At
+                  Dikirim Pada
                 </Typography>
                 <Typography variant="body1">
                   {formatDate(submission.submitted_at)}
@@ -249,7 +268,7 @@ export default function GradeSubmissionPage() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Question</Typography>
+                <Typography variant="h6">Pertanyaan</Typography>
                 <Chip
                   label={`${submission.question?.question_type || "unknown"}`}
                   size="small"
@@ -282,7 +301,7 @@ export default function GradeSubmissionPage() {
                       
                       <Divider sx={{ my: 2 }} />
                       <Typography variant="body2" color="success.main">
-                        <strong>Correct Answer:</strong> {submission.question.correct_answer}
+                        <strong>Jawaban Benar:</strong> {submission.question.correct_answer}
                       </Typography>
                     </Box>
                   )}
@@ -292,7 +311,7 @@ export default function GradeSubmissionPage() {
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="h6" gutterBottom>
-                Student&apos;s Answer
+                Jawaban Siswa
               </Typography>
               <Paper
                 variant="outlined"
@@ -303,9 +322,70 @@ export default function GradeSubmissionPage() {
                 }}
               >
                 <MathQuestionDisplay 
-                  question={submission.selected_answer || "No answer provided"} 
+                  question={submission.selected_answer || "Tidak ada jawaban"} 
                 />
               </Paper>
+
+              {/* Answer File Upload */}
+              {submission.answer_file_url && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    File Jawaban
+                  </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      backgroundColor: "grey.50",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      position: "relative",
+                      cursor: "pointer",
+                      "&:hover": {
+                        "& .zoom-overlay": {
+                          opacity: 1,
+                        },
+                      },
+                    }}
+                    onClick={() => setImagePreviewOpen(true)}
+                  >
+                    <Box
+                      component="img"
+                      src={submission.answer_file_url}
+                      alt="File Jawaban Siswa"
+                      sx={{
+                        maxWidth: "100%",
+                        maxHeight: 600,
+                        objectFit: "contain",
+                        borderRadius: 1,
+                      }}
+                    />
+                    <Box
+                      className="zoom-overlay"
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        opacity: 0,
+                        transition: "opacity 0.3s",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <ZoomInIcon sx={{ fontSize: 48, color: "white" }} />
+                    </Box>
+                  </Paper>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                    Klik gambar untuk memperbesar
+                  </Typography>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Box>
@@ -319,12 +399,12 @@ export default function GradeSubmissionPage() {
           >
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Grading
+                Penilaian
               </Typography>
 
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Points Possible: {maxPoints}
+                  Poin Maksimal: {maxPoints}
                 </Typography>
                 <Typography variant="h4" color="primary" gutterBottom>
                   {score} / {maxPoints}
@@ -337,19 +417,19 @@ export default function GradeSubmissionPage() {
                   marks
                   step={0.5}
                   valueLabelDisplay="auto"
-                  disabled={isSaving}
+                  disabled={gradeMutation.isPending}
                 />
               </Box>
 
               <TextField
-                label="Feedback (Optional)"
+                label="Umpan Balik (Opsional)"
                 multiline
                 rows={6}
                 fullWidth
                 value={feedback}
                 onChange={handleFeedbackChange}
-                disabled={isSaving}
-                placeholder="Provide feedback to the student..."
+                disabled={gradeMutation.isPending}
+                placeholder="Berikan umpan balik kepada siswa..."
                 sx={{ mb: 3 }}
               />
 
@@ -359,16 +439,16 @@ export default function GradeSubmissionPage() {
                 fullWidth
                 size="large"
                 startIcon={<SaveIcon />}
-                disabled={isSaving}
+                disabled={gradeMutation.isPending}
               >
-                {isSaving ? "Saving..." : "Save Grade"}
+                {gradeMutation.isPending ? "Menyimpan..." : "Simpan Nilai"}
               </Button>
 
               {submission.graded_at && (
                 <Box sx={{ mt: 2, p: 2, backgroundColor: "info.lighter", borderRadius: 1 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Previously graded on {formatDate(submission.graded_at)}
-                    {submission.grader && ` by ${submission.grader.email}`}
+                    Telah dinilai sebelumnya pada {formatDate(submission.graded_at)}
+                    {submission.grader && ` oleh ${submission.grader.email}`}
                   </Typography>
                 </Box>
               )}
@@ -376,6 +456,46 @@ export default function GradeSubmissionPage() {
           </Card>
         </Box>
       </Box>
+
+      {/* Image Preview Dialog */}
+      {submission?.answer_file_url && (
+        <Dialog
+          open={imagePreviewOpen}
+          onClose={() => setImagePreviewOpen(false)}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogContent sx={{ position: "relative", p: 0, backgroundColor: "black" }}>
+            <IconButton
+              onClick={() => setImagePreviewOpen(false)}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: 8,
+                color: "white",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                },
+                zIndex: 1,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Box
+              component="img"
+              src={submission.answer_file_url}
+              alt="File Jawaban Siswa"
+              sx={{
+                width: "100%",
+                height: "auto",
+                maxHeight: "90vh",
+                objectFit: "contain",
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Container>
   );
 }

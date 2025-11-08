@@ -177,3 +177,71 @@ export async function fetchMyEnrollments(): Promise<{ success: boolean; data?: E
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+/**
+ * Fetch enrollments with course and student details
+ * For teachers, filters to only their courses
+ * Note: Student details come from the students query, not from this function
+ */
+export async function fetchEnrollmentsWithDetails(): Promise<{
+  success: boolean;
+  data?: EnrollmentWithDetails[];
+  error?: string;
+}> {
+  try {
+    const supabase = createClient();
+
+    // Get current user to filter by their courses (for teachers)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Fetch enrollments with course details
+    const { data: enrollments, error: enrollmentsError } = await supabase
+      .from("enrollments")
+      .select(
+        `
+        id,
+        enrolled_at,
+        user_id,
+        course_id,
+        courses (
+          id,
+          title,
+          description,
+          user_id
+        )
+      `
+      )
+      .order("enrolled_at", { ascending: false });
+
+    if (enrollmentsError) {
+      return { success: false, error: enrollmentsError.message };
+    }
+
+    // Get user role
+    const role = user.user_metadata?.role;
+
+    let filteredEnrollments = enrollments || [];
+
+    // For teachers, filter to only their courses
+    if (role === "teacher") {
+      filteredEnrollments = (enrollments || []).filter(
+        (enrollment) => 
+          (enrollment as { courses?: { user_id?: string } }).courses?.user_id === user.id
+      );
+    }
+
+    return { success: true, data: filteredEnrollments };
+  } catch (error) {
+    console.error("Error fetching enrollments:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}

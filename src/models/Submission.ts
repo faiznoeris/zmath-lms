@@ -7,6 +7,7 @@ export interface Submission {
   is_correct?: boolean;
   score?: number;
   answers?: object;
+  answer_file_url?: string; // URL to uploaded answer file for this question
   submitted_at: string;
   time_spent_seconds?: number;
   attempt_number?: number;

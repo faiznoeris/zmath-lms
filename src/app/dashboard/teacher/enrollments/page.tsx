@@ -27,7 +27,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import {
-  fetchEnrollments,
+  fetchEnrollmentsWithDetails,
   createEnrollment,
   deleteEnrollment,
 } from "../../../../services/enrollment.service";
@@ -45,11 +45,11 @@ export default function EnrollmentsPage() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [courseFilter, setCourseFilter] = useState<string[]>([]);
 
-  // Fetch enrollments
-  const { data: enrollments = [], isLoading, error } = useQuery({
-    queryKey: ["enrollments"],
+  // Fetch enrollments with student details
+  const { data: enrollments = [], isLoading, error } = useQuery<EnrollmentWithDetails[]>({
+    queryKey: ["enrollments-with-details"],
     queryFn: async () => {
-      const result = await fetchEnrollments();
+      const result = await fetchEnrollmentsWithDetails();
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch enrollments");
       }
@@ -57,7 +57,7 @@ export default function EnrollmentsPage() {
     },
   });
 
-  // Fetch students
+  // Fetch students (via server action)
   const { data: students = [] } = useQuery<AuthUser[]>({
     queryKey: ["students"],
     queryFn: async () => {
@@ -81,7 +81,7 @@ export default function EnrollmentsPage() {
     },
   });
 
-  // Merge enrollments with student data from Auth
+  // Merge enrollments with student data
   const enrollmentsWithUsers = useMemo(() => {
     return enrollments.map((enrollment) => {
       const student = students.find((s) => s.id === enrollment.user_id);
@@ -91,7 +91,7 @@ export default function EnrollmentsPage() {
           ? {
               id: student.id,
               email: student.email || "Unknown",
-              full_name: student.user_metadata.display_name || "Unknown",
+              full_name: student.user_metadata?.display_name || "Unknown",
             }
           : undefined,
       };
@@ -108,7 +108,7 @@ export default function EnrollmentsPage() {
       return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["enrollments-with-details"] });
     },
   });
 
@@ -121,7 +121,7 @@ export default function EnrollmentsPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["enrollments-with-details"] });
       setDeleteDialogOpen(false);
       setEnrollmentToDelete(null);
     },

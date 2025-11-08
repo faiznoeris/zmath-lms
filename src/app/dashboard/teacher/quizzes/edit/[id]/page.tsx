@@ -50,6 +50,7 @@ interface QuizFormInputs {
   title: string;
   description?: string;
   time_limit_minutes?: number;
+  passing_score?: number;
   course_id?: string;
   questions: QuestionInput[];
 }
@@ -65,6 +66,7 @@ async function updateQuizApi(id: string, data: QuizFormInputs) {
       title: data.title,
       description: data.description,
       time_limit_minutes: data.time_limit_minutes,
+      passing_score: data.passing_score || 60,
       course_id: data.course_id || null,
     })
     .eq("id", id);
@@ -162,6 +164,7 @@ export default function EditQuizPage() {
       setValue("title", quiz.title);
       setValue("description", quiz.description || "");
       setValue("time_limit_minutes", quiz.time_limit_minutes);
+      setValue("passing_score", quiz.passing_score);
       setValue("course_id", quiz.course_id);
       
       // Filter out true_false questions as they're no longer supported
@@ -294,6 +297,22 @@ export default function EditQuizPage() {
                   type="number"
                   placeholder="contoh: 30"
                   {...register("time_limit_minutes", { valueAsNumber: true })}
+                  helperText="Opsional"
+                />
+
+                <TextField
+                  label="Nilai Lulus"
+                  fullWidth
+                  type="number"
+                  placeholder="contoh: 60"
+                  {...register("passing_score", { 
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Nilai minimal 0" },
+                    max: { value: 100, message: "Nilai maksimal 100" }
+                  })}
+                  error={!!errors.passing_score}
+                  helperText={errors.passing_score?.message || "Default: 60"}
+                  inputProps={{ min: 0, max: 100 }}
                 />
               </Stack>
             </Stack>

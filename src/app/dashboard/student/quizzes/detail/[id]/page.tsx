@@ -84,6 +84,8 @@ export default function QuizDetailPage() {
     ? Math.max(...results.map(r => r.percentage))
     : null;
   const latestAttempt = hasAttempts ? results[0] : null;
+  const passingScore = quiz?.passing_score ?? 60;
+  const bestScorePassed = bestScore !== null && bestScore >= passingScore;
 
   if (quizError) {
     return (
@@ -252,9 +254,19 @@ export default function QuizDetailPage() {
                 <Typography variant="body2" color="text.secondary">
                   Best Score
                 </Typography>
-                <Typography variant="h4" fontWeight={600} color="success.main">
+                <Typography 
+                  variant="h4" 
+                  fontWeight={600} 
+                  color={bestScorePassed ? "success.main" : "error.main"}
+                >
                   {bestScore?.toFixed(2)}%
                 </Typography>
+                {quiz?.passing_score !== null &&
+                  quiz?.passing_score !== undefined && (
+                    <Typography variant="caption" color="text.secondary">
+                      Min: {quiz.passing_score}%
+                    </Typography>
+                  )}
               </Card>
               {latestAttempt && (
                 <Card
@@ -307,7 +319,20 @@ export default function QuizDetailPage() {
                       <strong>Score</strong>
                     </TableCell>
                     <TableCell>
+                      <strong>Percentage</strong>
+                    </TableCell>
+                    <TableCell>
                       <strong>Status</strong>
+                      {quiz?.passing_score !== null &&
+                        quiz?.passing_score !== undefined && (
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            color="text.secondary"
+                          >
+                            (Min: {quiz.passing_score}%)
+                          </Typography>
+                        )}
                     </TableCell>
                     <TableCell>
                       <strong>Completed At</strong>

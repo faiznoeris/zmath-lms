@@ -7,6 +7,7 @@ export interface PendingSubmission {
   quiz_id: string;
   question_id: string;
   selected_answer?: string;
+  answer_file_url?: string;
   submitted_at: string;
   requires_grading: boolean;
   question_text: string;
@@ -35,23 +36,15 @@ export interface GradeSubmissionData {
 
 /**
  * Fetch all pending submissions that require manual grading for the current teacher
+ * Note: Call this from a server action that provides the authenticated user_id
  */
-export async function fetchPendingSubmissions(): Promise<{
+export async function fetchPendingSubmissions(userId: string): Promise<{
   success: boolean;
   data?: PendingSubmission[];
   error?: string;
 }> {
   try {
     const supabase = createClient();
-
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "User not authenticated" };
-    }
 
     // Fetch pending submissions using raw SQL query to access the view
     const { data, error } = await supabase
@@ -63,8 +56,10 @@ export async function fetchPendingSubmissions(): Promise<{
         quiz_id,
         question_id,
         selected_answer,
+        answer_file_url,
         submitted_at,
         requires_grading,
+        submitted_at,
         questions!inner(
           question_text,
           question_type,
@@ -83,6 +78,7 @@ export async function fetchPendingSubmissions(): Promise<{
       )
       .eq("requires_grading", true)
       .is("graded_at", null)
+      .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: true });
 
     if (error) {
@@ -112,16 +108,9 @@ export async function fetchPendingSubmissions(): Promise<{
       const course = quiz?.courses;
 
       // Only include submissions for courses owned by the current user (teacher)
-      if (course?.user_id !== user.id) {
+      if (course?.user_id !== userId) {
         continue;
       }
-
-      // Fetch student info
-      const { data: studentData } = await supabase
-        .from("users")
-        .select("email, raw_user_meta_data")
-        .eq("id", submission.user_id)
-        .single();
 
       pendingSubmissions.push({
         id: submission.id,
@@ -129,6 +118,7 @@ export async function fetchPendingSubmissions(): Promise<{
         quiz_id: submission.quiz_id,
         question_id: submission.question_id,
         selected_answer: submission.selected_answer,
+        answer_file_url: submission.answer_file_url,
         submitted_at: submission.submitted_at,
         requires_grading: submission.requires_grading || false,
         question_text: question?.question_text || "",
@@ -138,8 +128,8 @@ export async function fetchPendingSubmissions(): Promise<{
         course_id: quiz?.course_id || "",
         course_title: course?.title || "",
         teacher_id: course?.user_id || "",
-        student_email: studentData?.email || "",
-        student_name: studentData?.raw_user_meta_data?.full_name,
+        student_email: "", // Will be populated by server action
+        student_name: undefined, // Will be populated by server action
       });
     }
 
@@ -153,13 +143,13 @@ export async function fetchPendingSubmissions(): Promise<{
 /**
  * Fetch pending submissions grouped by quiz
  */
-export async function fetchGroupedPendingSubmissions(): Promise<{
+export async function fetchGroupedPendingSubmissions(userId: string): Promise<{
   success: boolean;
   data?: GroupedSubmissions[];
   error?: string;
 }> {
   try {
-    const result = await fetchPendingSubmissions();
+    const result = await fetchPendingSubmissions(userId);
 
     if (!result.success) {
       return { success: false, error: result.error };
@@ -198,6 +188,7 @@ export async function fetchGroupedPendingSubmissions(): Promise<{
 
 /**
  * Fetch a single submission with full details
+ * Note: Student and grader data should be enriched by server action
  */
 export async function fetchSubmissionById(
   id: string
@@ -240,37 +231,14 @@ export async function fetchSubmissionById(
       return { success: false, error: error.message };
     }
 
-    // Fetch student info from auth.users
-    const { data: studentData } = await supabase.auth.admin.getUserById(
-      data.user_id
-    );
-
-    // Fetch grader info if graded
-    let graderData = null;
-    if (data.graded_by) {
-      const result = await supabase.auth.admin.getUserById(data.graded_by);
-      graderData = result.data;
-    }
-
+    // Return submission without student/grader data (will be enriched by server action)
     const submissionWithDetails: SubmissionWithDetails = {
       ...data,
       question: (data as unknown as { questions: SubmissionWithDetails['question'] }).questions,
       quiz: (data as unknown as { quizzes: SubmissionWithDetails['quiz'] }).quizzes,
       course: (data as unknown as { quizzes?: { courses?: SubmissionWithDetails['course'] } }).quizzes?.courses,
-      student: studentData?.user
-        ? {
-            id: studentData.user.id,
-            email: studentData.user.email || "",
-            full_name: studentData.user.user_metadata?.full_name,
-          }
-        : undefined,
-      grader: graderData?.user
-        ? {
-            id: graderData.user.id,
-            email: graderData.user.email || "",
-            full_name: graderData.user.user_metadata?.full_name,
-          }
-        : undefined,
+      student: undefined, // Will be populated by server action
+      grader: undefined, // Will be populated by server action
     };
 
     return { success: true, data: submissionWithDetails };
@@ -374,26 +342,14 @@ export async function fetchSubmissionsByQuiz(
       return { success: false, error: error.message };
     }
 
-    // Enhance with student info
-    const submissionsWithDetails: SubmissionWithDetails[] = [];
-
-    for (const submission of data || []) {
-      const { data: studentData } = await supabase.auth.admin.getUserById(
-        submission.user_id
-      );
-
-      submissionsWithDetails.push({
+    // Return submissions without student data (will be enriched by server action if needed)
+    const submissionsWithDetails: SubmissionWithDetails[] = (data || []).map(
+      (submission) => ({
         ...submission,
         question: (submission as unknown as { questions: SubmissionWithDetails['question'] }).questions,
-        student: studentData?.user
-          ? {
-              id: studentData.user.id,
-              email: studentData.user.email || "",
-              full_name: studentData.user.user_metadata?.full_name,
-            }
-          : undefined,
-      });
-    }
+        student: undefined, // Will be populated by server action if needed
+      })
+    );
 
     return { success: true, data: submissionsWithDetails };
   } catch (error) {
@@ -406,10 +362,11 @@ export async function fetchSubmissionsByQuiz(
  * Fetch submissions that need grading for a specific quiz
  */
 export async function fetchPendingSubmissionsByQuiz(
-  quizId: string
+  quizId: string,
+  userId: string
 ): Promise<{ success: boolean; data?: PendingSubmission[]; error?: string }> {
   try {
-    const result = await fetchPendingSubmissions();
+    const result = await fetchPendingSubmissions(userId);
 
     if (!result.success || !result.data) {
       return result;

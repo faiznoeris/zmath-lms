@@ -4,7 +4,11 @@ import React from "react";
 import { Box, Button } from "@mui/material";
 import { useQuizStore } from "@/src/stores";
 
-const QuizBottomNav = () => {
+interface QuizBottomNavProps {
+  onOpenModal: () => void;
+}
+
+const QuizBottomNav = ({ onOpenModal }: QuizBottomNavProps) => {
   const { quiz, currentQuestionIndex, setCurrentQuestionIndex } =
     useQuizStore();
   const totalQuestion = quiz?.questions?.length ?? 0;
@@ -30,7 +34,7 @@ const QuizBottomNav = () => {
           Selanjutnya
         </Button>
       ) : (
-        <Button>Selesai</Button>
+        <Button onClick={onOpenModal}>Selesai</Button>
       )}
     </Box>
   );

@@ -9,3 +9,4 @@ export { default as MathQuestionDisplay } from "./MathQuestionDisplay";
 export { default as QuizBottomNav } from "./QuizBottomNav";
 export { default as CountdownTimer } from "./CountdownTimer";
 export { default as QuizAnswerOptions } from "./QuizAnswerOptions";
+export { default as ModalComponent } from "./Modal";

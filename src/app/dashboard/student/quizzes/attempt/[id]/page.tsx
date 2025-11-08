@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { Box, Card, CardContent, Skeleton } from "@mui/material";
+import { Box, Button, Card, CardContent, Skeleton } from "@mui/material";
 import { useQuizStore } from "@/src/stores";
 import {
   MathQuestionDisplay,
   QuizBottomNav,
   QuizAnswerOptions,
+  ModalComponent,
 } from "@/src/components";
 
 export default function QuizAttemptPage() {
@@ -22,6 +23,17 @@ export default function QuizAttemptPage() {
           question.option_d,
         ]
       : null;
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const handleCloseModal = () => {
+    setModalOpen(prev => !prev);
+  };
+
+  const handleOpenModal = () => {
+    setModalOpen(prev => !prev);
+  };
+
+  const handleEndQuiz = () => {};
 
   if (!question) {
     return (
@@ -42,7 +54,17 @@ export default function QuizAttemptPage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        maxWidth: 1200,
+        mx: "auto",
+        p: 3,
+      }}
+    >
       <Card>
         <CardContent>
           <MathQuestionDisplay
@@ -56,7 +78,19 @@ export default function QuizAttemptPage() {
           )}
         </CardContent>
       </Card>
-      <QuizBottomNav />
+      <QuizBottomNav onOpenModal={handleOpenModal} />
+      <ModalComponent
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="Apakah anda yakin ingin mengakhiri kuis ini?"
+      >
+        <Button onClick={handleCloseModal} variant="outlined">
+          Review kembali
+        </Button>
+        <Button onClick={handleEndQuiz} variant="contained">
+          Akhiri kuis
+        </Button>
+      </ModalComponent>
     </Box>
   );
 }

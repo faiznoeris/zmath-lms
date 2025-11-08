@@ -16,7 +16,7 @@ interface CountdownTimerParams {
 
 const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
   const startTimerInMs = 1000 * timeLimitInSeconds;
-  const { quiz, sessionId, userAnswers } = useQuizStore();
+  const { quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining } = useQuizStore();
   const { countdown } = useCountdownTimer({
     timer: startTimerInMs,
     autostart: true,
@@ -29,6 +29,17 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
     if (!quiz || !quiz.questions) return;
 
     const timeRemainingInSeconds = Math.floor(countdown / 1000);
+
+    // Update the store with current time remaining (for localStorage persistence)
+    setTimeRemaining(timeRemainingInSeconds);
+
+    // Check if timer has reached 0
+    if (timeRemainingInSeconds <= 0) {
+      // Timer expired, clear the store
+      resetQuizState();
+      // You might want to auto-submit or redirect here
+      return;
+    }
 
     // Send bulk update to Supabase every 30 seconds
     if (
@@ -62,7 +73,7 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
       saveQuizAttemptState(sessionId, timeRemainingInSeconds);
     }
     // 4. Add userAnswers to the dependency array
-  }, [countdown, quiz, sessionId, userAnswers]);
+  }, [countdown, quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining]);
 
   const getDangerStyles = () => {
     if (countdown <= startTimerInMs * 0.25) {

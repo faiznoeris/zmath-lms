@@ -13,6 +13,7 @@ interface IQuizState {
   setCurrentQuestionIndex: (index: number) => void;
   setUserAnswer: (questionId: string, answer: string) => void;
   setTimeRemaining: (seconds: number | null) => void;
+  resetQuizState: () => void; // Reset all quiz-related state for new attempts
 }
 
 export const useQuizStore = create<IQuizState>()(
@@ -26,9 +27,8 @@ export const useQuizStore = create<IQuizState>()(
       setQuiz: quizData =>
         set({
           quiz: quizData,
-          userAnswers: {},
-          currentQuestionIndex: 0,
-          timeRemaining: null, // Reset time remaining when setting new quiz
+          // Don't reset userAnswers, currentQuestionIndex, or timeRemaining
+          // These may have been set when resuming a session
         }),
       setSessionId: id => set({ sessionId: id }),
       setUserAnswer: (questionId, answer) =>
@@ -40,6 +40,13 @@ export const useQuizStore = create<IQuizState>()(
         })),
       setCurrentQuestionIndex: index => set({ currentQuestionIndex: index }),
       setTimeRemaining: seconds => set({ timeRemaining: seconds }),
+      resetQuizState: () =>
+        set({
+          userAnswers: {},
+          currentQuestionIndex: 0,
+          timeRemaining: null,
+          sessionId: "",
+        }),
     })),
     {
       name: "quiz-data",

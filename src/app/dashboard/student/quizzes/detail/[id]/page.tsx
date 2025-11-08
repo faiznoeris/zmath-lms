@@ -43,7 +43,17 @@ import { useQuizStore } from "@/src/stores";
 export default function QuizDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setQuiz, setSessionId, setUserAnswer, setTimeRemaining } = useQuizStore();
+  const quizStore = useQuizStore();
+  const { 
+    setQuiz, 
+    setSessionId, 
+    setUserAnswer, 
+    setTimeRemaining, 
+    resetQuizState,
+    sessionId: storedSessionId,
+    userAnswers: storedUserAnswers,
+    timeRemaining: storedTimeRemaining,
+  } = quizStore;
   const quizId = params.id as string;
 
   // Fetch quiz details
@@ -97,25 +107,28 @@ export default function QuizDetailPage() {
     );
   }
 
-  const handleStartAttempt = async () => {
+    const handleStartAttempt = async () => {
     if (!quiz || typeof quiz.time_limit_minutes !== "number") {
       console.error("Quiz details not loaded yet");
       return;
     }
 
-    // Check for ongoing attempt first
-    const ongoingAttemptCheck = await checkOngoingAttempt(quizId);
+    // Priority 1: Check if there's an ongoing session in the store (localStorage)
+    if (storedSessionId && storedTimeRemaining && storedTimeRemaining > 0) {
+      // Session data already in store, just navigate
+      router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
+      return;
+    }
 
-    console.log("ongoingAttemptCheck", ongoingAttemptCheck);
+    // Priority 2: Check database for ongoing attempt
+    const ongoingAttemptCheck = await checkOngoingAttempt(quizId);
     
     if (ongoingAttemptCheck.success && ongoingAttemptCheck.data?.hasTimeRemaining) {
-      // Continue previous session
+      // Continue previous session from database
       const submission = ongoingAttemptCheck.data.submission;
       if (submission) {
         // Fetch all existing submissions for this quiz attempt
         const submissionsResult = await fetchOngoingSubmissions(quizId);
-
-        console.log("submissionsResult", submissionsResult);
         
         if (submissionsResult.success && submissionsResult.data) {
           // Populate the store with existing answers
@@ -126,21 +139,24 @@ export default function QuizDetailPage() {
           });
         }
         
-        // Set the remaining time from the previous session
+        // Set the remaining time from the database session
+        // This will be used ONCE when the timer initializes
         if (submission.time_remaining) {
           setTimeRemaining(submission.time_remaining);
         }
         
-        setAttemptId(submission.id);
+        setSessionId(submission.id);
         router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
         return;
       }
     }
-
     // Start new attempt
     const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
+
+    // Reset quiz state for fresh start
+    resetQuizState();
 
     const initializeQuiz = await initializeQuizSubmission(
       quizId,

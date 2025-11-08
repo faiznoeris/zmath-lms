@@ -28,7 +28,6 @@ import GradeIcon from "@mui/icons-material/Grade";
 import HistoryIcon from "@mui/icons-material/History";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { v4 as uuidv4 } from "uuid";
 import {
   fetchQuizWithQuestions,
   fetchMyQuizResults,
@@ -100,13 +99,11 @@ export default function QuizDetailPage() {
       return;
     }
 
-    const id = uuidv4();
     const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
 
     const initializeQuiz = await initializeQuizSubmission(
-      id,
       quizId,
       questionId,
       startTime,
@@ -114,8 +111,8 @@ export default function QuizDetailPage() {
       startTime
     );
 
-    if (initializeQuiz.success) {
-      setAttemptId(id);
+    if (initializeQuiz.success && initializeQuiz.data?.id) {
+        setAttemptId(initializeQuiz.data.id);
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
     } else {
       console.error(

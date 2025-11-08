@@ -493,3 +493,51 @@ export async function updateUserAnswerState(
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+interface SubmittedQuizState {
+  quiz_id: string;
+  question_id: string;
+}
+
+/**
+ * Mark Quiz as Submitted
+ */
+export async function MarkQuizSubmitted(states: SubmittedQuizState[]) {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // 1. Map the incoming states to the full row structure for the database.
+    const rowsToUpsert = states.map(state => ({
+      user_id: user.id,
+      quiz_id: state.quiz_id,
+      question_id: state.question_id,
+      submitted_at: new Date(),
+    }));
+
+    // 2. Call upsert with the array of objects.
+    // We don't use .select() here as we don't need the returned data for a sync.
+    const { error } = await supabase.from("submissions").upsert(rowsToUpsert, {
+      onConflict: "user_id,question_id", // Ensure this matches your unique constraint
+    });
+
+    if (error) {
+      console.error("Error in bulk update submissions:", error.message);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    console.error("Exception in updateQuizAttemptState:", message);
+    return { success: false, error: message };
+  }
+}

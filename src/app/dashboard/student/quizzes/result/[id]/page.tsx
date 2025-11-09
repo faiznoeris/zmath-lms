@@ -273,7 +273,6 @@ export default function QuizResultPage() {
                     .filter(Boolean)
                     .map((option, idx) => {
                       const optionLabel = getOptionLabel(idx);
-                      console.log(question.selected_answer, optionLabel);
                       const isSelected = question.selected_answer === optionLabel;
                       const isCorrectAnswer = question.correct_answer === optionLabel;
 

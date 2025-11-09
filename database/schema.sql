@@ -104,7 +104,7 @@ CREATE TABLE results (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   score INTEGER NOT NULL CHECK (score >= 0),
   total_points INTEGER NOT NULL CHECK (total_points > 0),
-  percentage DECIMAL(5,2) GENERATED ALWAYS AS ((score::DECIMAL / total_points::DECIMAL) * 100) STORED,
+  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
   is_passed BOOLEAN NOT NULL,
   completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -336,8 +336,8 @@ BEGIN
   FROM questions
   WHERE quiz_id = p_quiz_id;
   
-  -- Calculate percentage
-  v_percentage := (v_score::DECIMAL / v_total_points::DECIMAL) * 100;
+  -- Calculate percentage (score is already out of 100)
+  v_percentage := v_score;
   
   -- Get passing score for the quiz
   SELECT COALESCE(passing_score, 60)
@@ -349,12 +349,13 @@ BEGIN
   v_is_passed := v_percentage >= v_passing_score;
   
   -- Insert or update result
-  INSERT INTO results (quiz_id, user_id, score, total_points, is_passed, completed_at)
-  VALUES (p_quiz_id, p_user_id, v_score, v_total_points, v_is_passed, NOW())
+  INSERT INTO results (quiz_id, user_id, score, total_points, percentage, is_passed, completed_at)
+  VALUES (p_quiz_id, p_user_id, v_score, v_total_points, v_percentage, v_is_passed, NOW())
   ON CONFLICT (quiz_id, user_id) 
   DO UPDATE SET 
     score = v_score, 
     total_points = v_total_points,
+    percentage = v_percentage,
     is_passed = v_is_passed,
     completed_at = NOW();
 END;

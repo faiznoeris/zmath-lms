@@ -205,10 +205,7 @@ export async function fetchEnrollmentsWithDetails(): Promise<{
       .from("enrollments")
       .select(
         `
-        id,
-        enrolled_at,
-        user_id,
-        course_id,
+        *,
         courses (
           id,
           title,
@@ -223,17 +220,34 @@ export async function fetchEnrollmentsWithDetails(): Promise<{
       return { success: false, error: enrollmentsError.message };
     }
 
+    // Transform the data to match EnrollmentWithDetails interface
+    const transformedEnrollments: EnrollmentWithDetails[] = (enrollments || []).map((enrollment) => {
+      const courseData = (enrollment as unknown as { courses: { id: string; title: string; description?: string; user_id?: string } | null }).courses;
+      
+      return {
+        id: enrollment.id,
+        enrolled_at: enrollment.enrolled_at,
+        user_id: enrollment.user_id,
+        course_id: enrollment.course_id,
+        course: courseData ? {
+          id: courseData.id,
+          title: courseData.title,
+          description: courseData.description,
+        } : undefined,
+      };
+    });
+
     // Get user role
     const role = user.user_metadata?.role;
 
-    let filteredEnrollments = enrollments || [];
+    let filteredEnrollments = transformedEnrollments;
 
     // For teachers, filter to only their courses
     if (role === "teacher") {
-      filteredEnrollments = (enrollments || []).filter(
-        (enrollment) => 
-          (enrollment as { courses?: { user_id?: string } }).courses?.user_id === user.id
-      );
+      filteredEnrollments = transformedEnrollments.filter((enrollment) => {
+        const courseData = (enrollment as unknown as { course?: { user_id?: string } }).course;
+        return courseData?.user_id === user.id;
+      });
     }
 
     return { success: true, data: filteredEnrollments };

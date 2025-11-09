@@ -188,7 +188,7 @@ export default function GradeSubmissionPage() {
   // Calculate maxPoints based on quiz passing score minus total points from all questions
   const passingScore = submission.quiz?.passing_score || 60;
   const totalQuestionPoints = quizData?.questions?.reduce((sum, q) => sum + (q.points || 0), 0) || 0;
-  const maxPoints = Math.max(passingScore - totalQuestionPoints, submission.question?.points || 10);
+  const maxPoints = Math.max(passingScore - totalQuestionPoints + 1, submission.question?.points || 10);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

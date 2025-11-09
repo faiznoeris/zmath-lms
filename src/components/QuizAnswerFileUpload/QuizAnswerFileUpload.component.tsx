@@ -50,6 +50,7 @@ export default function QuizAnswerFileUpload({
           .eq("question_id", questionId)
           .eq("quiz_id", quizId)
           .eq("user_id", userId)
+          .is("result_id", null) // Only get current attempt
           .maybeSingle();
 
         if (fetchError) {
@@ -147,18 +148,17 @@ export default function QuizAnswerFileUpload({
       setUserAnswer(questionId, `[File uploaded: ${file.name}]`);
 
       // Update submission with answer_file_url and selected_answer
+      // Find the current attempt's submission (result_id IS NULL)
       const { error: updateError } = await supabase
         .from("submissions")
-        .upsert(
-          {
-            user_id: userId,
-            question_id: questionId,
-            quiz_id: quizId,
-            answer_file_url: publicUrl,
-            selected_answer: `[File uploaded: ${file.name}]`,
-          },
-          { onConflict: "user_id,question_id" }
-        );
+        .update({
+          answer_file_url: publicUrl,
+          selected_answer: `[File uploaded: ${file.name}]`,
+        })
+        .eq("user_id", userId)
+        .eq("question_id", questionId)
+        .eq("quiz_id", quizId)
+        .is("result_id", null); // Only update current attempt
 
       if (updateError) {
         throw updateError;
@@ -201,18 +201,17 @@ export default function QuizAnswerFileUpload({
       setUserAnswer(questionId, "");
 
       // Update submission to remove answer_file_url and selected_answer
+      // Find the current attempt's submission (result_id IS NULL)
       const { error: updateError } = await supabase
         .from("submissions")
-        .upsert(
-          {
-            user_id: userId,
-            question_id: questionId,
-            quiz_id: quizId,
-            answer_file_url: null,
-            selected_answer: null,
-          },
-          { onConflict: "user_id,question_id" }
-        );
+        .update({
+          answer_file_url: null,
+          selected_answer: null,
+        })
+        .eq("user_id", userId)
+        .eq("question_id", questionId)
+        .eq("quiz_id", quizId)
+        .is("result_id", null); // Only update current attempt
 
       if (updateError) {
         throw updateError;

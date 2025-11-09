@@ -285,10 +285,10 @@ export async function gradeSubmission(
       return { success: false, error: error.message };
     }
 
-    // Fetch the submission to get quiz and user IDs
+    // Fetch the submission to get quiz, user, and result IDs
     const { data: submission, error: fetchError } = await supabase
       .from("submissions")
-      .select("quiz_id, user_id")
+      .select("quiz_id, user_id, result_id")
       .eq("id", submissionId)
       .single();
 
@@ -297,15 +297,28 @@ export async function gradeSubmission(
       return { success: true }; // Still return success for the grading
     }
 
-    // Recalculate quiz results
-    const { error: calcError } = await supabase.rpc("calculate_quiz_result", {
-      p_quiz_id: submission.quiz_id,
-      p_user_id: submission.user_id,
-    });
+    // If submission has result_id, update the existing result
+    // Otherwise, this is a legacy submission without result linking
+    if (submission.result_id) {
+      const { error: updateError } = await supabase.rpc("update_quiz_result", {
+        p_result_id: submission.result_id,
+      });
 
-    if (calcError) {
-      console.error("Error calculating quiz result:", calcError);
-      // Don't fail the grading if result calculation fails
+      if (updateError) {
+        console.error("Error updating quiz result:", updateError);
+        // Don't fail the grading if result update fails
+      }
+    } else {
+      // Legacy: Recalculate quiz results (creates new result)
+      const { error: calcError } = await supabase.rpc("calculate_quiz_result", {
+        p_quiz_id: submission.quiz_id,
+        p_user_id: submission.user_id,
+      });
+
+      if (calcError) {
+        console.error("Error calculating quiz result:", calcError);
+        // Don't fail the grading if result calculation fails
+      }
     }
 
     return { success: true };

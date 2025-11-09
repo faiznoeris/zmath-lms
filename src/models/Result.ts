@@ -7,6 +7,7 @@ export interface Result {
   completed_at: string;
   quiz_id: string;
   user_id: string;
+  has_pending_grading?: boolean; // Flag for manual grading pending
 }
 
 export interface ResultWithQuiz extends Result {

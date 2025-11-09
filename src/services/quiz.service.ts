@@ -329,6 +329,8 @@ export async function fetchQuizResults(
 ): Promise<{ success: boolean; data?: Result[]; error?: string }> {
   try {
     const supabase = createClient();
+    
+    // First, fetch results
     const { data, error } = await supabase
       .from("results")
       .select("*")
@@ -340,7 +342,62 @@ export async function fetchQuizResults(
       return { success: false, error: error.message };
     }
 
-    return { success: true, data };
+    if (!data || data.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Get all result IDs to fetch their submissions
+    const resultIds = data.map((r) => r.id);
+
+    // Fetch submissions for these specific results
+    const { data: submissionsData, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("result_id, requires_grading, manual_score")
+      .in("result_id", resultIds);
+
+    if (submissionsError) {
+      console.error("Error fetching submissions:", submissionsError);
+      // Continue without submission data
+    }
+
+    // Create a map of submissions by result_id for quick lookup
+    const submissionsMap = new Map<string, Array<{ requires_grading: boolean; manual_score: number | null }>>();
+    
+    if (submissionsData) {
+      submissionsData.forEach((sub) => {
+        const key = sub.result_id || "null";
+        if (!submissionsMap.has(key)) {
+          submissionsMap.set(key, []);
+        }
+        submissionsMap.get(key)!.push({
+          requires_grading: sub.requires_grading,
+          manual_score: sub.manual_score,
+        });
+      });
+    }
+
+    // Check each result for pending manual grading
+    const resultsWithPendingStatus = data.map((result) => {
+      const submissions = submissionsMap.get(result.id) || [];
+      
+      const hasPendingGrading = submissions.some(
+        (sub) => sub.requires_grading && sub.manual_score === null
+      );
+      
+      return {
+        id: result.id,
+        score: result.score,
+        total_points: result.total_points,
+        percentage: result.percentage,
+        is_passed: result.is_passed,
+        completed_at: result.completed_at,
+        quiz_id: result.quiz_id,
+        user_id: result.user_id,
+        has_pending_grading: hasPendingGrading,
+      } as Result;
+    });
+
+    return { success: true, data: resultsWithPendingStatus };
   } catch (error) {
     console.error("Error fetching quiz results:", error);
     return { success: false, error: "An unexpected error occurred" };
@@ -369,6 +426,7 @@ export async function fetchMyQuizResults(
       return { success: false, error: "User not authenticated" };
     }
 
+    // First, fetch results
     const { data, error } = await supabase
       .from("results")
       .select("*")
@@ -380,7 +438,62 @@ export async function fetchMyQuizResults(
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data || [] };
+    if (!data || data.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Get all result IDs to fetch their submissions
+    const resultIds = data.map((r) => r.id);
+
+    // Fetch submissions for these specific results
+    const { data: submissionsData, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("result_id, requires_grading, manual_score")
+      .in("result_id", resultIds);
+
+    if (submissionsError) {
+      console.error("Error fetching submissions:", submissionsError);
+      // Continue without submission data
+    }
+
+    // Create a map of submissions by result_id for quick lookup
+    const submissionsMap = new Map<string, Array<{ requires_grading: boolean; manual_score: number | null }>>();
+    
+    if (submissionsData) {
+      submissionsData.forEach((sub) => {
+        const key = sub.result_id || "null";
+        if (!submissionsMap.has(key)) {
+          submissionsMap.set(key, []);
+        }
+        submissionsMap.get(key)!.push({
+          requires_grading: sub.requires_grading,
+          manual_score: sub.manual_score,
+        });
+      });
+    }
+
+    // Check each result for pending manual grading
+    const resultsWithPendingStatus = data.map((result) => {
+      const submissions = submissionsMap.get(result.id) || [];
+      
+      const hasPendingGrading = submissions.some(
+        (sub) => sub.requires_grading && sub.manual_score === null
+      );
+      
+      return {
+        id: result.id,
+        score: result.score,
+        total_points: result.total_points,
+        percentage: result.percentage,
+        is_passed: result.is_passed,
+        completed_at: result.completed_at,
+        quiz_id: result.quiz_id,
+        user_id: result.user_id,
+        has_pending_grading: hasPendingGrading,
+      } as Result;
+    });
+
+    return { success: true, data: resultsWithPendingStatus };
   } catch (error) {
     console.error("Error fetching my quiz results:", error);
     return { success: false, error: "An unexpected error occurred" };
@@ -411,12 +524,14 @@ export async function checkOngoingAttempt(quizId: string): Promise<{
     }
 
     // Find any submission for this quiz that has time remaining and is not submitted
+    // Also filter by result_id IS NULL to only get current attempt
     const { data: submissions, error } = await supabase
       .from("submissions")
       .select("*")
       .eq("user_id", user.id)
       .eq("quiz_id", quizId)
       .is("submitted_at", null)
+      .is("result_id", null) // Only get submissions for current attempt
       .order("last_sync_at", { ascending: false })
       .limit(1);
 
@@ -472,12 +587,14 @@ export async function fetchOngoingSubmissions(quizId: string): Promise<{
     }
 
     // Fetch all submissions for this quiz that are not yet submitted
+    // Filter by result_id IS NULL to only get current attempt
     const { data: submissions, error } = await supabase
       .from("submissions")
       .select("*")
       .eq("user_id", user.id)
       .eq("quiz_id", quizId)
-      .is("submitted_at", null);
+      .is("submitted_at", null)
+      .is("result_id", null); // Only get submissions for current attempt
 
     if (error) {
       return { success: false, error: error.message };
@@ -514,19 +631,18 @@ export async function initializeQuizSubmission(
       return { success: false, error: "User not authenticated" };
     }
 
-    // Use upsert instead of insert to handle existing submissions
+    // For re-attempts, we create NEW submissions instead of updating old ones
+    // The result_id will be null until the quiz is submitted and calculated
     const { data, error } = await supabase
       .from("submissions")
-      .upsert(
-        {
-          user_id: user.id,
-          quiz_id: quizId,
-          question_id: questionId,
-          time_remaining,
-          last_sync_at,
-        },
-        { onConflict: "user_id,question_id" }
-      )
+      .insert({
+        user_id: user.id,
+        quiz_id: quizId,
+        question_id: questionId,
+        time_remaining,
+        last_sync_at,
+        result_id: null, // Will be set when quiz is completed
+      })
       .select()
       .single();
 
@@ -573,16 +689,17 @@ export async function updateQuizAttemptState(
 
     // Process each submission individually to ensure proper handling
     const updatePromises = states.map(async (state) => {
-      // First check if submission exists
+      // Check if submission exists for current attempt (result_id is NULL)
       const { data: existing } = await supabase
         .from("submissions")
         .select("id, is_correct")
         .eq("user_id", user.id)
         .eq("question_id", state.question_id)
+        .is("result_id", null) // Only get submissions for ongoing attempt
         .maybeSingle();
 
       if (existing) {
-        // Update existing submission, preserving is_correct
+        // Update existing submission for current attempt, preserving is_correct
         return supabase
           .from("submissions")
           .update({
@@ -590,10 +707,9 @@ export async function updateQuizAttemptState(
             time_remaining: state.time_remaining,
             last_sync_at: new Date().toISOString(),
           })
-          .eq("user_id", user.id)
-          .eq("question_id", state.question_id);
+          .eq("id", existing.id);
       } else {
-        // Insert new submission
+        // Insert new submission for current attempt
         return supabase.from("submissions").insert({
           user_id: user.id,
           quiz_id: state.quiz_id,
@@ -601,6 +717,7 @@ export async function updateQuizAttemptState(
           selected_answer: state.selected_answer,
           time_remaining: state.time_remaining,
           last_sync_at: new Date().toISOString(),
+          result_id: null, // Will be set when quiz is completed
         });
       }
     });
@@ -645,20 +762,49 @@ export async function updateUserAnswerState(
       return { success: false, error: "User not authenticated" };
     }
 
-    const { data, error } = await supabase
+    // Check if submission exists for current attempt (result_id IS NULL)
+    const { data: existing } = await supabase
       .from("submissions")
-      .upsert(
-        {
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("question_id", questionId)
+      .is("result_id", null)
+      .maybeSingle();
+
+    let data, error;
+
+    if (existing) {
+      // Update existing submission for current attempt
+      const result = await supabase
+        .from("submissions")
+        .update({
+          time_remaining: timeRemaining,
+          selected_answer: userAnswer,
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    } else {
+      // Insert new submission for current attempt
+      const result = await supabase
+        .from("submissions")
+        .insert({
           user_id: user.id,
           question_id: questionId,
           quiz_id: quizId,
           time_remaining: timeRemaining,
           selected_answer: userAnswer,
-        },
-        { onConflict: "user_id,question_id" }
-      )
-      .select()
-      .single();
+          result_id: null,
+        })
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       return { success: false, error: error.message };
@@ -694,6 +840,7 @@ export async function MarkQuizSubmitted(states: SubmittedQuizState[]) {
     const submittedAt = new Date().toISOString();
 
     // Update each submission individually to preserve existing data
+    // Only update submissions for current attempt (result_id IS NULL)
     const updatePromises = states.map(state =>
       supabase
         .from("submissions")
@@ -703,6 +850,7 @@ export async function MarkQuizSubmitted(states: SubmittedQuizState[]) {
         })
         .eq("user_id", user.id)
         .eq("question_id", state.question_id)
+        .is("result_id", null) // Only update submissions for current attempt
     );
 
     const results = await Promise.all(updatePromises);
@@ -906,12 +1054,11 @@ export async function fetchResultById(
       return { success: false, error: questionsError.message };
     }
 
-    // Fetch user's submissions
+    // Fetch user's submissions for this specific result
     const { data: submissions, error: submissionsError } = await supabase
       .from("submissions")
       .select("*")
-      .eq("quiz_id", quizId)
-      .eq("user_id", user.id);
+      .eq("result_id", resultId);
 
     if (submissionsError) {
       return { success: false, error: submissionsError.message };

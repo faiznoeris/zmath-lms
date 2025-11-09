@@ -239,13 +239,14 @@ export default function AddQuizPage() {
                   )}
                 />
 
-                <TextField
+                                <TextField
                   label="Batas Waktu (menit)"
                   fullWidth
                   type="number"
                   placeholder="contoh: 30"
                   {...register("time_limit_minutes", { valueAsNumber: true })}
                   helperText="Opsional"
+                  onWheel={(e) => (e.target as HTMLElement).blur()}
                 />
 
                 <TextField
@@ -258,9 +259,9 @@ export default function AddQuizPage() {
                     min: { value: 0, message: "Nilai minimal 0" },
                     max: { value: 100, message: "Nilai maksimal 100" }
                   })}
+                  helperText="Opsional (default: 60)"
                   error={!!errors.passing_score}
-                  helperText={errors.passing_score?.message || "Default: 60"}
-                  inputProps={{ min: 0, max: 100 }}
+                  onWheel={(e) => (e.target as HTMLElement).blur()}
                 />
               </Stack>
             </Stack>
@@ -396,6 +397,7 @@ export default function AddQuizPage() {
                             ? "Poin untuk esai akan diberikan saat penilaian manual"
                             : "Nilai poin untuk pertanyaan ini (default: 1)"
                         }
+                        onWheel={(e) => (e.target as HTMLElement).blur()}
                       />
 
                       {/* Conditional rendering based on question type */}

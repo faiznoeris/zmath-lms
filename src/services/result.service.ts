@@ -30,6 +30,7 @@ export async function fetchTeacherResults(teacherId: string): Promise<{
   try {
     const supabase = createClient();
 
+    // First, fetch results with quiz information
     const { data, error } = await supabase
       .from("results")
       .select(
@@ -56,9 +57,51 @@ export async function fetchTeacherResults(teacherId: string): Promise<{
       return { success: false, error: error.message };
     }
 
+    if (!data || data.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Get all result IDs to fetch their submissions
+    const resultIds = data.map((r) => r.id);
+
+    // Fetch submissions for these specific results
+    const { data: submissionsData, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("result_id, requires_grading, manual_score")
+      .in("result_id", resultIds);
+
+    if (submissionsError) {
+      console.error("Error fetching submissions:", submissionsError);
+      // Continue without submission data rather than failing
+    }
+
+    // Create a map of submissions by result_id for quick lookup
+    const submissionsMap = new Map<string, Array<{ requires_grading: boolean; manual_score: number | null }>>();
+    
+    if (submissionsData) {
+      submissionsData.forEach((sub) => {
+        const key = sub.result_id || "null";
+        if (!submissionsMap.has(key)) {
+          submissionsMap.set(key, []);
+        }
+        submissionsMap.get(key)!.push({
+          requires_grading: sub.requires_grading,
+          manual_score: sub.manual_score,
+        });
+      });
+    }
+
     // Transform the nested data structure
-    const results: ResultWithDetails[] = (data || []).map((result) => {
-      const quiz = result.quizzes as unknown as {
+    type ResultRow = {
+      id: string;
+      score: number;
+      total_points: number;
+      percentage: number;
+      is_passed: boolean;
+      completed_at: string;
+      quiz_id: string;
+      user_id: string;
+      quizzes: {
         id: string;
         title: string;
         passing_score?: number;
@@ -69,9 +112,29 @@ export async function fetchTeacherResults(teacherId: string): Promise<{
           user_id: string;
         };
       };
+    };
+
+    const results: ResultWithDetails[] = (data || []).map((result: ResultRow) => {
+      const quiz = result.quizzes;
+
+      // Get submissions for this specific result
+      const submissions = submissionsMap.get(result.id) || [];
+
+      // Check if there's pending manual grading
+      const hasPendingGrading = submissions.some(
+        (sub) => sub.requires_grading && sub.manual_score === null
+      );
 
       return {
-        ...result,
+        id: result.id,
+        score: result.score,
+        total_points: result.total_points,
+        percentage: result.percentage,
+        is_passed: result.is_passed,
+        completed_at: result.completed_at,
+        quiz_id: result.quiz_id,
+        user_id: result.user_id,
+        has_pending_grading: hasPendingGrading,
         quiz: {
           id: quiz.id,
           title: quiz.title,

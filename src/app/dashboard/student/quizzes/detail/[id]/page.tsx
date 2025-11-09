@@ -317,7 +317,7 @@ export default function QuizDetailPage() {
                 {quiz?.passing_score !== null &&
                   quiz?.passing_score !== undefined && (
                     <Typography variant="caption" color="text.secondary">
-                      Min: {quiz.passing_score}%
+                      Min: {quiz.passing_score} points
                     </Typography>
                   )}
               </Card>
@@ -383,7 +383,7 @@ export default function QuizDetailPage() {
                             display="block"
                             color="text.secondary"
                           >
-                            (Min: {quiz.passing_score}%)
+                            (Min: {quiz.passing_score} points)
                           </Typography>
                         )}
                     </TableCell>
@@ -394,10 +394,17 @@ export default function QuizDetailPage() {
                 </TableHead>
                 <TableBody>
                   {results.map((result, index) => {
+                    // Check if this attempt is pending manual grading
+                    const isPending = result.has_pending_grading === true;
+                    
                     const passed = quiz?.passing_score
                       ? result.percentage >= quiz.passing_score
                       : result.percentage >= 60;
-                    const status = passed ? "Passed" : "Failed";
+                    
+                    // Show "Pending" if manual grading is incomplete
+                    const status = isPending ? "Pending" : (passed ? "Passed" : "Failed");
+                    const statusColor = isPending ? "warning" : (passed ? "success" : "error");
+                    
                     return (
                       <TableRow 
                         key={result.id} 
@@ -408,14 +415,14 @@ export default function QuizDetailPage() {
                         <TableCell>{results.length - index}</TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
-                            {result.score} / {result.total_points} points
+                            {result.score} / 100 points
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography
                             fontWeight={600}
                             color={
-                              passed ? "success.main" : "error.main"
+                              isPending ? "warning.main" : (passed ? "success.main" : "error.main")
                             }
                           >
                             {result.percentage.toFixed(2)}%
@@ -424,7 +431,7 @@ export default function QuizDetailPage() {
                         <TableCell>
                           <Chip
                             label={status}
-                            color={passed ? "success" : "error"}
+                            color={statusColor}
                             size="small"
                           />
                         </TableCell>

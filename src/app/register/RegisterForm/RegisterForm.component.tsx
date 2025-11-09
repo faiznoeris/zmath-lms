@@ -44,8 +44,12 @@ const RegisterForm = () => {
       }
       
       // Redirect based on role after successful registration
-      if (data.role === "teacher" || data.role === "admin") {
+      if (data.role === "student") {
+        router.push("/dashboard/student");
+      } else if (data.role === "teacher") {
         router.push("/dashboard/teacher");
+      } else if (data.role === "admin") {
+        router.push("/dashboard/admin");
       } else {
         router.push("/dashboard");
       }

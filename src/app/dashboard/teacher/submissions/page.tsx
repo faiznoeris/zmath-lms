@@ -349,7 +349,6 @@ export default function SubmissionsPage() {
                     <TableCell>Kuis</TableCell>
                     <TableCell>Kursus</TableCell>
                     <TableCell align="center">Skor</TableCell>
-                    <TableCell align="center">Total Poin</TableCell>
                     <TableCell align="center">Persentase</TableCell>
                     <TableCell align="center">Status</TableCell>
                     <TableCell>Selesai Pada</TableCell>
@@ -357,9 +356,16 @@ export default function SubmissionsPage() {
                 </TableHead>
                 <TableBody>
                   {resultsHistory.map((result) => {
+                    // Check if this result has pending manual grading
+                    const isPending = result.has_pending_grading === true;
+                    
                     const passed = result.quiz?.passing_score
                       ? result.percentage >= result.quiz.passing_score
                       : result.percentage >= 60;
+
+                    // Show "Pending" if manual grading is incomplete
+                    const status = isPending ? "Pending" : (passed ? "Lulus" : "Tidak Lulus");
+                    const statusColor = isPending ? "warning" : (passed ? "success" : "error");
 
                     return (
                       <TableRow key={result.id} hover>
@@ -387,21 +393,20 @@ export default function SubmissionsPage() {
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
-                          <Typography variant="body2">{result.total_points}</Typography>
-                        </TableCell>
-                        <TableCell align="center">
                           <Typography
                             variant="body2"
                             fontWeight="medium"
-                            color={passed ? "success.main" : "error.main"}
+                            color={
+                              isPending ? "warning.main" : (passed ? "success.main" : "error.main")
+                            }
                           >
                             {result.percentage.toFixed(1)}%
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
                           <Chip
-                            label={passed ? "Lulus" : "Tidak Lulus"}
-                            color={passed ? "success" : "error"}
+                            label={status}
+                            color={statusColor}
                             size="small"
                           />
                         </TableCell>

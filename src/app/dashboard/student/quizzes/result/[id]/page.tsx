@@ -76,9 +76,24 @@ export default function QuizResultPage() {
 
   const { quiz, questions, totalScore, percentage, pendingGrading } = resultData;
 
+  // Check if there's pending manual grading
+  const hasPendingGrading = pendingGrading > 0;
+
   // Calculate pass/fail status
   const passingScore = quiz?.passing_score ?? 60;
-  const passed = percentage >= passingScore;
+  const passed = totalScore >= passingScore;
+
+  // Determine status: show "Pending" if manual grading is needed
+  const getStatus = () => {
+    if (hasPendingGrading) {
+      return { label: "Pending", color: "warning" as const };
+    }
+    return passed 
+      ? { label: "Lulus", color: "success" as const }
+      : { label: "Tidak Lulus", color: "error" as const };
+  };
+
+  const status = getStatus();
 
   // Calculate maxPoints based on quiz passing score minus total points from all questions
   const totalQuestionPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
@@ -132,7 +147,7 @@ export default function QuizResultPage() {
                 Skor Anda
               </Typography>
               <Typography variant="h3" fontWeight="bold">
-                {totalScore} / {quiz.passing_score || 60}
+                {totalScore} / 100
               </Typography>
             </Box>
 
@@ -150,20 +165,8 @@ export default function QuizResultPage() {
                 Status
               </Typography>
               <Chip
-                label={passed ? "Lulus" : "Tidak Lulus"}
-                color={passed ? "success" : "error"}
-                sx={{
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  px: 2,
-                  py: 3,
-                  height: "auto",
-                  backgroundColor: passed ? "rgba(46, 125, 50, 0.9)" : "rgba(211, 47, 47, 0.9)",
-                  color: "white",
-                  "& .MuiChip-label": {
-                    px: 1,
-                  },
-                }}
+                label={status.label}
+                color={status.color}
               />
             </Box>
 
@@ -172,7 +175,7 @@ export default function QuizResultPage() {
                 Penilaian
               </Typography>
               <Typography variant="h5" fontWeight="bold">
-                {getGradeText(percentage)}
+                {hasPendingGrading ? "Menunggu Penilaian" : getGradeText(percentage)}
               </Typography>
             </Box>
           </Box>
@@ -270,6 +273,7 @@ export default function QuizResultPage() {
                     .filter(Boolean)
                     .map((option, idx) => {
                       const optionLabel = getOptionLabel(idx);
+                      console.log(question.selected_answer, optionLabel);
                       const isSelected = question.selected_answer === optionLabel;
                       const isCorrectAnswer = question.correct_answer === optionLabel;
 

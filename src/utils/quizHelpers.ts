@@ -1,12 +1,17 @@
 /**
- * Get pass/fail status based on score and passing threshold
- * @param score - Actual score achieved
- * @param passingScore - Minimum passing score (optional)
+ * Get pass/fail status based on percentage and passing threshold
+ * @param percentage - Actual percentage achieved (0-100)
+ * @param passingScore - Minimum passing score percentage (optional, defaults to 60)
  * @returns "Passed", "Failed", or null if no passing score defined
  */
-export function getResultStatus(score: number, passingScore?: number): "Passed" | "Failed" | null {
-  if (passingScore === null || passingScore === undefined) return null;
-  return score >= passingScore ? "Passed" : "Failed";
+export function getResultStatus(
+  percentage: number,
+  passingScore?: number
+): "Passed" | "Failed" | null {
+  if (passingScore === null || passingScore === undefined) {
+    passingScore = 60; // Default to 60%
+  }
+  return percentage >= passingScore ? "Passed" : "Failed";
 }
 
 /**
@@ -15,7 +20,130 @@ export function getResultStatus(score: number, passingScore?: number): "Passed" 
  * @param totalQuestions - Total number of questions
  * @returns Percentage score (0-100)
  */
-export function calculateScorePercentage(correctAnswers: number, totalQuestions: number): number {
+export function calculateScorePercentage(
+  correctAnswers: number,
+  totalQuestions: number
+): number {
   if (totalQuestions === 0) return 0;
   return Math.round((correctAnswers / totalQuestions) * 100);
+}
+
+/**
+ * Formats milliseconds into a MM:SS string.
+ * @param milliseconds The raw time in milliseconds from the countdown hook.
+ * @returns A formatted string e.g., "05:00".
+ */
+export const formatCountdownTime = (milliseconds: number) => {
+  // Ensure we don't display negative numbers
+  if (milliseconds < 0) milliseconds = 0;
+
+  // 1. Convert milliseconds to total seconds
+  const totalSeconds = Math.floor(milliseconds / 1000);
+
+  // 2. Get the minutes and remaining seconds
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  // 3. Pad with leading zeros to ensure two digits
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  const paddedSeconds = String(seconds).padStart(2, "0");
+
+  return `${paddedMinutes}:${paddedSeconds}`;
+};
+
+/**
+ * Defines the structure of the quiz attempt state stored in localStorage.
+ */
+export interface QuizAttemptState {
+  sessionId: string;
+  timeRemaining: number; // Time remaining in milliseconds
+  timestamp: number; // The UNIX timestamp (Date.now()) when the state was saved
+}
+
+/**
+ * Generates a unique key for storing quiz attempt state in localStorage.
+ * @param attemptId The unique identifier for the quiz submission.
+ * @returns A string to be used as a localStorage key.
+ */
+const getStorageKey = (sessionId: string): string =>
+  `quiz-session-${sessionId}`;
+
+/**
+ * Saves the current state of a quiz attempt to localStorage.
+ * @param sessionId The unique identifier for the quiz submission.
+ * @param timeRemaining The time remaining in the quiz, in milliseconds.
+ */
+export function saveQuizAttemptState(
+  sessionId: string,
+  timeRemaining: number
+): void {
+  // Ensure this code only runs on the client where localStorage is available
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const state: QuizAttemptState = {
+      sessionId,
+      timeRemaining,
+      timestamp: Date.now(),
+    };
+    const storageKey = getStorageKey(sessionId);
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save quiz attempt state to localStorage:", error);
+  }
+}
+
+/**
+ * Loads the saved state of a quiz attempt from localStorage.
+ * @param sessionId The unique identifier for the quiz submission.
+ * @returns The saved QuizAttemptState object, or null if not found or invalid.
+ */
+export function loadQuizAttemptState(
+  sessionId: string
+): QuizAttemptState | null {
+  // Ensure this code only runs on the client
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const storageKey = getStorageKey(sessionId);
+    const savedStateJSON = localStorage.getItem(storageKey);
+
+    if (!savedStateJSON) {
+      return null;
+    }
+
+    const savedState = JSON.parse(savedStateJSON);
+    return savedState;
+  } catch (error) {
+    console.error(
+      "Failed to load quiz attempt state from localStorage:",
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Removes the saved state of a quiz attempt from localStorage.
+ * This should be called when a quiz is completed or abandoned.
+ * @param sessionId The unique identifier for the quiz submission.
+ */
+export function clearQuizAttemptState(sessionId: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const storageKey = getStorageKey(sessionId);
+    localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.error(
+      "Failed to clear quiz attempt state from localStorage:",
+      error
+    );
+  }
 }

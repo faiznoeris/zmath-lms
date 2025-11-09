@@ -48,6 +48,7 @@ interface QuizFormInputs {
   title: string;
   description?: string;
   time_limit_minutes?: number;
+  passing_score?: number;
   course_id?: string;
   questions: QuestionInput[];
 }
@@ -64,6 +65,7 @@ async function createQuizApi(data: QuizFormInputs) {
         title: data.title,
         description: data.description,
         time_limit_minutes: data.time_limit_minutes,
+        passing_score: data.passing_score || 60,
         course_id: data.course_id || null,
       },
     ])
@@ -243,6 +245,22 @@ export default function AddQuizPage() {
                   type="number"
                   placeholder="contoh: 30"
                   {...register("time_limit_minutes", { valueAsNumber: true })}
+                  helperText="Opsional"
+                />
+
+                <TextField
+                  label="Nilai Lulus"
+                  fullWidth
+                  type="number"
+                  placeholder="contoh: 60"
+                  {...register("passing_score", { 
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Nilai minimal 0" },
+                    max: { value: 100, message: "Nilai maksimal 100" }
+                  })}
+                  error={!!errors.passing_score}
+                  helperText={errors.passing_score?.message || "Default: 60"}
+                  inputProps={{ min: 0, max: 100 }}
                 />
               </Stack>
             </Stack>

@@ -1,7 +1,15 @@
 export * from "./PasswordField";
 export * from "./UserMenu";
 export * from "./Header";
+export * from "./QuizHeader";
+export * from "./QuizSidebar";
 export * from "./Breadcrumbs";
 export * from "./LoadingBar";
 export { default as MathPreview } from "./MathPreview";
 export { default as MathQuestionDisplay } from "./MathQuestionDisplay";
+export { default as QuizBottomNav } from "./QuizBottomNav";
+export { default as CountdownTimer } from "./CountdownTimer";
+export { default as QuizAnswerOptions } from "./QuizAnswerOptions";
+export { default as ModalComponent } from "./Modal";
+export { default as FileUpload } from "./FileUpload";
+export { QuizAnswerFileUpload } from "./QuizAnswerFileUpload";

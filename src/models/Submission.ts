@@ -7,6 +7,7 @@ export interface Submission {
   is_correct?: boolean;
   score?: number;
   answers?: object;
+  answer_file_url?: string; // URL to uploaded answer file for this question
   submitted_at: string;
   time_spent_seconds?: number;
   attempt_number?: number;
@@ -31,11 +32,18 @@ export interface SubmissionWithDetails extends Submission {
     question_type: string;
     points: number;
     correct_answer?: string;
+    option_a?: string;
+    option_b?: string;
+    option_c?: string;
+    option_d?: string;
+    explanation?: string;
+    quiz_id?: string;
   };
   quiz?: {
     id: string;
     title: string;
     course_id: string;
+    passing_score?: number;
   };
   course?: {
     id: string;

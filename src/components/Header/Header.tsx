@@ -35,6 +35,8 @@ const Header = () => {
 
   // Check if current path is dashboard
   const isDashboard = pathname?.startsWith("/dashboard");
+  // Check if current path is quiz attempt page
+  const isQuizPage = pathname?.startsWith("/dashboard/student/quizzes/attempt");
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -43,6 +45,11 @@ const Header = () => {
   const handleMobileMenuClose = () => {
     setMobileMenuAnchor(null);
   };
+
+  // Hide main header/navbar on quiz attempt page
+  if (isQuizPage) {
+    return null;
+  }
 
   return (
     <AppBar

@@ -62,6 +62,7 @@ CREATE TABLE quizzes (
   title VARCHAR NOT NULL,
   description TEXT,
   time_limit_minutes INTEGER,
+  passing_score INTEGER DEFAULT 60 CHECK (passing_score >= 0 AND passing_score <= 100),
   course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -89,6 +90,7 @@ CREATE TABLE submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   selected_answer TEXT,
   is_correct BOOLEAN,
+  answer_file_url TEXT,
   submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
   quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -103,6 +105,7 @@ CREATE TABLE results (
   score INTEGER NOT NULL CHECK (score >= 0),
   total_points INTEGER NOT NULL CHECK (total_points > 0),
   percentage DECIMAL(5,2) GENERATED ALWAYS AS ((score::DECIMAL / total_points::DECIMAL) * 100) STORED,
+  is_passed BOOLEAN NOT NULL,
   completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -306,15 +309,26 @@ RETURNS void AS $$
 DECLARE
   v_score INTEGER;
   v_total_points INTEGER;
+  v_percentage DECIMAL(5,2);
+  v_passing_score INTEGER;
+  v_is_passed BOOLEAN;
 BEGIN
-  -- Calculate total points earned from correct answers
-  SELECT COALESCE(SUM(q.points), 0)
+  -- Calculate total points earned from correct answers and manual scores
+  SELECT COALESCE(SUM(
+    CASE 
+      -- Use manual score if provided
+      WHEN s.manual_score IS NOT NULL THEN s.manual_score
+      -- Use points if auto-graded correctly
+      WHEN s.is_correct = true THEN q.points
+      -- Otherwise 0 points
+      ELSE 0
+    END
+  ), 0)
   INTO v_score
   FROM submissions s
   JOIN questions q ON s.question_id = q.id
   WHERE q.quiz_id = p_quiz_id
-    AND s.user_id = p_user_id
-    AND s.is_correct = true;
+    AND s.user_id = p_user_id;
   
   -- Calculate total possible points for the quiz
   SELECT COALESCE(SUM(points), 1)
@@ -322,13 +336,26 @@ BEGIN
   FROM questions
   WHERE quiz_id = p_quiz_id;
   
+  -- Calculate percentage
+  v_percentage := (v_score::DECIMAL / v_total_points::DECIMAL) * 100;
+  
+  -- Get passing score for the quiz
+  SELECT COALESCE(passing_score, 60)
+  INTO v_passing_score
+  FROM quizzes
+  WHERE id = p_quiz_id;
+  
+  -- Determine if passed
+  v_is_passed := v_percentage >= v_passing_score;
+  
   -- Insert or update result
-  INSERT INTO results (quiz_id, user_id, score, total_points, completed_at)
-  VALUES (p_quiz_id, p_user_id, v_score, v_total_points, NOW())
+  INSERT INTO results (quiz_id, user_id, score, total_points, is_passed, completed_at)
+  VALUES (p_quiz_id, p_user_id, v_score, v_total_points, v_is_passed, NOW())
   ON CONFLICT (quiz_id, user_id) 
   DO UPDATE SET 
     score = v_score, 
     total_points = v_total_points,
+    is_passed = v_is_passed,
     completed_at = NOW();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -351,6 +378,11 @@ $$ LANGUAGE plpgsql;
 -- Trigger to automatically check answers on submission
 CREATE TRIGGER check_answer_on_submit
   BEFORE INSERT ON submissions
+  FOR EACH ROW
+  EXECUTE FUNCTION check_submission_answer();
+
+CREATE TRIGGER check_answer_on_submit_update
+  BEFORE UPDATE ON submissions
   FOR EACH ROW
   EXECUTE FUNCTION check_submission_answer();
 

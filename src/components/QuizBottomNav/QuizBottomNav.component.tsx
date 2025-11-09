@@ -22,19 +22,20 @@ const QuizBottomNav = ({ onOpenModal }: QuizBottomNavProps) => {
     >
       {currentQuestionIndex > 0 && (
         <Button
+        variant="outlined"
           onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
         >
           Sebelumnya
         </Button>
       )}
       {currentQuestionIndex < totalQuestion - 1 ? (
-        <Button
+        <Button variant="outlined"
           onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
         >
           Selanjutnya
         </Button>
       ) : (
-        <Button onClick={onOpenModal}>Selesai</Button>
+        <Button  variant="contained" onClick={onOpenModal}>Selesai</Button>
       )}
     </Box>
   );

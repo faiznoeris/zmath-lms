@@ -34,6 +34,7 @@ import {
   gradeSubmission,
   GradeSubmissionData,
 } from "@/src/services/submission.service";
+import { fetchQuizWithQuestions } from "@/src/services/quiz.service";
 import { SubmissionWithDetails } from "@/src/models/Submission";
 import { formatDate } from "@/src/utils/dateFormat";
 import { MathQuestionDisplay } from "@/src/components";
@@ -82,6 +83,18 @@ export default function GradeSubmissionPage() {
       }
       return result.data;
     },
+  });
+
+  // Fetch all questions from the quiz to calculate total points
+  const { data: quizData } = useQuery({
+    queryKey: ["quiz-questions", submission?.question?.quiz_id],
+    queryFn: async () => {
+      if (!submission?.question?.quiz_id) return null;
+      const result = await fetchQuizWithQuestions(submission.question.quiz_id);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    enabled: !!submission?.question?.quiz_id,
   });
 
   // Update score and feedback when submission data is loaded
@@ -172,7 +185,10 @@ export default function GradeSubmissionPage() {
     );
   }
 
-  const maxPoints = submission.question?.points || 10;
+  // Calculate maxPoints based on quiz passing score minus total points from all questions
+  const passingScore = submission.quiz?.passing_score || 60;
+  const totalQuestionPoints = quizData?.questions?.reduce((sum, q) => sum + (q.points || 0), 0) || 0;
+  const maxPoints = Math.max(passingScore - totalQuestionPoints, submission.question?.points || 10);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -415,7 +431,7 @@ export default function GradeSubmissionPage() {
                   min={0}
                   max={maxPoints}
                   marks
-                  step={0.5}
+                  step={1}
                   valueLabelDisplay="auto"
                   disabled={gradeMutation.isPending}
                 />

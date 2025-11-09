@@ -37,7 +37,6 @@ import {
 } from "@/src/services/quiz.service";
 import { Result } from "@/src/models/Result";
 import { formatDate } from "@/src/utils/dateFormat";
-import { getResultStatus } from "@/src/utils/quizHelpers";
 import { useQuizStore } from "@/src/stores";
 
 export default function QuizDetailPage() {
@@ -51,7 +50,6 @@ export default function QuizDetailPage() {
     setTimeRemaining, 
     resetQuizState,
     sessionId: storedSessionId,
-    userAnswers: storedUserAnswers,
     timeRemaining: storedTimeRemaining,
   } = quizStore;
   const quizId = params.id as string;
@@ -107,26 +105,29 @@ export default function QuizDetailPage() {
     );
   }
 
-    const handleStartAttempt = async () => {
+  const handleStartAttempt = async () => {
     if (!quiz || typeof quiz.time_limit_minutes !== "number") {
       console.error("Quiz details not loaded yet");
       return;
     }
 
     // Priority 1: Check if there's an ongoing session in the store (localStorage)
+    // Only resume if there's time remaining (not submitted)
     if (storedSessionId && storedTimeRemaining && storedTimeRemaining > 0) {
       // Session data already in store, just navigate
       router.push(`/dashboard/student/quizzes/attempt/${quizId}`);
       return;
     }
 
-    // Priority 2: Check database for ongoing attempt
+    // Priority 2: Check database for ongoing attempt (not yet submitted)
     const ongoingAttemptCheck = await checkOngoingAttempt(quizId);
     
     if (ongoingAttemptCheck.success && ongoingAttemptCheck.data?.hasTimeRemaining) {
       // Continue previous session from database
       const submission = ongoingAttemptCheck.data.submission;
-      if (submission) {
+      
+      // Only resume if NOT submitted yet
+      if (submission && !submission.submitted_at) {
         // Fetch all existing submissions for this quiz attempt
         const submissionsResult = await fetchOngoingSubmissions(quizId);
         
@@ -140,7 +141,6 @@ export default function QuizDetailPage() {
         }
         
         // Set the remaining time from the database session
-        // This will be used ONCE when the timer initializes
         if (submission.time_remaining) {
           setTimeRemaining(submission.time_remaining);
         }
@@ -150,7 +150,8 @@ export default function QuizDetailPage() {
         return;
       }
     }
-    // Start new attempt
+
+    // Start new attempt (no ongoing attempt OR previous was submitted)
     const questionId = quiz.questions[0].id;
     const startTime = new Date();
     const timeLimitInSeconds = quiz.time_limit_minutes * 60;
@@ -329,7 +330,7 @@ export default function QuizDetailPage() {
                     Latest Score
                   </Typography>
                   <Typography variant="h4" fontWeight={600}>
-                    {latestAttempt.score}%
+                    {latestAttempt.percentage}%
                   </Typography>
                 </Card>
               )}
@@ -393,10 +394,10 @@ export default function QuizDetailPage() {
                 </TableHead>
                 <TableBody>
                   {results.map((result, index) => {
-                    const status = getResultStatus(
-                      result.score,
-                      quiz?.passing_score
-                    );
+                    const passed = quiz?.passing_score
+                      ? result.percentage >= quiz.passing_score
+                      : result.percentage >= 60;
+                    const status = passed ? "Passed" : "Failed";
                     return (
                       <TableRow 
                         key={result.id} 
@@ -414,24 +415,18 @@ export default function QuizDetailPage() {
                           <Typography
                             fontWeight={600}
                             color={
-                              status === "Passed"
-                                ? "success.main"
-                                : status === "Failed"
-                                  ? "error.main"
-                                  : "text.primary"
+                              passed ? "success.main" : "error.main"
                             }
                           >
                             {result.percentage.toFixed(2)}%
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          {status && (
-                            <Chip
-                              label={status}
-                              color={status === "Passed" ? "success" : "error"}
-                              size="small"
-                            />
-                          )}
+                          <Chip
+                            label={status}
+                            color={passed ? "success" : "error"}
+                            size="small"
+                          />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">

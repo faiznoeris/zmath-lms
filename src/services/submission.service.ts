@@ -211,12 +211,14 @@ export async function fetchSubmissionById(
           option_b,
           option_c,
           option_d,
-          explanation
+          explanation,
+          quiz_id
         ),
         quizzes!submissions_quiz_id_fkey(
           id,
           title,
           course_id,
+          passing_score,
           courses(
             id,
             title

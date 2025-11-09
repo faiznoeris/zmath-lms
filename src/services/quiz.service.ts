@@ -107,10 +107,58 @@ export async function fetchQuizWithQuestions(
 
     return {
       success: true,
-      data: { ...quiz, questions: questions || [] } as QuizWithQuestions,
+      data: { ...quiz, questions } as QuizWithQuestions,
     };
   } catch (error) {
     console.error("Error fetching quiz with questions:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+/**
+ * Create quiz result entry in results table using database calculation
+ */
+export async function createQuizResult(
+  quizId: string
+): Promise<{ success: boolean; data?: Result; error?: string }> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Use database RPC function to calculate and insert result
+    const { error: calcError } = await supabase.rpc("calculate_quiz_result", {
+      p_quiz_id: quizId,
+      p_user_id: user.id,
+    });
+
+    if (calcError) {
+      return { success: false, error: calcError.message };
+    }
+
+    // Fetch the created result
+    const { data: result, error: fetchError } = await supabase
+      .from("results")
+      .select("*")
+      .eq("quiz_id", quizId)
+      .eq("user_id", user.id)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message };
+    }
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error creating quiz result:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
@@ -343,14 +391,12 @@ export async function fetchMyQuizResults(
  * Check for ongoing quiz attempt
  * Returns existing submission if there's time remaining
  */
-export async function checkOngoingAttempt(
-  quizId: string
-): Promise<{ 
-  success: boolean; 
-  data?: { 
-    submission: Submission | null; 
+export async function checkOngoingAttempt(quizId: string): Promise<{
+  success: boolean;
+  data?: {
+    submission: Submission | null;
     hasTimeRemaining: boolean;
-  }; 
+  };
   error?: string;
 }> {
   try {
@@ -379,24 +425,25 @@ export async function checkOngoingAttempt(
     }
 
     if (!submissions || submissions.length === 0) {
-      return { 
-        success: true, 
-        data: { 
-          submission: null, 
-          hasTimeRemaining: false 
-        } 
+      return {
+        success: true,
+        data: {
+          submission: null,
+          hasTimeRemaining: false,
+        },
       };
     }
 
     const submission = submissions[0];
-    const hasTimeRemaining = submission.time_remaining && submission.time_remaining > 0;
+    const hasTimeRemaining =
+      submission.time_remaining && submission.time_remaining > 0;
 
-    return { 
-      success: true, 
-      data: { 
-        submission: hasTimeRemaining ? submission : null, 
-        hasTimeRemaining 
-      } 
+    return {
+      success: true,
+      data: {
+        submission: hasTimeRemaining ? submission : null,
+        hasTimeRemaining,
+      },
     };
   } catch (error) {
     console.error("Error checking ongoing attempt:", error);
@@ -408,11 +455,9 @@ export async function checkOngoingAttempt(
  * Fetch all submissions for an ongoing quiz attempt
  * Returns all unsubmitted answers for the current user and quiz
  */
-export async function fetchOngoingSubmissions(
-  quizId: string
-): Promise<{ 
-  success: boolean; 
-  data?: Submission[]; 
+export async function fetchOngoingSubmissions(quizId: string): Promise<{
+  success: boolean;
+  data?: Submission[];
   error?: string;
 }> {
   try {
@@ -438,9 +483,9 @@ export async function fetchOngoingSubmissions(
       return { success: false, error: error.message };
     }
 
-    return { 
-      success: true, 
-      data: submissions || [] 
+    return {
+      success: true,
+      data: submissions || [],
     };
   } catch (error) {
     console.error("Error fetching ongoing submissions:", error);
@@ -526,25 +571,47 @@ export async function updateQuizAttemptState(
       return { success: false, error: "User not authenticated" };
     }
 
-    // 1. Map the incoming states to the full row structure for the database.
-    const rowsToUpsert = states.map(state => ({
-      user_id: user.id,
-      quiz_id: state.quiz_id,
-      question_id: state.question_id,
-      selected_answer: state.selected_answer,
-      time_remaining: state.time_remaining,
-      last_sync_at: new Date().toISOString(),
-    }));
+    // Process each submission individually to ensure proper handling
+    const updatePromises = states.map(async (state) => {
+      // First check if submission exists
+      const { data: existing } = await supabase
+        .from("submissions")
+        .select("id, is_correct")
+        .eq("user_id", user.id)
+        .eq("question_id", state.question_id)
+        .maybeSingle();
 
-    // 2. Call upsert with the array of objects.
-    // We don't use .select() here as we don't need the returned data for a sync.
-    const { error } = await supabase.from("submissions").upsert(rowsToUpsert, {
-      onConflict: "user_id,question_id", // Ensure this matches your unique constraint
+      if (existing) {
+        // Update existing submission, preserving is_correct
+        return supabase
+          .from("submissions")
+          .update({
+            selected_answer: state.selected_answer,
+            time_remaining: state.time_remaining,
+            last_sync_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("question_id", state.question_id);
+      } else {
+        // Insert new submission
+        return supabase.from("submissions").insert({
+          user_id: user.id,
+          quiz_id: state.quiz_id,
+          question_id: state.question_id,
+          selected_answer: state.selected_answer,
+          time_remaining: state.time_remaining,
+          last_sync_at: new Date().toISOString(),
+        });
+      }
     });
 
-    if (error) {
-      console.error("Error in bulk update submissions:", error.message);
-      return { success: false, error: error.message };
+    const results = await Promise.all(updatePromises);
+
+    // Check if any operations failed
+    const errors = results.filter(result => result.error);
+    if (errors.length > 0) {
+      console.error("Error in bulk update submissions:", errors[0].error?.message);
+      return { success: false, error: errors[0].error?.message };
     }
 
     return { success: true };
@@ -624,30 +691,280 @@ export async function MarkQuizSubmitted(states: SubmittedQuizState[]) {
       return { success: false, error: "User not authenticated" };
     }
 
-    // 1. Map the incoming states to the full row structure for the database.
-    const rowsToUpsert = states.map(state => ({
-      user_id: user.id,
-      quiz_id: state.quiz_id,
-      question_id: state.question_id,
-      submitted_at: new Date(),
-    }));
+    const submittedAt = new Date().toISOString();
 
-    // 2. Call upsert with the array of objects.
-    // We don't use .select() here as we don't need the returned data for a sync.
-    const { error } = await supabase.from("submissions").upsert(rowsToUpsert, {
-      onConflict: "user_id,question_id", // Ensure this matches your unique constraint
-    });
+    // Update each submission individually to preserve existing data
+    const updatePromises = states.map(state =>
+      supabase
+        .from("submissions")
+        .update({
+          submitted_at: submittedAt,
+          is_submitted: true,
+        })
+        .eq("user_id", user.id)
+        .eq("question_id", state.question_id)
+    );
 
-    if (error) {
-      console.error("Error in bulk update submissions:", error.message);
-      return { success: false, error: error.message };
+    const results = await Promise.all(updatePromises);
+
+    // Check if any updates failed
+    const errors = results.filter(result => result.error);
+    if (errors.length > 0) {
+      console.error("Error in bulk update submissions:", errors[0].error?.message);
+      return { success: false, error: errors[0].error?.message };
     }
 
     return { success: true };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
-    console.error("Exception in updateQuizAttemptState:", message);
+    console.error("Exception in MarkQuizSubmitted:", message);
     return { success: false, error: message };
+  }
+}
+
+export interface QuestionResult {
+  id: string;
+  question_text: string;
+  question_type: "multiple_choice" | "true_false" | "essay";
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  option_d?: string;
+  correct_answer?: string;
+  points?: number;
+  explanation?: string;
+  selected_answer?: string;
+  is_correct?: boolean;
+  manual_score?: number;
+  requires_grading?: boolean;
+  teacher_feedback?: string;
+  answer_file_url?: string;
+}
+
+export interface QuizResult {
+  quiz: Quiz;
+  questions: QuestionResult[];
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  pendingGrading: number;
+}
+
+/**
+ * Fetch quiz result with user's submissions
+ */
+export async function fetchQuizResult(
+  quizId: string
+): Promise<{ success: boolean; data?: QuizResult; error?: string }> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Fetch quiz
+    const { data: quiz, error: quizError } = await supabase
+      .from("quizzes")
+      .select("*")
+      .eq("id", quizId)
+      .single();
+
+    if (quizError) {
+      return { success: false, error: quizError.message };
+    }
+
+    // Fetch questions with user's submissions
+    const { data: questions, error: questionsError } = await supabase
+      .from("questions")
+      .select("*")
+      .eq("quiz_id", quizId)
+      .order("created_at", { ascending: true });
+
+    if (questionsError) {
+      return { success: false, error: questionsError.message };
+    }
+
+    // Fetch user's submissions
+    const { data: submissions, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("quiz_id", quizId)
+      .eq("user_id", user.id);
+
+    if (submissionsError) {
+      return { success: false, error: submissionsError.message };
+    }
+
+    // Map submissions to questions
+    const submissionMap = new Map(
+      submissions.map(sub => [sub.question_id, sub])
+    );
+
+    const questionsWithResults: QuestionResult[] = questions.map(q => {
+      const submission = submissionMap.get(q.id);
+      return {
+        id: q.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        option_a: q.option_a,
+        option_b: q.option_b,
+        option_c: q.option_c,
+        option_d: q.option_d,
+        correct_answer: q.correct_answer,
+        points: q.points,
+        explanation: q.explanation,
+        selected_answer: submission?.selected_answer,
+        is_correct: submission?.is_correct,
+        manual_score: submission?.manual_score,
+        requires_grading: submission?.requires_grading,
+        teacher_feedback: submission?.teacher_feedback,
+        answer_file_url: submission?.answer_file_url,
+      };
+    });
+
+    // Calculate scores
+    let totalScore = 0;
+    let maxScore = 0;
+    let pendingGrading = 0;
+
+    questionsWithResults.forEach(q => {
+      maxScore += q.points || 0;
+
+      if (q.question_type === "essay" && q.requires_grading) {
+        pendingGrading++;
+      } else if (q.is_correct) {
+        totalScore += q.points || 0;
+      } else if (q.manual_score !== undefined && q.manual_score !== null) {
+        totalScore += q.manual_score;
+      }
+    });
+
+    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+    return {
+      success: true,
+      data: {
+        quiz,
+        questions: questionsWithResults,
+        totalScore,
+        maxScore,
+        percentage,
+        pendingGrading,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching quiz result:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+/**
+ * Fetch result by result ID with quiz and submission details
+ */
+export async function fetchResultById(
+  resultId: string
+): Promise<{ success: boolean; data?: QuizResult; error?: string }> {
+  try {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Fetch result with quiz details
+    const { data: result, error: resultError } = await supabase
+      .from("results")
+      .select("*, quiz:quizzes(*)")
+      .eq("id", resultId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (resultError) {
+      return { success: false, error: resultError.message };
+    }
+
+    const quizId = result.quiz_id;
+
+    // Fetch questions
+    const { data: questions, error: questionsError } = await supabase
+      .from("questions")
+      .select("*")
+      .eq("quiz_id", quizId)
+      .order("created_at", { ascending: true });
+
+    if (questionsError) {
+      return { success: false, error: questionsError.message };
+    }
+
+    // Fetch user's submissions
+    const { data: submissions, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("quiz_id", quizId)
+      .eq("user_id", user.id);
+
+    if (submissionsError) {
+      return { success: false, error: submissionsError.message };
+    }
+
+    // Map submissions to questions
+    const submissionMap = new Map(
+      submissions.map((sub) => [sub.question_id, sub])
+    );
+
+    const questionsWithResults: QuestionResult[] = questions.map((q) => {
+      const submission = submissionMap.get(q.id);
+      return {
+        id: q.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        option_a: q.option_a,
+        option_b: q.option_b,
+        option_c: q.option_c,
+        option_d: q.option_d,
+        correct_answer: q.correct_answer,
+        points: q.points,
+        explanation: q.explanation,
+        selected_answer: submission?.selected_answer,
+        is_correct: submission?.is_correct,
+        manual_score: submission?.manual_score,
+        requires_grading: submission?.requires_grading,
+        teacher_feedback: submission?.teacher_feedback,
+        answer_file_url: submission?.answer_file_url,
+      };
+    });
+
+    // Count pending grading
+    let pendingGrading = 0;
+    questionsWithResults.forEach((q) => {
+      if (q.question_type === "essay" && q.requires_grading) {
+        pendingGrading++;
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        quiz: result.quiz,
+        questions: questionsWithResults,
+        totalScore: result.score,
+        maxScore: result.total_points,
+        percentage: result.percentage,
+        pendingGrading,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching result by ID:", error);
+    return { success: false, error: "An unexpected error occurred" };
   }
 }

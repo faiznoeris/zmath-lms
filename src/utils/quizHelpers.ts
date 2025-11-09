@@ -1,15 +1,17 @@
 /**
- * Get pass/fail status based on score and passing threshold
- * @param score - Actual score achieved
- * @param passingScore - Minimum passing score (optional)
+ * Get pass/fail status based on percentage and passing threshold
+ * @param percentage - Actual percentage achieved (0-100)
+ * @param passingScore - Minimum passing score percentage (optional, defaults to 60)
  * @returns "Passed", "Failed", or null if no passing score defined
  */
 export function getResultStatus(
-  score: number,
+  percentage: number,
   passingScore?: number
 ): "Passed" | "Failed" | null {
-  if (passingScore === null || passingScore === undefined) return null;
-  return score >= passingScore ? "Passed" : "Failed";
+  if (passingScore === null || passingScore === undefined) {
+    passingScore = 60; // Default to 60%
+  }
+  return percentage >= passingScore ? "Passed" : "Failed";
 }
 
 /**

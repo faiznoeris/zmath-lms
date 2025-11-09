@@ -3,7 +3,11 @@ import { Box, Typography, CircularProgress } from "@mui/material";
 import { useQuizStore } from "@/src/stores";
 import CountdownTimer from "../CountdownTimer";
 
-const QuizHeader = () => {
+interface QuizHeaderProps {
+  onTimeExpired?: () => void;
+}
+
+const QuizHeader = ({ onTimeExpired }: QuizHeaderProps) => {
   const { quiz, timeRemaining, sessionId } = useQuizStore();
   const quizTitle = quiz?.title;
   const quizTimeLimit = quiz?.time_limit_minutes;
@@ -34,7 +38,8 @@ const QuizHeader = () => {
       {initialTimeRef.current !== null ? (
         <CountdownTimer 
           key={sessionId || 'default'}
-          timeLimitInSeconds={initialTimeRef.current} 
+          timeLimitInSeconds={initialTimeRef.current}
+          onTimeExpired={onTimeExpired}
         />
       ) : (
         <CircularProgress size={25} />

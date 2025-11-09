@@ -12,9 +12,10 @@ const SYNC_INTERVAL_SECONDS = 30;
 
 interface CountdownTimerParams {
   timeLimitInSeconds: number;
+  onTimeExpired?: () => void;
 }
 
-const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
+const CountdownTimer = ({ timeLimitInSeconds, onTimeExpired }: CountdownTimerParams) => {
   const startTimerInMs = 1000 * timeLimitInSeconds;
   const { quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining } = useQuizStore();
   const { countdown } = useCountdownTimer({
@@ -23,6 +24,7 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
   });
 
   const lastSyncedSecond = React.useRef<number | null>(null);
+  const hasTriggeredExpiry = React.useRef(false);
 
   React.useEffect(() => {
     // Guard clause: Don't do anything if the quiz data isn't loaded yet.
@@ -34,10 +36,16 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
     setTimeRemaining(timeRemainingInSeconds);
 
     // Check if timer has reached 0
-    if (timeRemainingInSeconds <= 0) {
+    if (timeRemainingInSeconds <= 0 && !hasTriggeredExpiry.current) {
+      hasTriggeredExpiry.current = true;
+      
       // Timer expired, clear the store
       resetQuizState();
-      // You might want to auto-submit or redirect here
+      
+      // Auto-submit the quiz
+      if (onTimeExpired) {
+        onTimeExpired();
+      }
       return;
     }
 
@@ -73,7 +81,7 @@ const CountdownTimer = ({ timeLimitInSeconds }: CountdownTimerParams) => {
       saveQuizAttemptState(sessionId, timeRemainingInSeconds);
     }
     // 4. Add userAnswers to the dependency array
-  }, [countdown, quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining]);
+  }, [countdown, quiz, sessionId, userAnswers, resetQuizState, setTimeRemaining, onTimeExpired]);
 
   const getDangerStyles = () => {
     if (countdown <= startTimerInMs * 0.25) {
